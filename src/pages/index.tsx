@@ -14,7 +14,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="min-h-screen bg-zinc-950">
-        <Nav sessionData={sessionData} />
+        <Nav sessionData={sessionData?.data} />
 
         <div className="mt-16 grid h-4 grid-cols-3">
           <div className="col-span-full flex justify-center">

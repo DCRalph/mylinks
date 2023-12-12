@@ -1,26 +1,34 @@
 import Nav from "components/Nav";
-import { useSession } from "next-auth/react";
 import Head from "next/head";
 
-export default function Dashboard() {
-  const sessionData = useSession();
+import { type GetServerSidePropsContext } from "next";
+import { requireAuth } from "~/utils/requreAuth";
+import { type Session } from "next-auth";
+// import { db } from "~/server/db";
 
-  if (sessionData.status === "loading") {
-    return <div>Loading...</div>;
-  }
+export default function Dashboard({
+  sessionData,
+}: {
+  sessionData: Session;
+}) {
+  console.log(sessionData);
 
-  if (sessionData.status === "unauthenticated") {
-    return <div>Unauthenticated</div>;
-  }
+  // const links = db.user.findMany({
+  //   where: {
+  //     id: sessionData.user.id,
+  //   },
+  // });
+
+  // console.log(links)
 
   return (
     <>
       <Head>
-        <title>mylinks</title>
+        <title>mylinks | dashboard</title>
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="min-h-screen bg-zinc-950">
+      <div className="min-h-screen bg-zinc-950">
         <Nav sessionData={sessionData} />
 
         <div className="mt-16 grid h-4 grid-cols-3">
@@ -28,7 +36,15 @@ export default function Dashboard() {
             <h1 className="text-5xl font-bold text-white">dashboard</h1>
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
+}
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  return requireAuth(context, ({ session }) => ({
+    props: {
+      sessionData: session,
+    },
+  }));
 }
