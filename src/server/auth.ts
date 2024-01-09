@@ -5,6 +5,7 @@ import {
   type DefaultSession,
   type NextAuthOptions,
 } from "next-auth";
+import { AdapterUser } from "next-auth/adapters";
 import DiscordProvider from "next-auth/providers/discord";
 
 import { env } from "~/env";
@@ -21,15 +22,15 @@ declare module "next-auth" {
     user: DefaultSession["user"] & {
       id: string;
       // ...other properties
-      // role: UserRole;
+      role: string;
     };
   }
-
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
 }
+
+interface User extends AdapterUser {
+  role: string;
+}
+
 
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
@@ -37,21 +38,31 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
+  //
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    //
+    session: ({ session, user }) => {
+      const newUser = user as User;
+
+
+      
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: user.id,
+          role: newUser.role,
+        },
+      };
+    },
+    //
   },
+  //
   adapter: PrismaAdapter(db),
   providers: [
     DiscordProvider({
       clientId: env.DISCORD_CLIENT_ID,
       clientSecret: env.DISCORD_CLIENT_SECRET,
-      
     }),
     /**
      * ...add more providers here.

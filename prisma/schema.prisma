@@ -41,6 +41,16 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+
 model User {
   id       String    @id @default(cuid())
   name     String?
@@ -51,15 +61,10 @@ model User {
   sessions Session[]
   flags    String?
 
-  Link Link[]
-}
+  Links Link[]
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
+  role     String?   @default("user")
 
-  @@unique([identifier, token])
 }
 
 model Link {
@@ -69,8 +74,15 @@ model Link {
   name      String
   slug      String   @unique
   url       String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
   userId    String
 
   @@unique([userId, url])
+}
+
+model invitedUsers {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  
+  email     String 
 }
