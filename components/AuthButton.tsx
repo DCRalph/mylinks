@@ -51,6 +51,18 @@ export default function AuthButton({
                 </Link>
               </Menu.Item>
 
+              {sessionData.user.role === "admin" && (
+                <Menu.Item>
+                  <Link
+                    className="w-full flex rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-blue-500 no-underline transition hover:bg-white/20"
+                    href={"/admin"}
+                  >
+                    Admin
+                  </Link>
+                </Menu.Item>
+              )}
+                
+
               <Menu.Item>
                 <button
                   className="w-full rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-red-500 no-underline transition hover:bg-white/20"

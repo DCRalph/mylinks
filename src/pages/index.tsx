@@ -1,8 +1,9 @@
 import Head from "next/head";
-import Link from "next/link";
 import Nav from "components/Nav";
+import {  signIn } from "next-auth/react";
 
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 
 export default function Home() {
   const sessionData = useSession();
@@ -22,7 +23,26 @@ export default function Home() {
               Next level link shortner
             </h1>
           </div>
+
+          </div>
+
+        <div className="mt-32 flex justify-center">
+          <div className="flex flex-col items-center space-y-4">
+            <h1 className="text-3xl font-bold text-white">Get started</h1>
+
+            {sessionData?.data ? (
+              <Link href="/dashboard" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Dashboard
+              </Link>
+          ) : (
+              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={() => void signIn()}>
+                Sign in
+              </button>
+          )}
+          </div>
         </div>
+
+
       </main>
     </>
   );
