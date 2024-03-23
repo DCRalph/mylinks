@@ -10,7 +10,7 @@
     "dev": "next dev",
     "postinstall": "prisma generate",
     "lint": "next lint",
-    "start": "next start -p 80"
+    "start": "next start -p 4080"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
