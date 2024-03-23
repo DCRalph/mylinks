@@ -1,5 +1,10 @@
 import { type Link } from "@prisma/client";
+import { toast } from 'react-toastify';
 
+
+const editBtn = (url: Link) => {
+  toast.info(url.id);
+}
 
 
 export default function DashLink({ url }: { url: Link }) {
@@ -13,7 +18,10 @@ export default function DashLink({ url }: { url: Link }) {
         </div>
 
         <div className="flex items-center">
-          <button className="px-4 h-10 rounded-lg bg-blue-500" onClick={() => { alert(url.id) }}>Edit</button>
+          <button className="px-4 h-10 rounded-lg bg-blue-500" onClick={() => {
+            // alert(url.id)
+            editBtn(url)
+          }}>Edit</button>
         </div>
       </div>
 

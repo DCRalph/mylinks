@@ -76,6 +76,7 @@ model Link {
   url       String
   user      User     @relation(fields: [userId], references: [id])
   userId    String
+  isUserLink Boolean  @default(false)
 
   @@unique([userId, url])
 }

@@ -24,7 +24,6 @@ export const slugRouter = createTRPCRouter({
       };
     }
 
-
     return {
       url: url.url,
     };
@@ -40,6 +39,25 @@ export const slugRouter = createTRPCRouter({
 
     return {
       urls,
+    };
+  }),
+  createLink: protectedProcedure
+  .input(z.object({name: z.string(), url: z.string(), slug: z.string()}))
+  .mutation(async ({input, ctx}) => {
+    const {name, url, slug} = input;
+    const newLink = await db.link.create({
+      data: {
+        name,
+        url,
+        slug,
+        userId: ctx.session?.user.id,
+        isUserLink: false,
+
+      },
+    });
+
+    return {
+      link: newLink,
     };
   }),
 });
