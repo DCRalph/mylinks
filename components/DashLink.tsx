@@ -1,13 +1,17 @@
 import { type Link } from "@prisma/client";
+import { useState } from "react";
+import DashLinkEditModel from "./DashLinkEditModel";
 import { toast } from 'react-toastify';
 
 
-const editBtn = (url: Link) => {
-  toast.info(url.id);
-}
-
-
 export default function DashLink({ url }: { url: Link }) {
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  const editBtn = (url: Link) => {
+    // toast.info(url.id);
+    setIsOpen(true);
+  }
 
   return (
     <div className=" bg-white rounded-lg w-full flex flex-col px-4 py-2">
@@ -25,6 +29,7 @@ export default function DashLink({ url }: { url: Link }) {
         </div>
       </div>
 
+      <DashLinkEditModel url={url} isOpen={isOpen} setIsOpen={setIsOpen} />
     </div>
   );
 

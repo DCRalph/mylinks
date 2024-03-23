@@ -151,7 +151,7 @@ export default function Dashboard({ sessionData }: { sessionData: Session }) {
           </div>
 
           <div className="col-span-full mt-16  flex items-center justify-center gap-4">
-            <span className=" text-2xl text-white">Your personal link is:</span>
+            {/* <span className=" text-2xl text-white">Your personal link is:</span> */}
 
             <div className="rounded-lg border-2 border-slate-600 bg-black bg-opacity-10 px-4 py-2 shadow-md ">
               <span className=" flex items-center text-2xl text-white">
@@ -162,24 +162,24 @@ export default function Dashboard({ sessionData }: { sessionData: Session }) {
           </div>
 
           <div className="col-span-full flex justify-center mt-8">
-            <form onSubmit={createLinkHandler} className="grid grid-cols-2 gap-4">
+            <form onSubmit={createLinkHandler} className="grid grid-cols-2 gap-4 w-full max-w-3xl">
 
-              <div className="">
+              <div className="col-span-full md:col-span-1">
                 <label htmlFor="newLinkName" className="block mb-2 text-sm font-medium text-white">Name</label>
                 <input type="text" id="newLinkName" className="text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500" placeholder="Name" value={newLinkName} onChange={(e) => setNewLinkName(e.target.value)} required />
               </div>
 
-              <div className="">
+              <div className="col-span-full md:col-span-1">
                 <label htmlFor="newLinkUrl" className="block mb-2 text-sm font-medium text-white">Long URL</label>
                 <input type="text" id="newLinkUrl" className="text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500" placeholder="Long Url" value={newLinkUrl} onChange={(e) => setNewLinkUrl(e.target.value)} required />
               </div>
 
-              <div className="">
+              <div className="col-span-full md:col-span-1">
                 <label htmlFor="newLinkSlug" className="block mb-2 text-sm font-medium text-white">Slug</label>
                 <input type="text" id="newLinkSlug" className="text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500" placeholder="Slug" value={newLinkSlug} onChange={(e) => setNewLinkSlug(e.target.value)} required />
               </div>
 
-              <button className="text-white focus:ring-4 focus:outline-none font-medium rounded-lg text-sm w-full mt-auto h-min sm:w-auto px-5 py-2.5 text-center bg-blue-600 hover:bg-blue-700 focus:ring-blue-800" disabled={createLinkMutation.isLoading} type="submit">Create</button>
+              <button className="text-white col-span-full md:col-span-1 focus:ring-4 focus:outline-none font-medium rounded-lg text-sm w-full mt-auto h-min sm:w-auto px-5 py-2.5 text-center bg-blue-600 hover:bg-blue-700 focus:ring-blue-800" disabled={createLinkMutation.isLoading} type="submit">Create</button>
 
             </form>
           </div>
@@ -188,7 +188,7 @@ export default function Dashboard({ sessionData }: { sessionData: Session }) {
 
             <span className="text-3xl text-white">Your links:</span>
 
-            <div className="flex mt-8 flex-col gap-4 max-w-xl w-full px-16">
+            <div className="flex mt-8 mb-24 flex-col gap-4 max-w-xl w-full px-16">
               {myUrls.data?.urls.map((url) => (
                 <DashLink key={url.id} url={url} />
               ))
