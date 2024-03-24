@@ -62,7 +62,7 @@ export default function Dashboard() {
   return (
     <>
       <Head>
-        <title>mylinks | dashboard</title>
+        <title>link2it | dashboard</title>
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -105,8 +105,8 @@ export default function Dashboard() {
               </div>
 
               <div className="col-span-full md:col-span-1">
-                <label htmlFor="newLinkSlug" className="block mb-2 text-sm font-medium text-white">Slug</label>
-                <input type="text" id="newLinkSlug" className="text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500" placeholder="Slug" value={newLinkSlug} onChange={(e) => setNewLinkSlug(e.target.value)} required />
+                <label htmlFor="newLinkSlug" className="block mb-2 text-sm font-medium text-white">Slug (Leave empty for random slug)</label>
+                <input type="text" id="newLinkSlug" className="text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500" placeholder="Custom slug" value={newLinkSlug} onChange={(e) => setNewLinkSlug(e.target.value)} />
               </div>
 
               <button className="text-white col-span-full md:col-span-1 focus:ring-4 focus:outline-none font-medium rounded-lg text-sm w-full mt-auto h-min sm:w-auto px-5 py-2.5 text-center bg-blue-600 hover:bg-blue-700 focus:ring-blue-800" disabled={createLinkMutation.isLoading} type="submit">Create</button>
@@ -115,18 +115,12 @@ export default function Dashboard() {
           </div>
 
           <div className="col-span-full mt-16 flex flex-col items-center">
-
             <span className="text-3xl text-white">Your links:</span>
-
-            <div className="flex mt-8 mb-24 flex-col gap-4 max-w-xl w-full px-16">
-              {myUrls.data?.urls.map((url) => (
-                <DashLink key={url.id} url={url} />
-              ))
-              }
-
+            <div className="flex mt-8 mb-24 flex-col gap-4 max-w-xl w-full md:px-16">
+              {myUrls.data?.urls?.filter((link) => link.isUserLink === false)?.map((link) => (
+                <DashLink key={link.id} url={link} />
+              ))}
             </div>
-
-
           </div>
 
           {/*  */}

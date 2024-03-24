@@ -13,7 +13,7 @@ export default function Admin() {
   return (
     <>
       <Head>
-        <title>mylinks | Admin</title>
+        <title>link2it | Admin</title>
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>

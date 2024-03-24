@@ -51,20 +51,20 @@ export default function Settings() {
   return (
     <>
       <Head>
-        <title>mylinks | settings</title>
+        <title>link2it | settings</title>
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className="min-h-screen bg-zinc-950">
         <Nav user={myUser.data} />
 
-        <div className="mt-16 grid h-4 grid-cols-3">
+        <div className="mt-16 grid h-4 grid-cols-12">
           <div className="col-span-full flex justify-center">
             <h1 className="text-5xl font-bold text-white">Settings</h1>
           </div>
 
 
-          <form onSubmit={changeUsernameHandler} className="col-start-2 flex gap-4 mt-8">
+          <form onSubmit={changeUsernameHandler} className="col-start-4 col-span-6 flex flex-col md:flex-row gap-4 mt-8">
 
             <div className="grow">
               <label htmlFor="userName" className="block mb-2 text-sm font-medium text-white">Username</label>

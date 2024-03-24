@@ -14,7 +14,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>mylinks</title>
+        <title>link2it</title>
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -23,7 +23,7 @@ export default function Home() {
 
         <div className="mt-16 grid h-4 grid-cols-3">
           <div className="col-span-full flex justify-center">
-            <h1 className="text-5xl font-bold text-white">
+            <h1 className="text-3xl lg:text-5xl font-bold text-white">
               Next level link shortner
             </h1>
           </div>

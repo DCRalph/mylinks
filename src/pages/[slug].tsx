@@ -78,7 +78,7 @@ export default function Redirect({ slug, notFound }: { slug: string, notFound: b
   return (
     <>
       <Head>
-        <title>mylinks | dashboard</title>
+        <title>link2it | dashboard</title>
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
