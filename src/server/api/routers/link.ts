@@ -35,8 +35,7 @@ export const linkRouter = createTRPCRouter({
   getMyUrls: protectedProcedure
   .query(async ({ctx}) => {
     
-    console.log("link here", ctx.session?.user)
-
+    // console.log("link here", ctx.session?.user)
 
     const urls = await db.link.findMany({
       where: {
