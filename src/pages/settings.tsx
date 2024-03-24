@@ -44,7 +44,6 @@ export default function Settings() {
           closeOnClick: true,
           pauseOnHover: true,
         });
-        console.log("error here", error.shape);
       }
     });
   }
