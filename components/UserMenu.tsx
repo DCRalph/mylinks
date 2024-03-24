@@ -1,27 +1,32 @@
-import {  signIn, signOut } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import { Menu, Transition } from "@headlessui/react";
 import Image from "next/image";
 import Link from "next/link";
-import { type Session } from "next-auth";
 
-export default function AuthButton({
-  sessionData,
-}: {
-  sessionData: Session | null;
-}) {
+
+import type { inferRouterOutputs } from '@trpc/server';
+import { type AppRouter } from "~/server/api/root";
+
+type UserMenuProps = {
+  user?: inferRouterOutputs<AppRouter>['user']['getUser'];
+};
+
+export default function UserMenu({ user }: UserMenuProps) {
 
   return (
     <>
-      {sessionData?.user?.image && (
+      {user && (
         <Menu as="div" className="relative inline-block">
           <Menu.Button>
             <div className="h-12 w-12 overflow-hidden rounded-full">
-              <Image
-                src={sessionData.user.image}
-                alt="user avatar"
-                width={1000}
-                height={1000}
-              />
+              {user.user?.image && (
+                <Image
+                  src={user.user?.image}
+                  alt="user avatar"
+                  width={1000}
+                  height={1000}
+                />
+              )}
             </div>
           </Menu.Button>
           <Transition
@@ -33,6 +38,21 @@ export default function AuthButton({
             leaveTo="transform opacity-0 scale-95"
           >
             <Menu.Items className="absolute flex flex-col gap-2 right-0 mt-2 w-56 origin-top-right divide-gray-100 rounded-md bg-zinc-800 p-2 shadow-lg ring-1 ring-black/5 focus:outline-none">
+              <Menu.Item>
+                <div className="flex flex-col">
+                  <h2 className="text-white text-xl font-semibold">
+                    {user.user?.name}
+                  </h2>
+
+                  <span className="text-gray-400 text-sm">
+                    {user.user?.username} - {user.user?.role}
+                  </span>
+
+
+                </div>
+              </Menu.Item>
+
+
               <Menu.Item>
                 <Link
                   className="w-full flex rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
@@ -51,7 +71,7 @@ export default function AuthButton({
                 </Link>
               </Menu.Item>
 
-              {sessionData.user.role === "admin" && (
+              {user.user?.role === "admin" && (
                 <Menu.Item>
                   <Link
                     className="w-full flex rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-blue-500 no-underline transition hover:bg-white/20"
@@ -61,7 +81,7 @@ export default function AuthButton({
                   </Link>
                 </Menu.Item>
               )}
-                
+
 
               <Menu.Item>
                 <button
@@ -76,7 +96,7 @@ export default function AuthButton({
         </Menu>
       )}
 
-      {!sessionData && (
+      {!user && (
         <button
           className="h-12 rounded-full bg-white/10 px-6 font-semibold text-white no-underline transition hover:bg-white/20"
           onClick={() => void signIn()}

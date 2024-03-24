@@ -25,12 +25,14 @@ declare module "next-auth" {
       id: string;
       // ...other properties
       role: string;
+      username: string;
     };
   }
 }
 
 interface User extends AdapterUser {
   role: string;
+  username: string;
 }
 
 
@@ -42,18 +44,13 @@ interface User extends AdapterUser {
 export const authOptions: NextAuthOptions = {
   //
   callbacks: {
-    //
     session: ({ session, user }) => {
-      const newUser = user as User;
-      
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: user.id,
-          role: newUser.role,
-        },
-      };
+      if (session.user) {
+        session.user.id = user.id;
+        session.user.role = (user as User).role;
+        session.user.username = (user as User).username;
+      }
+      return session;
     },
     //
   },
@@ -61,16 +58,16 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db),
   providers: [
     
-    DiscordProvider({
-      clientId: env.DISCORD_CLIENT_ID,
-      clientSecret: env.DISCORD_CLIENT_SECRET,
-      allowDangerousEmailAccountLinking: true,
-    }),
+    // DiscordProvider({
+    //   clientId: env.DISCORD_CLIENT_ID,
+    //   clientSecret: env.DISCORD_CLIENT_SECRET,
+    //   allowDangerousEmailAccountLinking: true,
+    // }),
 
     GoogleProvider({
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
-      allowDangerousEmailAccountLinking: true,
+      // allowDangerousEmailAccountLinking: true,
     })
   ],
 };

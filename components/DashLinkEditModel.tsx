@@ -50,21 +50,14 @@ export default function DashLinkEditModel({ url, isOpen, setIsOpen }: DashLinkEd
         className={
           'w-full max-w-2xl h-fit rounded-2xl overflow-hidden bg-zinc-700 shadow-lg cursor-auto relative'
         }>
-        {/* <button
-          onClick={() => setIsClosing(true)}
-          className={
-            'bg-bg-opaque rounded-md absolute text-4xl top-4 right-4 cursor-pointer transition-all transform hover:rotate-6 hover:bg-brand hover:text-6xl'
-          }>
-          <MdClose />
-        </button> */}
 
 
-        <div className={'p-6'}>
+        <div className="p-6 text-white">
           <h4 className="text-4xl font-semibold">{url.name}</h4>
           <h4 className="text-4xl font-semibold">{url.slug}</h4>
           <h4 className="text-4xl font-semibold">{url.url}</h4>
           <h4 className="text-4xl font-semibold">{url.id}</h4>
-          <h4 className="text-4xl font-semibold">{url.isUserLink}</h4>
+          <h4 className="text-4xl font-semibold">{url.isUserLink ? "yes" : "no"}</h4>
 
           {/* <div className="flex flex-wrap gap-4 text-white  text-base mb-6">
             <DateText

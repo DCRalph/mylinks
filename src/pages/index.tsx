@@ -1,12 +1,16 @@
 import Head from "next/head";
 import Nav from "components/Nav";
-import {  signIn } from "next-auth/react";
-
-import { useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 
+import { api } from "~/utils/api";
+
+
 export default function Home() {
-  const sessionData = useSession();
+
+  const myUser = api.user.getUser.useQuery();
+
+
   return (
     <>
       <Head>
@@ -15,7 +19,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="min-h-screen bg-zinc-950">
-        <Nav sessionData={sessionData?.data} />
+        <Nav user={myUser.data} />
 
         <div className="mt-16 grid h-4 grid-cols-3">
           <div className="col-span-full flex justify-center">
@@ -24,21 +28,21 @@ export default function Home() {
             </h1>
           </div>
 
-          </div>
+        </div>
 
         <div className="mt-32 flex justify-center">
           <div className="flex flex-col items-center space-y-4">
             <h1 className="text-3xl font-bold text-white">Get started</h1>
 
-            {sessionData?.data ? (
+            {myUser.data ? (
               <Link href="/dashboard" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                 Dashboard
               </Link>
-          ) : (
+            ) : (
               <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={() => void signIn()}>
                 Sign in
               </button>
-          )}
+            )}
           </div>
         </div>
 

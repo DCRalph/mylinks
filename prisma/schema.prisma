@@ -51,6 +51,9 @@ model VerificationToken {
 }
 
 
+// my shit
+
+
 model User {
   id       String    @id @default(cuid())
   name     String?
@@ -60,6 +63,8 @@ model User {
   accounts Account[]
   sessions Session[]
   flags    String?
+
+  username String?  @unique
 
   Links Link[]
 
@@ -74,16 +79,30 @@ model Link {
   name      String
   slug      String   @unique
   url       String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
   isUserLink Boolean  @default(false)
 
-  @@unique([userId, url])
+  clicks    Click[]
+
+  @@index([userId])
 }
 
-model invitedUsers {
+model Click {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
-  
-  email     String 
+  link      Link     @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  linkId    String
+  userAgent String?
+  ipAddress String?
+  referer   String?
+
+  @@index([linkId])
 }
+
+// model invitedUsers {
+//   id        String   @id @default(cuid())
+//   createdAt DateTime @default(now())
+  
+//   email     String 
+// }

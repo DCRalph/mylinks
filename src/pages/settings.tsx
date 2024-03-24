@@ -4,47 +4,24 @@ import Head from "next/head";
 import { type GetServerSidePropsContext } from "next";
 import { requireAuth } from "~/utils/requreAuth";
 import { api } from "~/utils/api";
-import { type Session } from "next-auth";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useState, useEffect } from "react";
 import { toast } from 'react-toastify';
 
-// import { db } from "~/server/db";
+export default function Settings() {
 
 
+  const myUser = api.user.getUser.useQuery();
 
-export default function Settings({
-  sessionData,
-}: {
-  sessionData: Session;
-}) {
-  const [newUsername, setNewUsername] = useState(sessionData.user.name ?? '');
+
+  const [newUsername, setNewUsername] = useState(myUser.data?.user?.username ?? '');
   const changeUsernameMutation = api.user.setUsername.useMutation();
+
+  useEffect(() => {
+    setNewUsername(myUser.data?.user?.username ?? '');
+  }, [myUser.data?.user?.username]);
 
   const changeUsernameHandler = async (e: FormEvent) => {
     e.preventDefault();
-    if (newUsername.length < 3) {
-      toast.error('Username must be at least 3 characters long', {
-        closeOnClick: true,
-        pauseOnHover: true,
-      });
-      return;
-    }
-
-    if (newUsername.length > 20) {
-      toast.error('Username must be at most 20 characters long', {
-        closeOnClick: true,
-        pauseOnHover: true,
-      });
-      return;
-    }
-
-    if (!/^[a-zA-Z0-9_]*$/.test(newUsername)) {
-      toast.error('Username can only contain letters, numbers and underscores', {
-        closeOnClick: true,
-        pauseOnHover: true,
-      });
-      return;
-    }
 
     changeUsernameMutation.mutate({ name: newUsername }, {
       onSuccess: () => {
@@ -52,12 +29,22 @@ export default function Settings({
           closeOnClick: true,
           pauseOnHover: true,
         });
+
+        myUser.refetch()
+          .then()
+          .catch((error: string) => {
+            toast.error(error, {
+              closeOnClick: true,
+              pauseOnHover: true,
+            });
+          });
       },
       onError: (error) => {
         toast.error(error.message, {
           closeOnClick: true,
           pauseOnHover: true,
         });
+        console.log("error here", error.shape);
       }
     });
   }
@@ -70,7 +57,7 @@ export default function Settings({
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className="min-h-screen bg-zinc-950">
-        <Nav sessionData={sessionData} />
+        <Nav user={myUser.data} />
 
         <div className="mt-16 grid h-4 grid-cols-3">
           <div className="col-span-full flex justify-center">
@@ -90,16 +77,11 @@ export default function Settings({
           </form>
         </div>
 
-
       </div>
     </>
   );
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  return requireAuth(context, ({ session }) => ({
-    props: {
-      sessionData: session,
-    },
-  }));
+  return requireAuth(context);
 }

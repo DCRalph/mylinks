@@ -7,93 +7,26 @@ import { type GetServerSidePropsContext } from "next";
 import { api } from "~/utils/api";
 
 import { requireAuth } from "~/utils/requreAuth";
-import { type Session } from "next-auth";
 import Copy from "components/copy";
 import DashLink from "components/DashLink";
 import { useState } from "react";
 import { toast } from 'react-toastify';
 
-// import { db } from "~/server/db";
 
-export default function Dashboard({ sessionData }: { sessionData: Session }) {
-  // console.log(sessionData);
+export default function Dashboard() {
 
   const [newLinkName, setNewLinkName] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
   const [newLinkSlug, setNewLinkSlug] = useState('');
 
-  const myUrls = api.slug.getMyUrls.useQuery();
-  const isSlugUnique = api.slug.getLongUrl.useQuery({ slug: newLinkSlug });
+  const myUser = api.user.getUser.useQuery();
+  const myUrls = api.link.getMyUrls.useQuery();
 
-  const createLinkMutation = api.slug.createLink.useMutation();
+  const createLinkMutation = api.link.createLink.useMutation();
 
   const createLinkHandler = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (newLinkName.length < 3) {
-      toast.error('Name must be at least 3 characters long', {
-        closeOnClick: true,
-        pauseOnHover: true,
-      });
-      return;
-    }
-
-    if (newLinkName.length > 20) {
-      toast.error('Name must be at most 20 characters long', {
-        closeOnClick: true,
-        pauseOnHover: true,
-      });
-      return;
-    }
-
-    if (newLinkSlug.length < 3) {
-      toast.error('Slug must be at least 3 characters long', {
-        closeOnClick: true,
-        pauseOnHover: true,
-      });
-      return;
-    }
-
-    if (newLinkSlug.length > 20) {
-      toast.error('Slug must be at most 20 characters long', {
-        closeOnClick: true,
-        pauseOnHover: true,
-      });
-      return;
-    }
-
-    if (!/^[a-zA-Z0-9_]*$/.test(newLinkSlug)) {
-      toast.error('Slug can only contain letters, numbers and underscores', {
-        closeOnClick: true,
-        pauseOnHover: true,
-      });
-      return;
-    }
-
-    // make sure url is valid
-    try {
-      new URL(newLinkUrl);
-    } catch (error) {
-      toast.error('Invalid URL', {
-        closeOnClick: true,
-        pauseOnHover: true,
-      });
-      return;
-    }
-
-    await isSlugUnique.refetch();
-
-    while (isSlugUnique.isLoading) {
-      // wait
-    }
-
-    if (!isSlugUnique.data) {
-      toast.error('Slug is already taken', {
-        closeOnClick: true,
-        pauseOnHover: true,
-      });
-      return;
-    }
 
     createLinkMutation.mutate({ name: newLinkName, url: newLinkUrl, slug: newLinkSlug }, {
       onSuccess: () => {
@@ -112,7 +45,6 @@ export default function Dashboard({ sessionData }: { sessionData: Session }) {
               closeOnClick: true,
               pauseOnHover: true,
             });
-
           });
 
       },
@@ -123,8 +55,6 @@ export default function Dashboard({ sessionData }: { sessionData: Session }) {
         });
       }
     });
-
-
   }
 
 
@@ -137,26 +67,26 @@ export default function Dashboard({ sessionData }: { sessionData: Session }) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className="min-h-screen bg-zinc-950">
-        <Nav sessionData={sessionData} />
+        <Nav user={myUser.data} />
 
         <div className="mt-16 grid grid-cols-3 mx-16">
           {/*  */}
-          <div className="col-span-full flex flex-col items-center">
-            {/* <h1 className="text-5xl font-bold text-white">dashboard</h1> */}
+          {/* <div className="col-span-full flex flex-col items-center">
+            <h1 className="text-5xl font-bold text-white">dashboard</h1>
 
             <h1 className="text-5xl font-bold text-white">
               Welcome { }
               {sessionData.user.name}
             </h1>
-          </div>
+          </div> */}
 
-          <div className="col-span-full mt-16  flex items-center justify-center gap-4">
+          <div className="col-span-full flex items-center justify-center gap-4">
             {/* <span className=" text-2xl text-white">Your personal link is:</span> */}
 
             <div className="rounded-lg border-2 border-slate-600 bg-black bg-opacity-10 px-4 py-2 shadow-md ">
               <span className=" flex items-center text-2xl text-white">
-                {env.NEXT_PUBLIC_SHORT_DOMAIN}/{sessionData.user.name}
-                <Copy text={`${env.NEXT_PUBLIC_DOMAIN}/${sessionData.user.name}`} />
+                {env.NEXT_PUBLIC_SHORT_DOMAIN}/{myUser.data?.user?.username}
+                <Copy text={`${env.NEXT_PUBLIC_DOMAIN}/${myUser.data?.user?.username}`} />
               </span>
             </div>
           </div>
@@ -207,9 +137,5 @@ export default function Dashboard({ sessionData }: { sessionData: Session }) {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  return requireAuth(context, ({ session }) => ({
-    props: {
-      sessionData: session,
-    },
-  }));
+  return requireAuth(context);
 }
