@@ -28,13 +28,44 @@ export const profileRouter = createTRPCRouter({
         profiles
       }
     }),
-  createProfileLink: protectedProcedure
-    .input(z.object({ name: z.string(), url: z.string(), slug: z.string() }))
-    .mutation(async ({ input, ctx }) => {
 
-      return {
-        ok: true
+
+  editProfileLink: protectedProcedure
+    .input(z.object({ id: z.string(), title: z.string(), url: z.string(), showenUrl: z.string(), iconUrl: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const { id, title, url, showenUrl, iconUrl } = input;
+
+      const profileLink = await db.profileLink.findUnique({
+        where: {
+          id,
+        },
+        include: {
+          profile: true,
+        },
+      });
+
+      if (!profileLink) {
+        throw new Error('Link not found');
       }
 
+      if (profileLink.profile.userId !== ctx.session?.user.id) {
+        throw new Error('Not authorized');
+      }
+
+      await db.profileLink.update({
+        where: {
+          id,
+        },
+        data: {
+          title,
+          url,
+          showenUrl,
+          iconUrl,
+        },
+      });
+
+      return {
+        success: true,
+      };
     }),
 });

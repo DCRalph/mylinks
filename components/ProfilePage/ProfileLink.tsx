@@ -5,7 +5,7 @@ import Image from "next/image";
 export default function ProfileLinkElement({ link }: { link: ProfileLink }) {
 
   const color = link.color ?? "bg-zinc-700 text-white";
-  const icon = link.iconUrl ? "/profileLinkIcons/" + link.iconUrl : "/profileLinkIcons/www.png";
+  const icon = link.iconUrl ? "/profileLinkIcons/" + link.iconUrl : "/profileLinkIcons/generic.png";
 
   return (
     <a className="h-20 w-full flex gap-4 transform transition md:hover:-translate-y-2 md:hover:-translate-x-2 gobold"
@@ -20,7 +20,7 @@ export default function ProfileLinkElement({ link }: { link: ProfileLink }) {
         </p>
       </div>
 
-      <div className="aspect-square h-full rounded-lg bg-zinc-700 p-2">
+      <div className="aspect-square flex justify-center items-center h-full rounded-lg bg-zinc-700 p-2">
         <Image
           src={icon}
           alt={link.title}

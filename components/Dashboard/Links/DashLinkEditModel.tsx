@@ -4,6 +4,7 @@ import ReactDOM from "react-dom";
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion'
 import ModelCloseBtn from "components/ModelCloseBtn";
+import { api } from "~/utils/api";
 
 
 interface DashLinkEditModelProps {
@@ -21,24 +22,67 @@ export default function DashLinkEditModel({ link, isOpen, setIsOpen }: DashLinkE
   const [UrllongUrl, setUrlLongUrl] = useState(link.url)
   const [UrlshortUrl, setUrlShortUrl] = useState(link.slug)
 
+  const myLinks = api.link.getMyLinks.useQuery();
+  const editLinkMutation = api.link.editLink.useMutation();
+  const deleteLinkMutation = api.link.deleteLink.useMutation();
+
   const editLinkHandler = async (e: React.FormEvent) => {
     e.preventDefault();
 
 
-    toast.promise(
-      new Promise(resolve => setTimeout(resolve, 1000)),
-      {
-        pending: 'Promise is pending',
-        success: 'Promise resolved 👌',
-        error: 'Promise rejected 🤯'
+    editLinkMutation.mutate({ id: link.id, name: UrlName, url: UrllongUrl, slug: UrlshortUrl }, {
+      onSuccess: () => {
+        toast.success('Link edited successfully', {
+          closeOnClick: true,
+          pauseOnHover: true,
+        });
+
+        setIsOpen(false)
+        myLinks.refetch()
+          .then()
+          .catch((error: string) => {
+            toast.error(error, {
+              closeOnClick: true,
+              pauseOnHover: true,
+            });
+          });
+
+      },
+      onError: (error) => {
+        toast.error(error.message, {
+          closeOnClick: true,
+          pauseOnHover: true,
+        });
       }
-    ).then(() => {
-      setIsClosing(true)
-    }).catch(() => {
-      setIsClosing(true)
-    })
+    });
+  }
 
+  const deleteLinkHandler = async () => {
+    deleteLinkMutation.mutate({ id: link.id }, {
+      onSuccess: () => {
+        toast.success('Link deleted successfully', {
+          closeOnClick: true,
+          pauseOnHover: true,
+        });
 
+        setIsOpen(false)
+        myLinks.refetch()
+          .then()
+          .catch((error: string) => {
+            toast.error(error, {
+              closeOnClick: true,
+              pauseOnHover: true,
+            });
+          });
+
+      },
+      onError: (error) => {
+        toast.error(error.message, {
+          closeOnClick: true,
+          pauseOnHover: true,
+        });
+      }
+    });
   }
 
 
@@ -105,9 +149,15 @@ export default function DashLinkEditModel({ link, isOpen, setIsOpen }: DashLinkE
               <input placeholder="Long Url" type="text" id="newLongUrl" className="form_input" value={UrllongUrl} onChange={(e) => setUrlLongUrl(e.target.value)} required />
             </div>
 
-            <button className="form_btn" type="submit">Change</button>
+            <div className="col-span-full flex justify-around">
+              <button className="form_btn_blue" type="submit">Change</button>
+              <button className="form_btn_red" type="button" onClick={deleteLinkHandler}>Delete</button>
+            </div>
 
           </form>
+
+
+
         </div>
 
       </motion.div >

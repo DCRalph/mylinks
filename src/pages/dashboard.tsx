@@ -121,7 +121,7 @@ export default function Dashboard() {
                 <input type="text" id="newLinkSlug" className="form_input" placeholder="Custom slug" value={newLinkSlug} onChange={(e) => setNewLinkSlug(e.target.value)} />
               </div>
 
-              <button className="form_btn" disabled={createLinkMutation.isLoading} type="submit">Create</button>
+              <button className="form_btn_blue" disabled={createLinkMutation.isLoading} type="submit">Create</button>
             </form>
 
             <div className="flex mt-4 mb-24 flex-col gap-4 w-full">

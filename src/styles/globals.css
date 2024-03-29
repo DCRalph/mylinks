@@ -17,8 +17,16 @@
   @apply text-sm rounded-lg block w-full p-2.5 bg-zinc-700 border border-zinc-600 placeholder-zinc-400 text-white
 }
 
-.form_btn{
-  @apply text-white col-span-full border border-blue-500 font-medium rounded-lg text-sm w-full mt-auto h-min px-5 py-2.5 text-center bg-blue-600 hover:bg-blue-700
+.form_btn {
+  @apply text-white col-span-full border font-medium rounded-lg text-sm w-min h-min px-5 py-2.5 text-center 
+}
+
+.form_btn_blue {
+  @apply form_btn border-blue-500 bg-blue-600 hover:bg-blue-700
+}
+
+.form_btn_red {
+  @apply form_btn border-red-500 bg-red-600 hover:bg-red-700
 }
 
 .gobold {
