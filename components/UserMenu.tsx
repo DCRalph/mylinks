@@ -52,35 +52,38 @@ export default function UserMenu({ user }: UserMenuProps) {
                 </div>
               </Menu.Item>
 
+              {user.user?.requireSetup == false && (<>
 
-              <Menu.Item>
-                <Link
-                  className="w-full flex rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
-                  href={"/dashboard"}
-                >
-                  Dashboard
-                </Link>
-              </Menu.Item>
-
-              <Menu.Item>
-                <Link
-                  className="w-full flex rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
-                  href={"/settings"}
-                >
-                  Settings
-                </Link>
-              </Menu.Item>
-
-              {user.user?.role === "admin" && (
                 <Menu.Item>
                   <Link
-                    className="w-full flex rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-blue-500 no-underline transition hover:bg-white/20"
-                    href={"/admin"}
+                    className="w-full flex rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
+                    href={"/dashboard"}
                   >
-                    Admin
+                    Dashboard
                   </Link>
                 </Menu.Item>
-              )}
+
+                <Menu.Item>
+                  <Link
+                    className="w-full flex rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
+                    href={"/settings"}
+                  >
+                    Settings
+                  </Link>
+                </Menu.Item>
+
+                {user.user?.role === "admin" && (
+                  <Menu.Item>
+                    <Link
+                      className="w-full flex rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-blue-500 no-underline transition hover:bg-white/20"
+                      href={"/admin"}
+                    >
+                      Admin
+                    </Link>
+                  </Menu.Item>
+                )}
+
+              </>)}
 
 
               <Menu.Item>

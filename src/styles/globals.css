@@ -1,3 +1,30 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+  font-family: 'Gobold';
+  src: url('/font/Gobold.ttf.woff') format('woff'),
+      url('/font/Gobold.ttf.svg#Gobold') format('svg'),
+      url('/font/Gobold.ttf.eot'),
+      url('/font/Gobold.ttf.eot?#iefix') format('embedded-opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+
+.form_input {
+  @apply text-sm rounded-lg block w-full p-2.5 bg-zinc-700 border border-zinc-600 placeholder-zinc-400 text-white
+}
+
+.form_btn{
+  @apply text-white col-span-full border border-blue-500 font-medium rounded-lg text-sm w-full mt-auto h-min px-5 py-2.5 text-center bg-blue-600 hover:bg-blue-700
+}
+
+.gobold {
+  font-family: 'Gobold';
+}
+
+.instagram {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}

@@ -4,6 +4,7 @@ import { api } from "~/utils/api";
 
 import { type GetServerSidePropsContext } from "next";
 import { requireAuthAdmin } from "~/utils/requreAuth";
+import { checkRequireSetup } from "~/utils/requireSetup";
 
 
 export default function Admin() {
@@ -62,5 +63,29 @@ export default function Admin() {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  return requireAuthAdmin(context);
+  const needsSetup = await checkRequireSetup(context);
+  const isAdmin = await requireAuthAdmin(context);
+
+  if (!isAdmin) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      },
+
+    };
+  }
+
+  if (needsSetup) {
+    return {
+      redirect: {
+        destination: '/setup',
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {},
+  };
 }

@@ -4,12 +4,13 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 
 import { api } from "~/utils/api";
+import { GetServerSidePropsContext } from "next";
+import { checkRequireSetup } from "~/utils/requireSetup";
 
 
 export default function Home() {
 
   const myUser = api.user.getUser.useQuery();
-
 
   return (
     <>
@@ -50,4 +51,22 @@ export default function Home() {
       </main>
     </>
   );
+}
+
+
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const needsSetup = await checkRequireSetup(context);
+
+  if (needsSetup) {
+    return {
+      redirect: {
+        destination: '/setup',
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {},
+  };
 }

@@ -1,15 +1,14 @@
 import { z } from "zod";
 import { db } from "~/server/db";
 
+import badWords from "~/utils/badWords";
+
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
 import { randomUUID } from "crypto";
-
-const badSlugs = ['dashboard', 'settings', 'admin', 'api', 'auth', 'me', 'profile', 'robots.txt']
-const badUrlFilter = ['porn', 'lgbt']
 
 export const linkRouter = createTRPCRouter({
   getLongUrl: publicProcedure
@@ -33,19 +32,19 @@ export const linkRouter = createTRPCRouter({
       };
 
     }),
-  getMyUrls: protectedProcedure
+  getMyLinks: protectedProcedure
     .query(async ({ ctx }) => {
 
       // console.log("link here", ctx.session?.user)
 
-      const urls = await db.link.findMany({
+      const links = await db.link.findMany({
         where: {
           userId: ctx.session?.user.id,
         },
       });
 
       return {
-        urls,
+        links,
       };
     }),
   createLink: protectedProcedure
@@ -77,10 +76,10 @@ export const linkRouter = createTRPCRouter({
         }
 
         const lowerSlug = slug.toLowerCase()
-        const indexInBadSlugs = badSlugs.indexOf(lowerSlug);
+        const indexInBadSlugs = badWords.badSlugs.indexOf(lowerSlug);
 
         if (indexInBadSlugs !== -1) {
-          throw new Error(`Slug cannot be "${badSlugs[indexInBadSlugs]}" you cheaky barstard`);
+          throw new Error(`Slug cannot be "${badWords.badSlugs[indexInBadSlugs]}" you cheaky barstard`);
         }
       } else {
         slug = randomUUID().slice(0, 8)
@@ -96,10 +95,10 @@ export const linkRouter = createTRPCRouter({
         throw new Error('Slug already exists');
       }
 
-      const indexInBadUrlFilter = badUrlFilter.findIndex((badWord) => url.includes(badWord));
+      const indexInBadUrlFilter = badWords.badUrlFilter.findIndex((badWord) => url.includes(badWord));
 
       if (indexInBadUrlFilter !== -1) {
-        throw new Error(`URL cannot contain "${badUrlFilter[indexInBadUrlFilter]}"`);
+        throw new Error(`URL cannot contain "${badWords.badUrlFilter[indexInBadUrlFilter]}"`);
       }
 
       try {
@@ -115,8 +114,6 @@ export const linkRouter = createTRPCRouter({
           url,
           slug,
           userId: ctx.session?.user.id,
-          isUserLink: false,
-
         },
       });
 

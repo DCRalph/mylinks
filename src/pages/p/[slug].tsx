@@ -5,25 +5,25 @@ import { getClientIp } from 'request-ip'
 import { type GetServerSidePropsContext } from 'next';
 import ProfilePage from 'components/ProfilePage/ProfilePage';
 
-import { type Link, type ProfileLink } from '@prisma/client'
+import { type Profile, type ProfileLink } from '@prisma/client'
+
+type Profile_ProjectLinks = {
+  profileLinks: ProfileLink[];
+} & Profile;
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const slug = context.query.slug as string;
 
-  const url = await db.link.findUnique({
+  const profile = await db.profile.findUnique({
     where: {
       slug,
     },
+    include: {
+      profileLinks: true
+    }
   });
 
-  if (!url) {
-    // return {
-    //   redirect: {
-    //     destination: '/',
-    //     permanent: false,
-    //   },
-    // };
-
+  if (!profile) {
     return {
       props: {
         slug,
@@ -32,46 +32,47 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     }
   }
 
-
   const userIp = getClientIp(context.req);
   const userUserAgent = context.req.headers['user-agent'] ?? 'unknown';
   const userReferer = context.req.headers.referer ?? 'unknown';
 
   db.click.create({
     data: {
-      linkId: url.id,
+      profileId: profile.id,
       userAgent: userUserAgent,
       ipAddress: userIp,
       referer: userReferer,
-    }
+    },
   }).catch((err) => {
     console.error(err)
   })
 
 
   return {
-    redirect: {
-      destination: url.url,
-    }
-  }
-
-  return {
     props: {
-      slug
+      slug,
+      notFound: false,
+      profile: profile
     }
   }
 }
 
 
-export default function Slug({ slug, notFound }: { slug: string, notFound: boolean }) {
+export default function Slug({ slug, notFound, profile }: { slug: string, notFound: boolean, profile: Profile_ProjectLinks }) {
 
-
-  if (slug && !notFound) {
+  if (profile) {
     return (
-      <div>
-        <h1>Redirecting...</h1>
-      </div>
-    )
+      <>
+        <Head>
+          <title>link2it | Porfile</title>
+          <meta name="description" content="Link sharing website" />
+          <link rel="icon" href="/favicon.ico" />
+        </Head>
+
+        <ProfilePage profile={profile} />
+      </>
+    );
+
   }
 
   if (notFound) {
@@ -85,7 +86,7 @@ export default function Slug({ slug, notFound }: { slug: string, notFound: boole
 
         <div className="min-h-screen flex items-center justify-center bg-zinc-950">
 
-          <h1 className="text-6xl text-white">Link "{slug}" Not Found</h1>
+          <h1 className="text-6xl text-white">Profile "{slug}" Not Found</h1>
 
         </div>
       </>

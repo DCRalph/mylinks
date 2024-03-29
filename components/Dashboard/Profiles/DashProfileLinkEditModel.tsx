@@ -1,19 +1,22 @@
-import { type Link } from "@prisma/client";
+import { type Profile, type ProfileLink } from "@prisma/client";
 import { useEffect, useState, type ReactNode } from "react";
 import ReactDOM from "react-dom";
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion'
+import DashProfileLink from "./DashProfileLink";
+import ModelCloseBtn from "components/ModelCloseBtn";
 
 
 interface DashLinkEditModelProps {
-  url: Link;
+  profileLink: ProfileLink;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
 
-export default function DashLinkEditModel({ url, isOpen, setIsOpen }: DashLinkEditModelProps) {
+export default function DashProfileEditModel({ profileLink, isOpen, setIsOpen }: DashLinkEditModelProps) {
 
   const [isClosing, setIsClosing] = useState(false)
+
 
   useEffect(() => {
     const body = document.querySelector('body')
@@ -48,29 +51,20 @@ export default function DashLinkEditModel({ url, isOpen, setIsOpen }: DashLinkEd
         transition={{ type: 'spring', damping: 12, mass: 0.75 }}
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
         className={
-          'w-full max-w-2xl h-fit rounded-2xl overflow-hidden bg-zinc-700 shadow-lg cursor-auto relative'
+          'w-full m-16 h-fit p-8 grid grid-cols-12 rounded-2xl overflow-hidden bg-zinc-800 shadow-lg cursor-auto relative'
         }>
+        <ModelCloseBtn setIsClosing={setIsClosing} />
 
 
-        <div className="p-6 text-white">
-          <h4 className="text-4xl font-semibold">{url.name}</h4>
-          <h4 className="text-4xl font-semibold">{url.slug}</h4>
-          <h4 className="text-4xl font-semibold">{url.url}</h4>
-          <h4 className="text-4xl font-semibold">{url.id}</h4>
-          <h4 className="text-4xl font-semibold">{url.isUserLink ? "yes" : "no"}</h4>
+        <div className="col-span-full text-white flex justify-center">
+          <h1 className="text-4xl font-semibold underline">{profileLink.title}</h1>
+        </div>
 
-          {/* <div className="flex flex-wrap gap-4 text-white  text-base mb-6">
-            <DateText
-              publishedAt={url.createdAt}
-              updatedAt={url.updatedAt}
-            />
-          </div> */}
-
-
-          <div className="w-full h-1 rounded-full opacity-50 bg-text mt-6"></div>
+        <div className="col-span-full md:col-span-10 w-full col-start-1 md:col-start-2 mx-auto flex flex-col gap-4 justify-center mt-8">
 
 
         </div>
+
       </motion.div >
     </motion.div >
   );

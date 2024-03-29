@@ -88,7 +88,6 @@ export const userRouter = createTRPCRouter({
     await db.link.updateMany({
       where: {
         userId: ctx.session?.user.id,
-        isUserLink: true,
       },
       data: {
         slug: newUsername,

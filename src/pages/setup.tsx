@@ -5,17 +5,16 @@ import { type GetServerSidePropsContext } from "next";
 import { requireAuth } from "~/utils/requreAuth";
 import { checkRequireSetup } from "~/utils/requireSetup";
 import { api } from "~/utils/api";
-import { type FormEvent, useState, useEffect } from "react";
 import { toast } from 'react-toastify';
+import { FormEvent, useEffect, useState } from "react";
 
-export default function Settings() {
+export default function Setup() {
 
 
   const myUser = api.user.getUser.useQuery();
 
-
   const [newUsername, setNewUsername] = useState(myUser.data?.user?.username ?? '');
-  const changeUsernameMutation = api.user.setUsername.useMutation();
+  const createUsername = api.setup.createUsername.useMutation();
 
   useEffect(() => {
     setNewUsername(myUser.data?.user?.username ?? '');
@@ -24,7 +23,7 @@ export default function Settings() {
   const changeUsernameHandler = async (e: FormEvent) => {
     e.preventDefault();
 
-    changeUsernameMutation.mutate({ name: newUsername }, {
+    createUsername.mutate({ username: newUsername }, {
       onSuccess: () => {
         toast.success('Username changed successfully', {
           closeOnClick: true,
@@ -39,6 +38,12 @@ export default function Settings() {
               pauseOnHover: true,
             });
           });
+
+
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1000);
+
       },
       onError: (error) => {
         toast.error(error.message, {
@@ -49,10 +54,11 @@ export default function Settings() {
     });
   }
 
+
   return (
     <>
       <Head>
-        <title>link2it | settings</title>
+        <title>link2it | Setup</title>
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -61,20 +67,27 @@ export default function Settings() {
 
         <div className="mt-16 grid h-4 grid-cols-12">
           <div className="col-span-full flex justify-center">
-            <h1 className="text-5xl font-bold text-white">Settings</h1>
+            <h1 className="text-5xl font-bold text-white">Setup</h1>
+          </div>
+
+          <div className="col-span-4 col-start-5  flex justify-center mt-8">
+            <form onSubmit={changeUsernameHandler} className="grid grid-cols-2 gap-4 w-full">
+
+              <div className="col-span-full text-white py-4 flex justify-center">
+                <h1 className="text-3xl">Create your username</h1>
+              </div>
+
+              <div className="col-span-full">
+                <label htmlFor="newUsername" className="block mb-2 text-sm font-medium text-white">Username</label>
+                <input type="text" id="newUsername" className="text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500" placeholder="Name" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} required />
+              </div>
+
+              <button className="text-white col-span-full focus:ring-4 focus:outline-none font-medium rounded-lg text-sm w-full mt-auto h-min sm:w-auto px-5 py-2.5 text-center bg-blue-600 hover:bg-blue-700 focus:ring-blue-800" type="submit">Create</button>
+
+            </form>
           </div>
 
 
-          <form onSubmit={changeUsernameHandler} className="col-start-4 col-span-6 flex flex-col md:flex-row gap-4 mt-8">
-
-            <div className="grow">
-              <label htmlFor="userName" className="block mb-2 text-sm font-medium text-white">Username</label>
-              <input type="text" id="userName" className="text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500" placeholder="Username" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} required />
-            </div>
-
-            <button className="text-white focus:ring-4 focus:outline-none font-medium rounded-lg text-sm w-full mt-auto h-min sm:w-auto px-5 py-2.5 text-center bg-blue-600 hover:bg-blue-700 focus:ring-blue-800" disabled={changeUsernameMutation.isLoading} type="submit">Change</button>
-
-          </form>
         </div>
 
       </div>
@@ -92,14 +105,13 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         destination: '/',
         permanent: false,
       },
-
     };
   }
 
-  if (needsSetup) {
+  if (!needsSetup) {
     return {
       redirect: {
-        destination: '/setup',
+        destination: '/',
         permanent: false,
       },
     };

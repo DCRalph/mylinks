@@ -1,4 +1,3 @@
-import { getSession } from "next-auth/react";
 import { type GetServerSidePropsContext } from "next";
 import { type Session } from "next-auth";
 import { getServerAuthSession } from "~/server/auth";
@@ -9,20 +8,15 @@ export const requireAuth = async (
   const session = await getServerAuthSession(context);
 
   if (!session) {
-    return {
-      redirect: {
-        destination: "/",
-        permanent: false,
-      },
-    };
+    return false
   }
 
-  return { props: {}};
+  return true;
 };
 
 export const requireAuthCB = async (
   context: GetServerSidePropsContext,
-  cb: ({session}: {session: Session}) => void,
+  cb: ({ session }: { session: Session }) => void,
 ) => {
   const session = await getServerAuthSession(context);
 
@@ -45,29 +39,19 @@ export const requireAuthAdmin = async (
   const session = await getServerAuthSession(context);
 
   if (!session) {
-    return {
-      redirect: {
-        destination: "/",
-        permanent: false,
-      },
-    };
+    return false
   }
 
   if (session.user.role !== "admin") {
-    return {
-      redirect: {
-        destination: "/",
-        permanent: false,
-      },
-    };
+    return false;
   }
 
-  return { props: {}};
+  return true;
 };
 
 export const requireAuthAdminCB = async (
   context: GetServerSidePropsContext,
-  cb: ({session}: {session: Session}) => void,
+  cb: ({ session }: { session: Session }) => void,
 ) => {
   const session = await getServerAuthSession(context);
 
