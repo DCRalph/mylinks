@@ -113,7 +113,7 @@ export default function DashProfileEditModel({ profileLink, isOpen, setIsOpen }:
               <input id="newLinkShowenUrl" className="form_input" placeholder="Showen URL" value={newLinkShowenUrl} onChange={(e) => { setNewLinkShowenUrl(e.target.value) }} required />
             </div>
 
-            <div className="col-span-1 flex gap-4">
+            <div className="col-span-full lg:col-span-1 flex gap-4">
               <div className="h-full w-20">
                 <input type="color" className="form_input h-full" value={newLinkBgColor} onChange={(e) => { setNewLinkBgColor(e.target.value) }} />
               </div>
@@ -123,7 +123,7 @@ export default function DashProfileEditModel({ profileLink, isOpen, setIsOpen }:
               </div>
             </div>
 
-            <div className="col-span-1 flex gap-4">
+            <div className="col-span-full lg:col-span-1 flex gap-4">
               <div className="h-full w-20">
                 <input type="color" className="form_input h-full" value={newLinkFgColor} onChange={(e) => { setNewLinkFgColor(e.target.value) }} />
               </div>
