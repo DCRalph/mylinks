@@ -1,14 +1,11 @@
 import Nav from "components/Nav";
 import Head from "next/head";
 
-import { env } from "~/env.js";
-
 import { type GetServerSidePropsContext } from "next";
 import { api } from "~/utils/api";
 
 import { requireAuth } from "~/utils/requreAuth";
 import { checkRequireSetup } from "~/utils/requireSetup";
-import Copy from "components/copy";
 import DashLink from "components/Dashboard/Links/DashLink";
 import DashProfileItem from "components/Dashboard/Profiles/DashProfile";
 import { useState } from "react";

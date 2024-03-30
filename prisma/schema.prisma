@@ -119,7 +119,7 @@ model ProfileLink {
   order       Int
   title       String
   url         String
-  showenUrl   String
+  showenUrl   String     //TODO change to description
   iconUrl     String?
   bgColor       String?
   fgColor       String?

@@ -1,14 +1,11 @@
-import { type Profile, type ProfileLink } from "@prisma/client";
+import { type ProfileLink } from "@prisma/client";
 import { useEffect, useState, type ReactNode } from "react";
 import ReactDOM from "react-dom";
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion'
-import DashProfileLink from "./DashProfileLink";
 import ModelCloseBtn from "components/ModelCloseBtn";
-import Image from "next/image";
 import { api } from "~/utils/api";
 import ProfileLinkElement from "components/ProfilePage/ProfileLink";
-import { profileRouter } from "~/server/api/routers/profile";
 
 
 
