@@ -121,7 +121,8 @@ model ProfileLink {
   url         String
   showenUrl   String
   iconUrl     String?
-  color       String?
+  bgColor       String?
+  fgColor       String?
 }
 
 model Click {

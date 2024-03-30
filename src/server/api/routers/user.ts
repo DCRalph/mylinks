@@ -7,7 +7,7 @@ import {
   protectedProcedure,
 } from "~/server/api/trpc";
 
-const badUsernames = ['unknown', 'admin', 'moderator', 'mod', 'administrator', 'root', 'superuser', 'user', 'users', 'me']
+import badWords from "~/utils/badWords";
 
 
 export const userRouter = createTRPCRouter({
@@ -25,8 +25,6 @@ export const userRouter = createTRPCRouter({
   }),
   getUser: protectedProcedure
   .query(async ({ctx}) => {
-
-    // console.log("user here", ctx.session?.user)
 
     const user = await db.user.findUnique({
       where: {
@@ -56,9 +54,9 @@ export const userRouter = createTRPCRouter({
     }
 
     const lowerUsername = newUsername.toLowerCase()
-    const indexInBadUsernames = badUsernames.indexOf(lowerUsername);
+    const indexInBadUsernames = badWords.badUsernames.indexOf(lowerUsername);
     if (indexInBadUsernames !== -1) {
-      throw new Error(`Username cannot be "${badUsernames[indexInBadUsernames]}"`);
+      throw new Error(`Username cannot be "${badWords.badUsernames[indexInBadUsernames]}"`);
     }
 
     if (newUsername == ctx.session?.user.username) {
@@ -83,16 +81,6 @@ export const userRouter = createTRPCRouter({
         username: newUsername
       },
     })
-
-
-    await db.link.updateMany({
-      where: {
-        userId: ctx.session?.user.id,
-      },
-      data: {
-        slug: newUsername,
-      }
-    });
 
 
     return {

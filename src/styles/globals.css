@@ -14,7 +14,7 @@
 
 
 .form_input {
-  @apply text-sm rounded-lg block w-full p-2.5 bg-zinc-700 border border-zinc-600 placeholder-zinc-400 text-white
+  @apply text-sm rounded-lg block w-full p-2.5 border placeholder-zinc-400 text-white bg-zinc-700 border-zinc-600
 }
 
 .form_btn {

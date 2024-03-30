@@ -24,7 +24,7 @@ export default function DashProfileItem({ profile }: { profile: Profile_ProjectL
         </div>
 
         <div className="flex items-center">
-          <button className="px-4 h-10 text-sm md:text-lg rounded-lg bg-blue-500" onClick={() => {
+          <button className="form_btn_blue" onClick={() => {
             editBtn()
           }}>Edit</button>
         </div>

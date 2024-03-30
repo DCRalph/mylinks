@@ -159,6 +159,21 @@ export const linkRouter = createTRPCRouter({
         slug = randomUUID().slice(0, 8)
       }
 
+      const link = await db.link.findUnique({
+        where: {
+          id,
+        },
+      });
+
+      if (!link) {
+        throw new Error('Link not found');
+      }
+
+      if (link.userId !== ctx.session?.user.id) {
+        throw new Error('Not authorized');
+      }
+
+
       const urlExists = await db.link.findUnique({
         where: {
           slug,
@@ -203,8 +218,22 @@ export const linkRouter = createTRPCRouter({
     }),
   deleteLink: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const { id } = input;
+
+      const link = await db.link.findUnique({
+        where: {
+          id,
+        },
+      });
+
+      if (!link) {
+        throw new Error('Link not found');
+      }
+
+      if (link.userId !== ctx.session?.user.id) {
+        throw new Error('Not authorized');
+      }
 
       await db.link.delete({
         where: {

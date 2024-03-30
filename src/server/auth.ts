@@ -52,12 +52,20 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    //
+    // signIn: async (params) => {
+    //   const { user, account, profile } = params;
+    //   console.log('signIn', user, account, profile);
+
+    //   if (profile?.email && account?.provider === 'google') {
+
+    //     return true;
+    //   }
+    // }
   },
   //
   adapter: PrismaAdapter(db),
   providers: [
-    
+
     // DiscordProvider({
     //   clientId: env.DISCORD_CLIENT_ID,
     //   clientSecret: env.DISCORD_CLIENT_SECRET,

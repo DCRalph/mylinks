@@ -7,9 +7,7 @@ import badWords from "~/utils/badWords";
 import {
   createTRPCRouter,
   protectedProcedure,
-  publicProcedure,
 } from "~/server/api/trpc";
-import { randomUUID } from "crypto";
 
 export const profileRouter = createTRPCRouter({
   getProfiles: protectedProcedure
@@ -31,9 +29,9 @@ export const profileRouter = createTRPCRouter({
 
 
   editProfileLink: protectedProcedure
-    .input(z.object({ id: z.string(), title: z.string(), url: z.string(), showenUrl: z.string(), iconUrl: z.string() }))
+    .input(z.object({ id: z.string(), title: z.string(), url: z.string(), showenUrl: z.string(), bgColor: z.string(), fgColor: z.string(), iconUrl: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const { id, title, url, showenUrl, iconUrl } = input;
+      const { id, title, url, showenUrl, bgColor, fgColor, iconUrl } = input;
 
       const profileLink = await db.profileLink.findUnique({
         where: {
@@ -60,6 +58,8 @@ export const profileRouter = createTRPCRouter({
           title,
           url,
           showenUrl,
+          bgColor,
+          fgColor,
           iconUrl,
         },
       });

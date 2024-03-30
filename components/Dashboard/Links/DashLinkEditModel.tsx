@@ -37,7 +37,7 @@ export default function DashLinkEditModel({ link, isOpen, setIsOpen }: DashLinkE
           pauseOnHover: true,
         });
 
-        setIsOpen(false)
+        setIsClosing(true)
         myLinks.refetch()
           .then()
           .catch((error: string) => {
@@ -65,7 +65,7 @@ export default function DashLinkEditModel({ link, isOpen, setIsOpen }: DashLinkE
           pauseOnHover: true,
         });
 
-        setIsOpen(false)
+        setIsClosing(true)
         myLinks.refetch()
           .then()
           .catch((error: string) => {

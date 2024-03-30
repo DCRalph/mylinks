@@ -7,6 +7,8 @@ import DashProfileLink from "./DashProfileLink";
 import ModelCloseBtn from "components/ModelCloseBtn";
 import Image from "next/image";
 import { api } from "~/utils/api";
+import ProfileLinkElement from "components/ProfilePage/ProfileLink";
+import { profileRouter } from "~/server/api/routers/profile";
 
 
 
@@ -23,6 +25,8 @@ export default function DashProfileEditModel({ profileLink, isOpen, setIsOpen }:
   const [newLinkTitle, setNewLinkTitle] = useState(profileLink.title)
   const [newLinkUrl, setNewLinkUrl] = useState(profileLink.url)
   const [newLinkShowenUrl, setNewLinkShowenUrl] = useState(profileLink.showenUrl)
+  const [newLinkBgColor, setNewLinkBgColor] = useState(profileLink.bgColor ?? "")
+  const [newLinkFgColor, setNewLinkFgColor] = useState(profileLink.fgColor ?? "")
   const [newLinkIconUrl, setNewLinkIconUrl] = useState(profileLink.iconUrl ?? "")
 
   const editProfileLinkMutation = api.profile.editProfileLink.useMutation();
@@ -30,14 +34,14 @@ export default function DashProfileEditModel({ profileLink, isOpen, setIsOpen }:
   const editProfileLinkHandler = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    editProfileLinkMutation.mutate({ id: profileLink.id, title: newLinkTitle, url: newLinkUrl, showenUrl: newLinkShowenUrl, iconUrl: newLinkIconUrl }, {
+    editProfileLinkMutation.mutate({ id: profileLink.id, title: newLinkTitle, url: newLinkUrl, showenUrl: newLinkShowenUrl, bgColor: newLinkBgColor, fgColor: newLinkFgColor, iconUrl: newLinkIconUrl }, {
       onSuccess: () => {
         toast.success('Link edited successfully', {
           closeOnClick: true,
           pauseOnHover: true,
         });
 
-        setIsOpen(false)
+        setIsClosing(true)
       },
       onError: (error) => {
         toast.error(error.message, {
@@ -109,6 +113,27 @@ export default function DashProfileEditModel({ profileLink, isOpen, setIsOpen }:
               <input id="newLinkShowenUrl" className="form_input" placeholder="Showen URL" value={newLinkShowenUrl} onChange={(e) => { setNewLinkShowenUrl(e.target.value) }} required />
             </div>
 
+            <div className="col-span-1 flex gap-4">
+              <div className="h-full w-20">
+                <input type="color" className="form_input h-full" value={newLinkBgColor} onChange={(e) => { setNewLinkBgColor(e.target.value) }} />
+              </div>
+              <div className="w-full">
+                <label htmlFor="newLinkBgColor" className="block mb-2 text-sm font-medium text-white">Bg Color</label>
+                <input id="newLinkBgColor" className="form_input" placeholder="Showen URL" value={newLinkBgColor} onChange={(e) => { setNewLinkBgColor(e.target.value) }} required />
+              </div>
+            </div>
+
+            <div className="col-span-1 flex gap-4">
+              <div className="h-full w-20">
+                <input type="color" className="form_input h-full" value={newLinkFgColor} onChange={(e) => { setNewLinkFgColor(e.target.value) }} />
+              </div>
+              <div className="w-full">
+                <label htmlFor="newLinkFgColor" className="block mb-2 text-sm font-medium text-white">Fg Color</label>
+                <input id="newLinkFgColor" className="form_input" placeholder="Showen URL" value={newLinkFgColor} onChange={(e) => { setNewLinkFgColor(e.target.value) }} required />
+              </div>
+            </div>
+
+
             {/* iconUrl */}
             <div className="col-span-full flex items-center gap-4">
 
@@ -125,14 +150,31 @@ export default function DashProfileEditModel({ profileLink, isOpen, setIsOpen }:
 
               </div>
 
-              <div className="aspect-square flex justify-center items-center h-16 rounded-lg bg-zinc-700 p-2">
+              {/* <div className="aspect-square flex justify-center items-center h-16 rounded-lg bg-zinc-700 p-2">
                 <Image
                   src={"/profileLinkIcons/" + newLinkIconUrl}
                   alt={profileLink.title}
                   width={100}
                   height={100}
                 />
-              </div>
+              </div> */}
+            </div>
+
+            <div className="col-span-full flex justify-center">
+
+              <ProfileLinkElement key={profileLink.id} link={{
+                id: profileLink.id,
+                order: 0,
+                profileId: "",
+
+                title: newLinkTitle,
+                url: newLinkUrl,
+                showenUrl: newLinkShowenUrl,
+                bgColor: newLinkBgColor,
+                fgColor: newLinkFgColor,
+                iconUrl: newLinkIconUrl,
+              }} />
+
             </div>
 
             <div className="col-span-full flex justify-center">
