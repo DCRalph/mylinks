@@ -91,6 +91,11 @@ export default function Dashboard() {
 
             <div className="flex mt-4 mb-24 flex-col gap-4 w-full">
 
+              <div className="w-full flex justify-center gap-4">
+                <button className="form_btn_blue">Create Profile</button>
+
+              </div>
+
               {myProfiles.data?.profiles?.map((profile) => (
                 <DashProfileItem key={profile.id} profile={profile} />
               ))}

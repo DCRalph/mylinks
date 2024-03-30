@@ -18,7 +18,7 @@
 }
 
 .form_btn {
-  @apply text-white col-span-full border font-medium rounded-lg text-sm w-min h-min px-5 py-2.5 text-center 
+  @apply text-white col-span-full border font-medium rounded-lg text-sm h-min px-5 py-2.5 text-center 
 }
 
 .form_btn_blue {

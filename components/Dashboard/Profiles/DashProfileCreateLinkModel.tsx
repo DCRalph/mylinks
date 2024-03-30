@@ -3,64 +3,49 @@ import { useEffect, useState, type ReactNode } from "react";
 import ReactDOM from "react-dom";
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion'
-import DashProfileLink from "./DashProfileLink";
 import ModelCloseBtn from "components/ModelCloseBtn";
 import Image from "next/image";
 import { api } from "~/utils/api";
 import ProfileLinkElement from "components/ProfilePage/ProfileLink";
-import { profileRouter } from "~/server/api/routers/profile";
 
 
 
 interface DashLinkEditModelProps {
-  profileLink: ProfileLink;
+  profileId: string;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
 
-export default function DashProfileEditModel({ profileLink, isOpen, setIsOpen }: DashLinkEditModelProps) {
+export default function DashProfileCreateLinkModel({ profileId, isOpen, setIsOpen }: DashLinkEditModelProps) {
 
   const [isClosing, setIsClosing] = useState(false)
 
-  const [newLinkTitle, setNewLinkTitle] = useState(profileLink.title)
-  const [newLinkUrl, setNewLinkUrl] = useState(profileLink.url)
-  const [newLinkShowenUrl, setNewLinkShowenUrl] = useState(profileLink.showenUrl)
-  const [newLinkBgColor, setNewLinkBgColor] = useState(profileLink.bgColor ?? "")
-  const [newLinkFgColor, setNewLinkFgColor] = useState(profileLink.fgColor ?? "")
-  const [newLinkIconUrl, setNewLinkIconUrl] = useState(profileLink.iconUrl ?? "www.png")
+  const [newLinkTitle, setNewLinkTitle] = useState("")
+  const [newLinkUrl, setNewLinkUrl] = useState("")
+  const [newLinkShowenUrl, setNewLinkShowenUrl] = useState("")
+  const [newLinkBgColor, setNewLinkBgColor] = useState("#000000")
+  const [newLinkFgColor, setNewLinkFgColor] = useState("#ffffff")
+  const [newLinkIconUrl, setNewLinkIconUrl] = useState("www.png")
 
   const profiles = api.profile.getProfiles.useQuery();
-  const editProfileLinkMutation = api.profile.editProfileLink.useMutation();
-  const deleteProfileLinkMutation = api.profile.deleteProfileLink.useMutation();
+  const createProfileLinkMutation = api.profile.createProfileLink.useMutation();
 
-  const editProfileLinkHandler = async (e: React.FormEvent) => {
+  const createProfileLinkHandler = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    editProfileLinkMutation.mutate({ id: profileLink.id, title: newLinkTitle, url: newLinkUrl, showenUrl: newLinkShowenUrl, bgColor: newLinkBgColor, fgColor: newLinkFgColor, iconUrl: newLinkIconUrl }, {
+    createProfileLinkMutation.mutate({ profileId, title: newLinkTitle, url: newLinkUrl, showenUrl: newLinkShowenUrl, bgColor: newLinkBgColor, fgColor: newLinkFgColor, iconUrl: newLinkIconUrl }, {
       onSuccess: () => {
-        toast.success('Link edited successfully', {
+        toast.success('Link created successfully', {
           closeOnClick: true,
           pauseOnHover: true,
         });
 
-        setIsClosing(true)
-      },
-      onError: (error) => {
-        toast.error(error.message, {
-          closeOnClick: true,
-          pauseOnHover: true,
-        });
-      }
-    });
-  }
-
-  const deleteProfileLinkHandler = async () => {
-    deleteProfileLinkMutation.mutate({ id: profileLink.id }, {
-      onSuccess: () => {
-        toast.success('Link deleted successfully', {
-          closeOnClick: true,
-          pauseOnHover: true,
-        });
+        setNewLinkTitle("")
+        setNewLinkUrl("")
+        setNewLinkShowenUrl("")
+        setNewLinkBgColor("#000000")
+        setNewLinkFgColor("#ffffff")
+        setNewLinkIconUrl("www.png")
 
         setIsClosing(true)
         profiles.refetch()
@@ -71,7 +56,6 @@ export default function DashProfileEditModel({ profileLink, isOpen, setIsOpen }:
               pauseOnHover: true,
             });
           });
-
       },
       onError: (error) => {
         toast.error(error.message, {
@@ -81,6 +65,7 @@ export default function DashProfileEditModel({ profileLink, isOpen, setIsOpen }:
       }
     });
   }
+
 
   useEffect(() => {
     const body = document.querySelector('body')
@@ -121,11 +106,11 @@ export default function DashProfileEditModel({ profileLink, isOpen, setIsOpen }:
 
 
         <div className="col-span-full text-white flex justify-center">
-          <h1 className="text-4xl font-semibold underline">{newLinkTitle}</h1>
+          <h1 className="text-4xl font-semibold">Create New Link</h1>
         </div>
 
         <div className="col-span-full md:col-span-6 w-full col-start-1 md:col-start-4 mx-auto flex justify-center mt-8">
-          <form onSubmit={editProfileLinkHandler} className="grid grid-cols-2 gap-4 w-full">
+          <form onSubmit={createProfileLinkHandler} className="grid grid-cols-2 gap-4 w-full">
 
 
             <div className="col-span-full">
@@ -192,8 +177,8 @@ export default function DashProfileEditModel({ profileLink, isOpen, setIsOpen }:
 
             <div className="col-span-full flex justify-center">
 
-              <ProfileLinkElement key={profileLink.id} link={{
-                id: profileLink.id,
+              <ProfileLinkElement link={{
+                id: "na",
                 order: 0,
                 profileId: "",
 
@@ -208,8 +193,7 @@ export default function DashProfileEditModel({ profileLink, isOpen, setIsOpen }:
             </div>
 
             <div className="col-span-full flex justify-center gap-4">
-              <button type="submit" className="form_btn_blue">Save</button>
-              <button className="form_btn_red" type="button" onClick={deleteProfileLinkHandler}>Delete</button>
+              <button type="submit" className="form_btn_blue">Create</button>
             </div>
           </form>
         </div>

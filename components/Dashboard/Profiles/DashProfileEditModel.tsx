@@ -2,9 +2,11 @@ import { type Profile, type ProfileLink } from "@prisma/client";
 import { useEffect, useState, type ReactNode } from "react";
 import ReactDOM from "react-dom";
 import { toast } from 'react-toastify';
+import { api } from "~/utils/api";
 import { motion } from 'framer-motion'
 import DashProfileLink from "./DashProfileLink";
 import ModelCloseBtn from "components/ModelCloseBtn";
+import DashProfileCreateLinkModel from "./DashProfileCreateLinkModel";
 
 type Profile_ProjectLinks = {
   profileLinks: ProfileLink[];
@@ -18,8 +20,38 @@ interface DashLinkEditModelProps {
 
 export default function DashProfileEditModel({ profile, isOpen, setIsOpen }: DashLinkEditModelProps) {
 
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false)
 
+  const profiles = api.profile.getProfiles.useQuery();
+  const deleteProfileMutation = api.profile.deleteProfile.useMutation();
+
+  const deleteProfileHandler = async () => {
+    deleteProfileMutation.mutate({ id: profile.id }, {
+      onSuccess: () => {
+        toast.success('Profile deleted successfully', {
+          closeOnClick: true,
+          pauseOnHover: true,
+        });
+
+        setIsClosing(true)
+        profiles.refetch()
+          .then()
+          .catch((error: string) => {
+            toast.error(error, {
+              closeOnClick: true,
+              pauseOnHover: true,
+            });
+          });
+      },
+      onError: (error) => {
+        toast.error(error.message, {
+          closeOnClick: true,
+          pauseOnHover: true,
+        });
+      }
+    });
+  }
 
   useEffect(() => {
     const body = document.querySelector('body')
@@ -65,14 +97,24 @@ export default function DashProfileEditModel({ profile, isOpen, setIsOpen }: Das
 
         <div className="col-span-full md:col-span-10 w-full col-start-1 md:col-start-2 mx-auto flex flex-col gap-4 justify-center mt-8">
 
-          {profile.profileLinks.map((link) => (
+          <div className="col-span-full flex justify-center gap-4 mb-4">
+            <button className="form_btn_blue" type="button" onClick={() => { setIsCreateOpen(true) }} >Add Link</button>
+            <button className="form_btn_red" type="button" onClick={deleteProfileHandler}>Delete Profile</button>
+
+          </div>
+
+
+
+          {profile.profileLinks.sort((a, b) => a.order - b.order).map((link) => (
             <DashProfileLink key={link.id} profileLink={link} />
           ))}
 
         </div>
 
+        <DashProfileCreateLinkModel profileId={profile.id} isOpen={isCreateOpen} setIsOpen={setIsCreateOpen} />
       </motion.div >
     </motion.div >
+
   );
 
   if (!isOpen) return <></>

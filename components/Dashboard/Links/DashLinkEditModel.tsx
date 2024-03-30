@@ -149,8 +149,8 @@ export default function DashLinkEditModel({ link, isOpen, setIsOpen }: DashLinkE
               <input placeholder="Long Url" type="text" id="newLongUrl" className="form_input" value={UrllongUrl} onChange={(e) => setUrlLongUrl(e.target.value)} required />
             </div>
 
-            <div className="col-span-full flex justify-around">
-              <button className="form_btn_blue" type="submit">Change</button>
+            <div className="col-span-full flex justify-center gap-4">
+              <button className="form_btn_blue" type="submit">Save</button>
               <button className="form_btn_red" type="button" onClick={deleteLinkHandler}>Delete</button>
             </div>
 
