@@ -23,7 +23,7 @@ export default function DashProfileCreateLinkModel({ profileId, isOpen, setIsOpe
   const [newLinkShowenUrl, setNewLinkShowenUrl] = useState("")
   const [newLinkBgColor, setNewLinkBgColor] = useState("#000000")
   const [newLinkFgColor, setNewLinkFgColor] = useState("#ffffff")
-  const [newLinkIconUrl, setNewLinkIconUrl] = useState("www.png")
+  const [newLinkIconUrl, setNewLinkIconUrl] = useState("generic.png")
 
   const profiles = api.profile.getProfiles.useQuery();
   const createProfileLinkMutation = api.profile.createProfileLink.useMutation();
@@ -43,7 +43,7 @@ export default function DashProfileCreateLinkModel({ profileId, isOpen, setIsOpe
         setNewLinkShowenUrl("")
         setNewLinkBgColor("#000000")
         setNewLinkFgColor("#ffffff")
-        setNewLinkIconUrl("www.png")
+        setNewLinkIconUrl("generic.png")
 
         setIsClosing(true)
         profiles.refetch()
