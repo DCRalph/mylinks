@@ -3,36 +3,47 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: 'Gobold';
-  src: url('/font/Gobold.ttf.woff') format('woff'),
-      url('/font/Gobold.ttf.svg#Gobold') format('svg'),
-      url('/font/Gobold.ttf.eot'),
-      url('/font/Gobold.ttf.eot?#iefix') format('embedded-opentype');
+  font-family: "Gobold";
+  src:
+    url("/font/Gobold.ttf.woff") format("woff"),
+    url("/font/Gobold.ttf.svg#Gobold") format("svg"),
+    url("/font/Gobold.ttf.eot"),
+    url("/font/Gobold.ttf.eot?#iefix") format("embedded-opentype");
   font-weight: normal;
   font-style: normal;
 }
 
-
 .form_input {
-  @apply text-sm rounded-lg block w-full p-2.5 border placeholder-zinc-400 text-white bg-zinc-700 border-zinc-600
+  @apply block w-full rounded-lg border border-zinc-600 bg-zinc-700 p-2.5 text-sm text-white placeholder-zinc-400;
 }
 
 .form_btn {
-  @apply text-white col-span-full border font-medium rounded-lg text-sm h-min px-5 py-2.5 text-center 
+  @apply col-span-full h-min rounded-lg border px-5 py-2.5 text-center text-sm font-medium text-white;
 }
 
 .form_btn_blue {
-  @apply form_btn border-blue-500 bg-blue-600 hover:bg-blue-700
+  @apply form_btn border-blue-500 bg-blue-600 hover:bg-blue-700;
 }
 
 .form_btn_red {
-  @apply form_btn border-red-500 bg-red-600 hover:bg-red-700
+  @apply form_btn border-red-500 bg-red-600 hover:bg-red-700;
+}
+
+.form_btn_green {
+  @apply form_btn border-green-500 bg-green-600 hover:bg-green-700;
 }
 
 .gobold {
-  font-family: 'Gobold';
+  font-family: "Gobold";
 }
 
 .instagram {
-  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  background: linear-gradient(
+    45deg,
+    #f09433 0%,
+    #e6683c 25%,
+    #dc2743 50%,
+    #cc2366 75%,
+    #bc1888 100%
+  );
 }

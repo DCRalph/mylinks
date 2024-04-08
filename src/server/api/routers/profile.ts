@@ -3,38 +3,53 @@ import { db } from "~/server/db";
 
 import badWords from "~/utils/badWords";
 
-
-import {
-  createTRPCRouter,
-  protectedProcedure,
-} from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 export const profileRouter = createTRPCRouter({
-  getProfiles: protectedProcedure
-    .query(async ({ ctx }) => {
+  getProfiles: protectedProcedure.query(async ({ ctx }) => {
+    const profiles = await db.profile.findMany({
+      where: {
+        userId: ctx.session?.user.id,
+      },
+      include: {
+        profileLinks: true,
+      },
+    });
 
-      const profiles = await db.profile.findMany({
-        where: {
-          userId: ctx.session?.user.id,
-        },
-        include: {
-          profileLinks: true,
-        },
-      });
-
-      return {
-        profiles
-      }
-    }),
+    return {
+      profiles,
+    };
+  }),
 
   createProfile: protectedProcedure
     .input(z.object({ name: z.string(), slug: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const { name, slug } = input;
 
+      if (badWords.badSlugs.includes(slug)) {
+        throw new Error("Slug is not allowed");
+      }
+
+      const existingProfile = await db.profile.findFirst({
+        where: {
+          slug,
+        },
+      });
+
+      if (existingProfile) {
+        throw new Error("Slug is already taken");
+      }
+
+      const profile = await db.profile.create({
+        data: {
+          userId: ctx.session.user.id,
+          name,
+          slug,
+        },
+      });
 
       return {
-        success: true,
+        profile,
       };
     }),
 
@@ -42,8 +57,6 @@ export const profileRouter = createTRPCRouter({
     .input(z.object({ id: z.string(), name: z.string(), slug: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const { id, name, slug } = input;
-
-
 
       return {
         success: true,
@@ -58,15 +71,15 @@ export const profileRouter = createTRPCRouter({
       const profile = await db.profile.findUnique({
         where: {
           id,
-        }
+        },
       });
 
       if (!profile) {
-        throw new Error('Profile not found');
+        throw new Error("Profile not found");
       }
 
       if (profile.userId !== ctx.session?.user.id) {
-        throw new Error('Not authorized');
+        throw new Error("Not authorized");
       }
 
       await db.profile.delete({
@@ -81,19 +94,30 @@ export const profileRouter = createTRPCRouter({
     }),
 
   createProfileLink: protectedProcedure
-    .input(z.object({ profileId: z.string(), title: z.string(), url: z.string(), showenUrl: z.string(), bgColor: z.string(), fgColor: z.string(), iconUrl: z.string() }))
+    .input(
+      z.object({
+        profileId: z.string(),
+        title: z.string(),
+        url: z.string(),
+        description: z.string(),
+        bgColor: z.string(),
+        fgColor: z.string(),
+        iconUrl: z.string(),
+      }),
+    )
     .mutation(async ({ input, ctx }) => {
-      const { profileId, title, url, showenUrl, bgColor, fgColor, iconUrl } = input;
+      const { profileId, title, url, description, bgColor, fgColor, iconUrl } =
+        input;
 
       const profile = await db.profile.findFirst({
         where: {
           userId: ctx.session.user.id,
-          id: profileId
+          id: profileId,
         },
       });
 
       if (!profile) {
-        throw new Error('Profile not found');
+        throw new Error("Profile not found");
       }
 
       const profileLink = await db.profileLink.create({
@@ -103,7 +127,7 @@ export const profileRouter = createTRPCRouter({
 
           title,
           url,
-          showenUrl,
+          description,
           bgColor,
           fgColor,
           iconUrl,
@@ -116,9 +140,19 @@ export const profileRouter = createTRPCRouter({
     }),
 
   editProfileLink: protectedProcedure
-    .input(z.object({ id: z.string(), title: z.string(), url: z.string(), showenUrl: z.string(), bgColor: z.string(), fgColor: z.string(), iconUrl: z.string() }))
+    .input(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        url: z.string(),
+        description: z.string(),
+        bgColor: z.string(),
+        fgColor: z.string(),
+        iconUrl: z.string(),
+      }),
+    )
     .mutation(async ({ input, ctx }) => {
-      const { id, title, url, showenUrl, bgColor, fgColor, iconUrl } = input;
+      const { id, title, url, description, bgColor, fgColor, iconUrl } = input;
 
       const profileLink = await db.profileLink.findUnique({
         where: {
@@ -130,11 +164,11 @@ export const profileRouter = createTRPCRouter({
       });
 
       if (!profileLink) {
-        throw new Error('Link not found');
+        throw new Error("Link not found");
       }
 
       if (profileLink.profile.userId !== ctx.session?.user.id) {
-        throw new Error('Not authorized');
+        throw new Error("Not authorized");
       }
 
       await db.profileLink.update({
@@ -144,7 +178,7 @@ export const profileRouter = createTRPCRouter({
         data: {
           title,
           url,
-          showenUrl,
+          description,
           bgColor,
           fgColor,
           iconUrl,
@@ -171,11 +205,11 @@ export const profileRouter = createTRPCRouter({
       });
 
       if (!profileLink) {
-        throw new Error('Link not found');
+        throw new Error("Link not found");
       }
 
       if (profileLink.profile.userId !== ctx.session?.user.id) {
-        throw new Error('Not authorized');
+        throw new Error("Not authorized");
       }
 
       await db.profileLink.delete({

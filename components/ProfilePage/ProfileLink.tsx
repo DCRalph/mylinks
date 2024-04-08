@@ -18,7 +18,7 @@ export default function ProfileLinkElement({ link }: { link: ProfileLink }) {
           {link.title}
         </p>
         <p className="text-sm">
-          {link.showenUrl}
+          {link.description}
         </p>
       </div>
 

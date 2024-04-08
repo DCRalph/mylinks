@@ -75,7 +75,7 @@ export default function UserMenu({ user }: UserMenuProps) {
                 {user.user?.role === "admin" && (
                   <Menu.Item>
                     <Link
-                      className="w-full flex rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-blue-500 no-underline transition hover:bg-white/20"
+                      className="w-full flex rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-blue-600 no-underline transition hover:bg-white/20"
                       href={"/admin"}
                     >
                       Admin
@@ -88,7 +88,7 @@ export default function UserMenu({ user }: UserMenuProps) {
 
               <Menu.Item>
                 <button
-                  className="w-full rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-red-500 no-underline transition hover:bg-white/20"
+                  className="w-full rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-red-600 no-underline transition hover:bg-white/20"
                   onClick={() => void signOut()}
                 >
                   Sign out
