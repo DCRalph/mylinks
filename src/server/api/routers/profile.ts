@@ -70,16 +70,13 @@ export const profileRouter = createTRPCRouter({
 
       const profile = await db.profile.findUnique({
         where: {
+          userId: ctx.session?.user.id,
           id,
         },
       });
 
       if (!profile) {
         throw new Error("Profile not found");
-      }
-
-      if (profile.userId !== ctx.session?.user.id) {
-        throw new Error("Not authorized");
       }
 
       await db.profile.delete({
@@ -114,6 +111,9 @@ export const profileRouter = createTRPCRouter({
           userId: ctx.session.user.id,
           id: profileId,
         },
+        include: {
+          profileLinks: true,
+        },
       });
 
       if (!profile) {
@@ -123,7 +123,6 @@ export const profileRouter = createTRPCRouter({
       const profileLink = await db.profileLink.create({
         data: {
           profileId: profileId,
-          order: 0,
 
           title,
           url,
@@ -131,6 +130,26 @@ export const profileRouter = createTRPCRouter({
           bgColor,
           fgColor,
           iconUrl,
+        },
+      });
+
+      const linkOrderS = profile.linkOrder as string | null;
+      let linkOrder: string[] | null = null;
+
+      if (linkOrderS === null) {
+        linkOrder = profile.profileLinks.map((link) => link.id);
+      } else {
+        linkOrder = JSON.parse(linkOrderS) as string[];
+      }
+
+      linkOrder.push(profileLink.id);
+
+      const updateOrder = await db.profile.update({
+        where: {
+          id: profileId,
+        },
+        data: {
+          linkOrder: JSON.stringify(linkOrder),
         },
       });
 
@@ -182,6 +201,36 @@ export const profileRouter = createTRPCRouter({
           bgColor,
           fgColor,
           iconUrl,
+        },
+      });
+
+      return {
+        success: true,
+      };
+    }),
+
+  changeOrder: protectedProcedure
+    .input(z.object({ profileId: z.string(), order: z.array(z.string()) }))
+    .mutation(async ({ input, ctx }) => {
+      const { profileId, order } = input;
+
+      const profile = await db.profile.findFirst({
+        where: {
+          userId: ctx.session.user.id,
+          id: profileId,
+        },
+      });
+
+      if (!profile) {
+        throw new Error("Profile not found");
+      }
+
+      await db.profile.update({
+        where: {
+          id: profileId,
+        },
+        data: {
+          linkOrder: JSON.stringify(order),
         },
       });
 

@@ -103,6 +103,8 @@ model Profile {
 
   profileLinks ProfileLink[]
 
+  linkOrder String?
+
   clicks Click[]
 
   @@index([userId])
@@ -116,7 +118,7 @@ model ProfileLink {
   profile        Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
   profileId      String
 
-  order       Int
+  // order       Int
   title       String
   url         String
   description   String?     

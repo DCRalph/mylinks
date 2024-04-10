@@ -4,7 +4,7 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 
 import { api } from "~/utils/api";
-import { GetServerSidePropsContext } from "next";
+import { type GetServerSidePropsContext } from "next";
 import { checkRequireSetup } from "~/utils/requireSetup";
 
 

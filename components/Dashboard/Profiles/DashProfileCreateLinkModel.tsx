@@ -286,7 +286,6 @@ export default function DashProfileCreateLinkModel({
               <ProfileLinkElement
                 link={{
                   id: "na",
-                  order: 0,
                   profileId: "",
 
                   title: newLinkTitle,

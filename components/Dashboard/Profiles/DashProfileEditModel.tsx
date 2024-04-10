@@ -10,6 +10,9 @@ import DashProfileCreateLinkModel from "./DashProfileCreateLinkModel";
 import Link from "next/link";
 import { env } from "~/env";
 
+import { Reorder } from "framer-motion";
+import { set } from "zod";
+
 type Profile_ProjectLinks = {
   profileLinks: ProfileLink[];
 } & Profile;
@@ -30,6 +33,18 @@ export default function DashProfileEditModel({
 
   const profiles = api.profile.getProfiles.useQuery();
   const deleteProfileMutation = api.profile.deleteProfile.useMutation();
+  const reorderProfileLinksMutation = api.profile.changeOrder.useMutation();
+
+  const linkOrderS = profile.linkOrder as string | null;
+  let linkOrder: string[] | null = null;
+
+  if (linkOrderS === null) {
+    linkOrder = profile.profileLinks.map((link) => link.id);
+  } else {
+    linkOrder = JSON.parse(linkOrderS) as string[];
+  }
+
+  const [items, setItems] = useState(linkOrder);
 
   const deleteProfileHandler = async () => {
     deleteProfileMutation.mutate(
@@ -62,6 +77,41 @@ export default function DashProfileEditModel({
     );
   };
 
+  const [reorderTimeout, setReorderTimeout] = useState<NodeJS.Timeout | null>(
+    null,
+  );
+
+  const reorderHandler = async (items: string[]) => {
+    setItems(items);
+
+    if (reorderTimeout) {
+      clearTimeout(reorderTimeout);
+      setReorderTimeout(null);
+    }
+
+    const timeout = setTimeout(() => {
+      reorderProfileLinksMutation.mutate(
+        { profileId: profile.id, order: items },
+        {
+          onSuccess: () => {
+            toast.success("Profile links reordered successfully", {
+              closeOnClick: true,
+              pauseOnHover: true,
+            });
+          },
+          onError: (error) => {
+            toast.error(error.message, {
+              closeOnClick: true,
+              pauseOnHover: true,
+            });
+          },
+        },
+      );
+    }, 1000);
+
+    setReorderTimeout(timeout);
+  };
+
   useEffect(() => {
     const body = document.querySelector("body");
 
@@ -80,6 +130,13 @@ export default function DashProfileEditModel({
       }, 300);
     }
   }, [isClosing, setIsOpen]);
+
+  useEffect(() => {
+    if (profile.linkOrder) {
+      const newOrder = JSON.parse(profile.linkOrder as string) as string[];
+      setItems(newOrder);
+    }
+  }, [profile.linkOrder]);
 
   const content: ReactNode = (
     <motion.div
@@ -137,11 +194,24 @@ export default function DashProfileEditModel({
             </button>
           </div>
 
-          {profile.profileLinks
-            .sort((a, b) => a.order - b.order)
-            .map((link) => (
-              <DashProfileLink key={link.id} profileLink={link} />
+          <Reorder.Group
+            axis="y"
+            onReorder={reorderHandler}
+            values={items}
+            className="flex flex-col gap-4"
+          >
+            {items.map((item) => (
+              <Reorder.Item value={item} key={item}>
+                <DashProfileLink
+                  key={item}
+                  profileLink={
+                    profile.profileLinks.find((link) => link.id === item)!
+                  }
+                />
+                {/* <span>{item}</span> */}
+              </Reorder.Item>
             ))}
+          </Reorder.Group>
         </div>
 
         <DashProfileCreateLinkModel

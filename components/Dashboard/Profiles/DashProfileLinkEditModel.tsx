@@ -205,7 +205,6 @@ export default function DashProfileEditModel({
                 onChange={(e) => {
                   setNewLinkDescription(e.target.value);
                 }}
-                required
               />
             </div>
 
@@ -235,7 +234,6 @@ export default function DashProfileEditModel({
                   onChange={(e) => {
                     setNewLinkBgColor(e.target.value);
                   }}
-                  required
                 />
               </div>
             </div>
@@ -313,7 +311,6 @@ export default function DashProfileEditModel({
                 key={profileLink.id}
                 link={{
                   id: profileLink.id,
-                  order: 0,
                   profileId: "",
 
                   title: newLinkTitle,
