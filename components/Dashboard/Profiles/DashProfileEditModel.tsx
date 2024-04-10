@@ -11,7 +11,6 @@ import Link from "next/link";
 import { env } from "~/env";
 
 import { Reorder } from "framer-motion";
-import { set } from "zod";
 
 type Profile_ProjectLinks = {
   profileLinks: ProfileLink[];
@@ -35,7 +34,7 @@ export default function DashProfileEditModel({
   const deleteProfileMutation = api.profile.deleteProfile.useMutation();
   const reorderProfileLinksMutation = api.profile.changeOrder.useMutation();
 
-  const linkOrderS = profile.linkOrder as string | null;
+  const linkOrderS = profile.linkOrder
   let linkOrder: string[] | null = null;
 
   if (linkOrderS === null) {
@@ -133,7 +132,7 @@ export default function DashProfileEditModel({
 
   useEffect(() => {
     if (profile.linkOrder) {
-      const newOrder = JSON.parse(profile.linkOrder as string) as string[];
+      const newOrder = JSON.parse(profile.linkOrder) as string[];
       setItems(newOrder);
     }
   }, [profile.linkOrder]);

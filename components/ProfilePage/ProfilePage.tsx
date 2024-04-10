@@ -10,7 +10,7 @@ export default function ProfilePage({
 }: {
   profile: Profile_ProjectLinks;
 }) {
-  const linkOrderS = profile.linkOrder as string | null;
+  const linkOrderS = profile.linkOrder;
   let linkOrder: string[] | null = null;
 
   if (linkOrderS === null) {

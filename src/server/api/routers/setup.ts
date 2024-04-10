@@ -7,9 +7,7 @@ import badWords from "~/utils/badWords";
 import {
   createTRPCRouter,
   protectedProcedure,
-  publicProcedure,
 } from "~/server/api/trpc";
-import { randomUUID } from "crypto";
 
 export const setupRouter = createTRPCRouter({
   createUsername: protectedProcedure
@@ -23,6 +21,10 @@ export const setupRouter = createTRPCRouter({
 
       if (username.length > 20) {
         throw new Error('Username must be at most 20 characters long');
+      }
+
+      if (badWords.badUsernames.includes(username)) {
+        throw new Error('Username is not allowed');
       }
 
       const usernameExists = await db.user.findFirst({

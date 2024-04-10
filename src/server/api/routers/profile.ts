@@ -133,7 +133,7 @@ export const profileRouter = createTRPCRouter({
         },
       });
 
-      const linkOrderS = profile.linkOrder as string | null;
+      const linkOrderS = profile.linkOrder;
       let linkOrder: string[] | null = null;
 
       if (linkOrderS === null) {
@@ -144,7 +144,7 @@ export const profileRouter = createTRPCRouter({
 
       linkOrder.push(profileLink.id);
 
-      const updateOrder = await db.profile.update({
+      await db.profile.update({
         where: {
           id: profileId,
         },

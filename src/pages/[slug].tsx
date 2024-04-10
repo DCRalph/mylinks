@@ -3,9 +3,6 @@ import { db } from '~/server/db';
 import Head from "next/head";
 import { getClientIp } from 'request-ip'
 import { type GetServerSidePropsContext } from 'next';
-import ProfilePage from 'components/ProfilePage/ProfilePage';
-
-import { type Link, type ProfileLink } from '@prisma/client'
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const slug = context.query.slug as string;

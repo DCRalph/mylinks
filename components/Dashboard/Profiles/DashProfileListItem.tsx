@@ -1,6 +1,5 @@
 import { type Profile, type ProfileLink } from "@prisma/client";
 import { useState } from "react";
-import { toast } from "react-toastify";
 import DashProfileEditModel from "./DashProfileEditModel";
 import Link from "next/link";
 import { env } from "~/env";
