@@ -107,11 +107,11 @@ export default function DashProfileCreateLinkModel({
     >
       <motion.div
         initial={{ y: 100, opacity: 0 }}
-        animate={isClosing ? { y: "80vh", opacity: 0 } : { y: 0, opacity: 1 }}
+        animate={isClosing ? { y: "50vh", opacity: 0 } : { y: 0, opacity: 1 }}
         transition={{ type: "spring", damping: 12, mass: 0.75 }}
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
         className={
-          "relative m-8 grid h-fit w-full cursor-auto grid-cols-12 overflow-hidden rounded-2xl bg-zinc-800 p-8 shadow-lg"
+          "relative m-2 grid h-fit w-full cursor-auto grid-cols-12 overflow-hidden rounded-2xl bg-zinc-800 p-8 shadow-lg"
         }
       >
         <ModelCloseBtn setIsClosing={setIsClosing} />

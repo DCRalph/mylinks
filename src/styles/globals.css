@@ -13,6 +13,13 @@
   font-style: normal;
 }
 
+html,
+body {
+  height: 100%;
+  margin: 0;
+  scroll-behavior: smooth;
+}
+
 .form_input {
   @apply block w-full rounded-lg border border-zinc-600 bg-zinc-700 p-2.5 text-sm text-white placeholder-zinc-400;
 }

@@ -1,8 +1,7 @@
-
-import { db } from '~/server/db';
+import { db } from "~/server/db";
 import Head from "next/head";
-import { getClientIp } from 'request-ip'
-import { type GetServerSidePropsContext } from 'next';
+import { getClientIp } from "request-ip";
+import { type GetServerSidePropsContext } from "next";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const slug = context.query.slug as string;
@@ -24,51 +23,55 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     return {
       props: {
         slug,
-        notFound: true
-      }
-    }
+        notFound: true,
+      },
+    };
   }
 
-
   const userIp = getClientIp(context.req);
-  const userUserAgent = context.req.headers['user-agent'] ?? 'unknown';
-  const userReferer = context.req.headers.referer ?? 'unknown';
+  const userUserAgent = context.req.headers["user-agent"] ?? "unknown";
+  const userReferer = context.req.headers.referer ?? "unknown";
 
-  db.click.create({
-    data: {
-      linkId: url.id,
-      userAgent: userUserAgent,
-      ipAddress: userIp,
-      referer: userReferer,
-    }
-  }).catch((err) => {
-    console.error(err)
-  })
-
+  db.click
+    .create({
+      data: {
+        linkId: url.id,
+        userAgent: userUserAgent,
+        ipAddress: userIp,
+        referer: userReferer,
+      },
+    })
+    .catch((err) => {
+      console.error(err);
+    });
 
   return {
     redirect: {
       destination: url.url,
-    }
-  }
+      permanent: true,
+    },
+  };
 
   return {
     props: {
-      slug
-    }
-  }
+      slug,
+    },
+  };
 }
 
-
-export default function Slug({ slug, notFound }: { slug: string, notFound: boolean }) {
-
-
+export default function Slug({
+  slug,
+  notFound,
+}: {
+  slug: string;
+  notFound: boolean;
+}) {
   if (slug && !notFound) {
     return (
       <div>
         <h1>Redirecting...</h1>
       </div>
-    )
+    );
   }
 
   if (notFound) {
@@ -80,15 +83,10 @@ export default function Slug({ slug, notFound }: { slug: string, notFound: boole
           <link rel="icon" href="/favicon.ico" />
         </Head>
 
-        <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-
+        <div className="flex min-h-screen items-center justify-center bg-zinc-950">
           <h1 className="text-6xl text-white">Link "{slug}" Not Found</h1>
-
         </div>
       </>
     );
   }
-
-
-
 }

@@ -6,10 +6,9 @@ import Link from "next/link";
 import { api } from "~/utils/api";
 import { type GetServerSidePropsContext } from "next";
 import { checkRequireSetup } from "~/utils/requireSetup";
-
+import Footer from "components/footer";
 
 export default function Home() {
-
   const myUser = api.user.getUser.useQuery();
 
   return (
@@ -19,16 +18,15 @@ export default function Home() {
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="min-h-screen bg-zinc-950">
+      <main className="relative min-h-screen bg-zinc-950 pb-32">
         <Nav user={myUser.data} />
 
-        <div className="mt-16 grid h-4 grid-cols-3">
+        <div className=" mt-16 grid h-4 grid-cols-3">
           <div className="col-span-full flex justify-center">
-            <h1 className="text-3xl lg:text-5xl font-bold text-white">
+            <h1 className="text-3xl font-bold text-white lg:text-5xl">
               Next level link shortner
             </h1>
           </div>
-
         </div>
 
         <div className="mt-32 flex justify-center">
@@ -36,23 +34,28 @@ export default function Home() {
             <h1 className="text-3xl font-bold text-white">Get started</h1>
 
             {myUser.data ? (
-              <Link href="/dashboard" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              <Link
+                href="/dashboard"
+                className="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
+              >
                 Dashboard
               </Link>
             ) : (
-              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={() => void signIn()}>
+              <button
+                className="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
+                onClick={() => void signIn()}
+              >
                 Sign in
               </button>
             )}
           </div>
         </div>
 
-
+        <Footer />
       </main>
     </>
   );
 }
-
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const needsSetup = await checkRequireSetup(context);
@@ -60,7 +63,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   if (needsSetup) {
     return {
       redirect: {
-        destination: '/setup',
+        destination: "/setup",
         permanent: false,
       },
     };

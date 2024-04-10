@@ -11,6 +11,7 @@ import DashProfileListItem from "components/Dashboard/Profiles/DashProfileListIt
 import { useState } from "react";
 import { toast } from "react-toastify";
 import DashProfileCreateModel from "components/Dashboard/Profiles/DashProfileCreateModel";
+import Footer from "components/footer";
 
 export default function Dashboard() {
   const [createProfileModelOpen, setCreateProfileModelOpen] = useState(false);
@@ -68,7 +69,7 @@ export default function Dashboard() {
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="min-h-screen bg-zinc-950">
+      <main className="relative min-h-screen bg-zinc-950">
         <Nav user={myUser.data} />
 
         <div className="mx-8 mt-8 grid grid-cols-12 gap-4">
@@ -184,7 +185,9 @@ export default function Dashboard() {
 
           {/*  */}
         </div>
-      </div>
+
+        <Footer />
+      </main>
       <DashProfileCreateModel
         isOpen={createProfileModelOpen}
         setIsOpen={setCreateProfileModelOpen}

@@ -58,6 +58,41 @@ export const profileRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       const { id, name, slug } = input;
 
+      if (badWords.badSlugs.includes(slug)) {
+        throw new Error("Slug is not allowed");
+      }
+
+      const existingProfile = await db.profile.findFirst({
+        where: {
+          slug,
+        },
+      });
+
+      if (existingProfile && existingProfile.id !== id) {
+        throw new Error("Slug is already taken");
+      }
+
+      const profile = await db.profile.findUnique({
+        where: {
+          userId: ctx.session?.user.id,
+          id,
+        },
+      });
+
+      if (!profile) {
+        throw new Error("Profile not found");
+      }
+
+      await db.profile.update({
+        where: {
+          id,
+        },
+        data: {
+          name,
+          slug,
+        },
+      });
+
       return {
         success: true,
       };

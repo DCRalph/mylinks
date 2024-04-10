@@ -1,6 +1,6 @@
 import { type ProfileLink } from "@prisma/client";
 import { useState } from "react";
-import DashProfileLinkEditModel from "./DashProfileLinkEditModel";
+import DashProfileLinkEditModel from "./DashProfileEditLinkModel";
 import Link from "next/link";
 
 export default function DashProfileLink({

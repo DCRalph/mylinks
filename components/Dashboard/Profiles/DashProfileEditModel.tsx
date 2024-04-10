@@ -11,6 +11,7 @@ import Link from "next/link";
 import { env } from "~/env";
 
 import { Reorder } from "framer-motion";
+import DashProfileEditProfileDetailsModel from "./DashProfileEditProfileDetailsModel";
 
 type Profile_ProjectLinks = {
   profileLinks: ProfileLink[];
@@ -28,6 +29,7 @@ export default function DashProfileEditModel({
   setIsOpen,
 }: DashLinkEditModelProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditDetailsOpen, setIsEditDetailsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
   const profiles = api.profile.getProfiles.useQuery();
@@ -153,7 +155,7 @@ export default function DashProfileEditModel({
     >
       <motion.div
         initial={{ y: 100, opacity: 0 }}
-        animate={isClosing ? { y: "80vh", opacity: 0 } : { y: 0, opacity: 1 }}
+        animate={isClosing ? { y: "50vh", opacity: 0 } : { y: 0, opacity: 1 }}
         transition={{ type: "spring", damping: 12, mass: 0.75 }}
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
         className={
@@ -163,7 +165,7 @@ export default function DashProfileEditModel({
         <ModelCloseBtn setIsClosing={setIsClosing} />
 
         <div className="col-span-full flex flex-col items-center gap-2 text-white">
-          <h1 className="text-4xl font-semibold underline">{profile.name}</h1>
+          <h1 className="text-4xl font-semibold">Profile: {profile.name}</h1>
           <Link
             href={`${env.NEXT_PUBLIC_DOMAIN}/p/${profile.slug}`}
             target="_blank"
@@ -185,7 +187,7 @@ export default function DashProfileEditModel({
             <button
               className="form_btn_blue"
               type="button"
-              onClick={() => null}
+              onClick={() => setIsEditDetailsOpen(true)}
             >
               Edit Profile
             </button>
@@ -202,7 +204,7 @@ export default function DashProfileEditModel({
             axis="y"
             onReorder={reorderHandler}
             values={items}
-            className="flex flex-col gap-4 mt-4"
+            className="mt-4 flex flex-col gap-4"
           >
             {items
               .filter((item) =>
@@ -226,6 +228,12 @@ export default function DashProfileEditModel({
           profileId={profile.id}
           isOpen={isCreateOpen}
           setIsOpen={setIsCreateOpen}
+        />
+
+        <DashProfileEditProfileDetailsModel
+          profile={profile}
+          isOpen={isEditDetailsOpen}
+          setIsOpen={setIsEditDetailsOpen}
         />
       </motion.div>
     </motion.div>

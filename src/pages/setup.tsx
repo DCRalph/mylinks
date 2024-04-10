@@ -7,6 +7,7 @@ import { checkRequireSetup } from "~/utils/requireSetup";
 import { api } from "~/utils/api";
 import { toast } from "react-toastify";
 import { type FormEvent, useEffect, useState } from "react";
+import Footer from "components/footer";
 
 export default function Setup() {
   const myUser = api.user.getUser.useQuery();
@@ -63,7 +64,7 @@ export default function Setup() {
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="min-h-screen bg-zinc-950">
+      <main className="relative min-h-screen bg-zinc-950">
         <Nav user={myUser.data} />
 
         <div className="mt-16 grid h-4 grid-cols-12">
@@ -107,7 +108,9 @@ export default function Setup() {
             </form>
           </div>
         </div>
-      </div>
+
+        <Footer />
+      </main>
     </>
   );
 }

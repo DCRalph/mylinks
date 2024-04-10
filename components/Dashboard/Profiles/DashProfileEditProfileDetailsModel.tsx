@@ -1,3 +1,4 @@
+import { type Profile } from "@prisma/client";
 import { useEffect, useState, type ReactNode } from "react";
 import ReactDOM from "react-dom";
 import { toast } from "react-toastify";
@@ -5,37 +6,36 @@ import { motion } from "framer-motion";
 import ModelCloseBtn from "components/ModelCloseBtn";
 import { api } from "~/utils/api";
 
-interface DashProfileCreateModelProps {
+interface DashEditProfileDetailsModelProps {
+  profile: Profile;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
 
-export default function DashProfileCreateModel({
+export default function DashEditProfileDetailsModel({
+  profile,
   isOpen,
   setIsOpen,
-}: DashProfileCreateModelProps) {
+}: DashEditProfileDetailsModelProps) {
   const [isClosing, setIsClosing] = useState(false);
 
-  const [newProfileName, setNewProfileName] = useState("");
-  const [newProfileSlug, setNewProfileSlug] = useState("");
+  const [newProfileName, setNewProfileName] = useState(profile.name);
+  const [newProfileSlug, setNewProfileSlug] = useState(profile.slug);
 
   const profiles = api.profile.getProfiles.useQuery();
-  const createProfileMutation = api.profile.createProfile.useMutation();
+  const editProfileMutation = api.profile.editProfile.useMutation();
 
-  const createProfileHandler = async (e: React.FormEvent) => {
+  const editProfileLinkHandler = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    createProfileMutation.mutate(
-      { name: newProfileName, slug: newProfileSlug },
+    editProfileMutation.mutate(
+      { id: profile.id, name: newProfileName, slug: newProfileSlug },
       {
         onSuccess: () => {
-          toast.success("Profile created successfully", {
+          toast.success("Profile edited successfully", {
             closeOnClick: true,
             pauseOnHover: true,
           });
-
-          setNewProfileName("");
-          setNewProfileSlug("");
 
           setIsClosing(true);
           profiles
@@ -92,18 +92,18 @@ export default function DashProfileCreateModel({
         transition={{ type: "spring", damping: 12, mass: 0.75 }}
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
         className={
-          "relative grid h-fit w-full cursor-auto grid-cols-12 overflow-hidden rounded-2xl bg-zinc-800 p-8 shadow-lg"
+          "relative m-2 grid h-fit w-full cursor-auto grid-cols-12 overflow-hidden rounded-2xl bg-zinc-800 p-8 shadow-lg"
         }
       >
         <ModelCloseBtn setIsClosing={setIsClosing} />
 
         <div className="col-span-full flex justify-center text-white">
-          <h1 className="text-4xl font-semibold">Create New Profile</h1>
+          <h1 className="text-4xl font-semibold">Edit details</h1>
         </div>
 
         <div className="col-span-full col-start-1 mx-auto mt-8 flex w-full justify-center md:col-span-6 md:col-start-4">
           <form
-            onSubmit={createProfileHandler}
+            onSubmit={editProfileLinkHandler}
             className="grid w-full grid-cols-2 gap-4"
           >
             <div className="col-span-full">
@@ -148,7 +148,10 @@ export default function DashProfileCreateModel({
 
             <div className="col-span-full flex justify-center gap-4">
               <button type="submit" className="form_btn_blue">
-                Create
+                Save
+              </button>
+              <button className="form_btn_red" type="button">
+                Delete
               </button>
             </div>
           </form>

@@ -132,17 +132,17 @@ export default function DashProfileEditModel({
     >
       <motion.div
         initial={{ y: 100, opacity: 0 }}
-        animate={isClosing ? { y: "80vh", opacity: 0 } : { y: 0, opacity: 1 }}
+        animate={isClosing ? { y: "50vh", opacity: 0 } : { y: 0, opacity: 1 }}
         transition={{ type: "spring", damping: 12, mass: 0.75 }}
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
         className={
-          "relative m-8 grid h-fit w-full cursor-auto grid-cols-12 overflow-hidden rounded-2xl bg-zinc-800 p-8 shadow-lg"
+          "relative m-2 grid h-fit w-full cursor-auto grid-cols-12 overflow-hidden rounded-2xl bg-zinc-800 p-8 shadow-lg"
         }
       >
         <ModelCloseBtn setIsClosing={setIsClosing} />
 
         <div className="col-span-full flex justify-center text-white">
-          <h1 className="text-4xl font-semibold underline">{newLinkTitle}</h1>
+          <h1 className="text-4xl font-semibold">Edit Profile Link</h1>
         </div>
 
         <div className="col-span-full col-start-1 mx-auto mt-8 flex w-full justify-center md:col-span-6 md:col-start-4">
