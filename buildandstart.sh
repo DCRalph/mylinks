@@ -9,7 +9,10 @@ echo "Installing dependencies"
 npm i
 
 echo "Running postinstall"
-npm run postinstall
+npx prisma db push
+
+echo "Running prisma generate"
+npx prisma generate
 
 echo "Running build"
 npm run build
