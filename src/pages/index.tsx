@@ -21,7 +21,7 @@ export default function Home() {
       <main className="relative min-h-screen bg-zinc-950 pb-32">
         <Nav user={myUser.data} />
 
-        <div className=" mt-16 grid h-4 grid-cols-3">
+        <div className=" mt-16 grid grid-cols-3">
           <div className="col-span-full flex justify-center">
             <h1 className="text-3xl font-bold text-white lg:text-5xl">
               Next level link shortner
@@ -29,7 +29,18 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mt-32 flex justify-center">
+        <div className="mx-8 mt-16 flex flex-col items-center">
+          <div className="w-full max-w-lg rounded-lg border border-zinc-600 bg-zinc-800 p-4">
+            <h1 className="text-center text-2xl font-bold text-red-600 lg:text-3xl mb-4">
+              BETA
+            </h1>
+            <h1 className="text-center text-2xl font-bold text-white lg:text-3xl">
+              More info comming soon
+            </h1>
+          </div>
+        </div>
+
+        <div className="mt-16 flex justify-center">
           <div className="flex flex-col items-center space-y-4">
             <h1 className="text-3xl font-bold text-white">Get started</h1>
 

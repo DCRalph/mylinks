@@ -72,7 +72,7 @@ export default function Dashboard() {
       <main className="relative min-h-screen bg-zinc-950">
         <Nav user={myUser.data} />
 
-        <div className="mx-8 mt-8 grid grid-cols-12 gap-4">
+        <div className="mx-8 mt-8 grid grid-cols-12 gap-8">
           {/* <div className="col-span-full flex items-center justify-center gap-4">
             <span className=" text-2xl text-white">Your personal link is:</span>
 
