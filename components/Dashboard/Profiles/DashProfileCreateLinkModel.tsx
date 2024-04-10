@@ -6,6 +6,8 @@ import ModelCloseBtn from "components/ModelCloseBtn";
 import { api } from "~/utils/api";
 import ProfileLinkElement from "components/ProfilePage/ProfileLink";
 
+import { defualtIcon, Icons } from "~/utils/profileLinkIcons";
+
 interface DashCreateLinkModelProps {
   profileId: string;
   isOpen: boolean;
@@ -24,7 +26,7 @@ export default function DashProfileCreateLinkModel({
   const [newLinkDescription, setNewLinkDescription] = useState("");
   const [newLinkBgColor, setNewLinkBgColor] = useState("#000000");
   const [newLinkFgColor, setNewLinkFgColor] = useState("#ffffff");
-  const [newLinkIconUrl, setNewLinkIconUrl] = useState("generic.png");
+  const [newLinkIconUrl, setNewLinkIconUrl] = useState(defualtIcon.icon);
 
   const profiles = api.profile.getProfiles.useQuery();
   const createProfileLinkMutation = api.profile.createProfileLink.useMutation();
@@ -54,7 +56,7 @@ export default function DashProfileCreateLinkModel({
           setNewLinkDescription("");
           setNewLinkBgColor("#000000");
           setNewLinkFgColor("#ffffff");
-          setNewLinkIconUrl("generic.png");
+          setNewLinkIconUrl(defualtIcon.icon);
 
           setIsClosing(true);
           profiles
@@ -263,12 +265,11 @@ export default function DashProfileCreateLinkModel({
                   }}
                   required
                 >
-                  <option value="generic.png">Generic</option>
-                  <option value="github.png">Github</option>
-                  <option value="instagram.png">Instagram</option>
-                  <option value="linkedin.png">Linkedin</option>
-                  <option value="twitter.svg">Twitter</option>
-                  <option value="youtube.png">Youtube</option>
+                  {Icons.map((icon) => (
+                    <option key={icon.name} value={icon.icon}>
+                      {icon.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 

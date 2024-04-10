@@ -8,7 +8,7 @@ rm -rf .next
 echo "Installing dependencies"
 npm i
 
-echo "Running postinstall"
+echo "Running db push"
 npx prisma db push
 
 echo "Running prisma generate"

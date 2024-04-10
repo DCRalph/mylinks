@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import ModelCloseBtn from "components/ModelCloseBtn";
 import { api } from "~/utils/api";
 import ProfileLinkElement from "components/ProfilePage/ProfileLink";
+import { defualtIcon, Icons } from "~/utils/profileLinkIcons";
 
 interface DashLinkEditModelProps {
   profileLink: ProfileLink;
@@ -32,7 +33,7 @@ export default function DashProfileEditModel({
     profileLink.fgColor ?? "",
   );
   const [newLinkIconUrl, setNewLinkIconUrl] = useState(
-    profileLink.iconUrl ?? "www.png",
+    profileLink.iconUrl ?? defualtIcon.icon,
   );
 
   const profiles = api.profile.getProfiles.useQuery();
@@ -287,12 +288,11 @@ export default function DashProfileEditModel({
                   }}
                   required
                 >
-                  <option value="generic.png">Generic</option>
-                  <option value="github.png">Github</option>
-                  <option value="instagram.png">Instagram</option>
-                  <option value="linkedin.png">Linkedin</option>
-                  <option value="twitter.svg">Twitter</option>
-                  <option value="youtube.png">Youtube</option>
+                  {Icons.map((icon) => (
+                    <option key={icon.name} value={icon.icon}>
+                      {icon.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
