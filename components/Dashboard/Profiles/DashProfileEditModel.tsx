@@ -34,7 +34,7 @@ export default function DashProfileEditModel({
   const deleteProfileMutation = api.profile.deleteProfile.useMutation();
   const reorderProfileLinksMutation = api.profile.changeOrder.useMutation();
 
-  const linkOrderS = profile.linkOrder
+  const linkOrderS = profile.linkOrder;
   let linkOrder: string[] | null = null;
 
   if (linkOrderS === null) {
@@ -132,10 +132,15 @@ export default function DashProfileEditModel({
 
   useEffect(() => {
     if (profile.linkOrder) {
-      const newOrder = JSON.parse(profile.linkOrder) as string[];
+      let newOrder = JSON.parse(profile.linkOrder) as string[];
+
+      newOrder = newOrder.filter((item) =>
+        profile.profileLinks.find((link) => link.id === item),
+      );
+
       setItems(newOrder);
     }
-  }, [profile.linkOrder]);
+  }, [profile]);
 
   const content: ReactNode = (
     <motion.div
@@ -168,7 +173,7 @@ export default function DashProfileEditModel({
           </Link>
         </div>
 
-        <div className="col-span-full col-start-1 mx-auto mt-8 flex w-full flex-col justify-center gap-4 md:col-span-10 md:col-start-2">
+        <div className="col-span-full col-start-1 mx-auto mt-8 flex w-full flex-col justify-center md:col-span-10 md:col-start-2">
           <div className="col-span-full mb-4 flex justify-center gap-4">
             <button
               className="form_btn_green"
@@ -197,19 +202,23 @@ export default function DashProfileEditModel({
             axis="y"
             onReorder={reorderHandler}
             values={items}
-            className="flex flex-col gap-4"
+            className="flex flex-col gap-4 mt-4"
           >
-            {items.map((item) => (
-              <Reorder.Item value={item} key={item}>
-                <DashProfileLink
-                  key={item}
-                  profileLink={
-                    profile.profileLinks.find((link) => link.id === item)!
-                  }
-                />
-                {/* <span>{item}</span> */}
-              </Reorder.Item>
-            ))}
+            {items
+              .filter((item) =>
+                profile.profileLinks.find((link) => link.id === item),
+              )
+              .map((item, index) => (
+                <Reorder.Item value={item} key={item}>
+                  <DashProfileLink
+                    key={item}
+                    profileLink={
+                      profile.profileLinks.find((link) => link.id === item)!
+                    }
+                  />
+                  {/* <span className="text-white">{item} {index}</span> */}
+                </Reorder.Item>
+              ))}
           </Reorder.Group>
         </div>
 

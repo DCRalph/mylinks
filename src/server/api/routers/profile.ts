@@ -267,6 +267,24 @@ export const profileRouter = createTRPCRouter({
         },
       });
 
+      const linkOrder = profileLink.profile.linkOrder;
+      if (linkOrder) {
+        const newLinkOrder = JSON.parse(linkOrder) as string[];
+        const index = newLinkOrder.indexOf(id);
+        if (index > -1) {
+          newLinkOrder.splice(index, 1);
+        }
+
+        await db.profile.update({
+          where: {
+            id: profileLink.profileId,
+          },
+          data: {
+            linkOrder: JSON.stringify(newLinkOrder),
+          },
+        });
+      }
+
       return {
         success: true,
       };

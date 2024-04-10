@@ -72,6 +72,7 @@ export default function DashProfileEditModel({
   };
 
   const deleteProfileLinkHandler = async () => {
+    setIsClosing(true);
     deleteProfileLinkMutation.mutate(
       { id: profileLink.id },
       {
@@ -81,7 +82,6 @@ export default function DashProfileEditModel({
             pauseOnHover: true,
           });
 
-          setIsClosing(true);
           profiles
             .refetch()
             .then()
