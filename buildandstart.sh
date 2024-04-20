@@ -1,5 +1,6 @@
 sudo systemctl stop startlink
 
+sleep 5
 
 echo "Starting build and start process"
 echo "Pulling latest changes from git"
