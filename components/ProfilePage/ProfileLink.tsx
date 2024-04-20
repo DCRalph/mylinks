@@ -24,7 +24,7 @@ export default function ProfileLinkElement({ link }: { link: ProfileLink }) {
       </div>
 
       <div className="flex aspect-square h-full items-center justify-center rounded-lg bg-zinc-700 p-2">
-        <Image src={icon} alt={link.title} width={1000} height={1000} />
+        <Image src={icon} alt={link.title} width={200} height={200} />
       </div>
     </a>
   );

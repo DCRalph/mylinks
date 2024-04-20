@@ -99,11 +99,12 @@ model Profile {
   userId     String
 
   name        String
-  slug         String @unique
+  slug        String @unique
+  bio         String @default("")
 
   profileLinks ProfileLink[]
 
-  linkOrder String?
+  linkOrder String
 
   clicks Click[]
 
@@ -117,6 +118,8 @@ model ProfileLink {
 
   profile        Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
   profileId      String
+
+  visible       Boolean @default(true)
 
   // order       Int
   title       String

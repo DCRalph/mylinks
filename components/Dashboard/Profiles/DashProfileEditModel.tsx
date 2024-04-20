@@ -12,6 +12,7 @@ import { env } from "~/env";
 
 import { Reorder } from "framer-motion";
 import DashProfileEditProfileDetailsModel from "./DashProfileEditProfileDetailsModel";
+import parseProfileLinkOrder from "~/utils/parseProfileLinkOrder";
 
 type Profile_ProjectLinks = {
   profileLinks: ProfileLink[];
@@ -36,14 +37,10 @@ export default function DashProfileEditModel({
   const deleteProfileMutation = api.profile.deleteProfile.useMutation();
   const reorderProfileLinksMutation = api.profile.changeOrder.useMutation();
 
-  const linkOrderS = profile.linkOrder;
-  let linkOrder: string[] | null = null;
-
-  if (linkOrderS === null) {
-    linkOrder = profile.profileLinks.map((link) => link.id);
-  } else {
-    linkOrder = JSON.parse(linkOrderS) as string[];
-  }
+  const linkOrder = parseProfileLinkOrder({
+    linkOrderS: profile.linkOrder,
+    profileLinks: profile.profileLinks,
+  });
 
   const [items, setItems] = useState(linkOrder);
 

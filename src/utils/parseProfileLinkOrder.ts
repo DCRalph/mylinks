@@ -1,12 +1,24 @@
 import { string, array } from "zod";
+import { type ProfileLink } from "@prisma/client";
 
 const schema = array(string());
 
-export default function parseProfileLinkOrder(order: string | undefined): string[] {
+type Prams = {
+  linkOrderS: string;
+  profileLinks: ProfileLink[];
+};
 
-  if (!order) {
-    return [];
+export default function parseProfileLinkOrder({
+  linkOrderS,
+  profileLinks,
+}: Prams): string[] {
+  let linkOrder: string[];
+
+  if (linkOrderS === null) {
+    linkOrder = profileLinks.map((link) => link.id);
+  } else {
+    linkOrder = schema.parse(JSON.parse(linkOrderS));
   }
 
-  return schema.parse(JSON.parse(order));
+  return linkOrder;
 }

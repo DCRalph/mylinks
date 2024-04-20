@@ -21,6 +21,7 @@ export default function DashEditProfileDetailsModel({
 
   const [newProfileName, setNewProfileName] = useState(profile.name);
   const [newProfileSlug, setNewProfileSlug] = useState(profile.slug);
+  const [newProfileBio, setNewProfileBio] = useState(profile.bio);
 
   const profiles = api.profile.getProfiles.useQuery();
   const editProfileMutation = api.profile.editProfile.useMutation();
@@ -29,7 +30,12 @@ export default function DashEditProfileDetailsModel({
     e.preventDefault();
 
     editProfileMutation.mutate(
-      { id: profile.id, name: newProfileName, slug: newProfileSlug },
+      {
+        id: profile.id,
+        name: newProfileName,
+        slug: newProfileSlug,
+        bio: newProfileBio,
+      },
       {
         onSuccess: () => {
           toast.success("Profile edited successfully", {
@@ -143,6 +149,24 @@ export default function DashEditProfileDetailsModel({
                   setNewProfileSlug(e.target.value);
                 }}
                 required
+              />
+            </div>
+
+            <div className="col-span-full">
+              <label
+                htmlFor="newProfileBio"
+                className="mb-2 block text-sm font-medium text-white"
+              >
+                Bio
+              </label>
+              <textarea
+                id="newProfileBio"
+                className="form_input h-64"
+                placeholder="Bio"
+                value={newProfileBio}
+                onChange={(e) => {
+                  setNewProfileBio(e.target.value);
+                }}
               />
             </div>
 

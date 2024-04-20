@@ -273,14 +273,6 @@ export default function DashProfileCreateLinkModel({
                 </select>
               </div>
 
-              {/* <div className="aspect-square flex justify-center items-center h-16 rounded-lg bg-zinc-700 p-2">
-                <Image
-                  src={"/profileLinkIcons/" + newLinkIconUrl}
-                  alt={profileLink.title}
-                  width={100}
-                  height={100}
-                />
-              </div> */}
             </div>
 
             <div className="col-span-full flex justify-center">
@@ -288,6 +280,7 @@ export default function DashProfileCreateLinkModel({
                 link={{
                   id: "na",
                   profileId: "",
+                  visible: true,
 
                   title: newLinkTitle,
                   url: newLinkUrl,

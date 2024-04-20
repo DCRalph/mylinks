@@ -4,6 +4,7 @@ import { db } from "~/server/db";
 import badWords from "~/utils/badWords";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import parseProfileLinkOrder from "~/utils/parseProfileLinkOrder";
 
 export const profileRouter = createTRPCRouter({
   getProfiles: protectedProcedure.query(async ({ ctx }) => {
@@ -22,9 +23,15 @@ export const profileRouter = createTRPCRouter({
   }),
 
   createProfile: protectedProcedure
-    .input(z.object({ name: z.string(), slug: z.string() }))
+    .input(
+      z.object({
+        name: z.string(),
+        slug: z.string(),
+        bio: z.string().optional(),
+      }),
+    )
     .mutation(async ({ input, ctx }) => {
-      const { name, slug } = input;
+      const { name, slug, bio } = input;
 
       if (badWords.badSlugs.includes(slug)) {
         throw new Error("Slug is not allowed");
@@ -45,6 +52,8 @@ export const profileRouter = createTRPCRouter({
           userId: ctx.session.user.id,
           name,
           slug,
+          bio,
+          linkOrder: "[]",
         },
       });
 
@@ -54,9 +63,16 @@ export const profileRouter = createTRPCRouter({
     }),
 
   editProfile: protectedProcedure
-    .input(z.object({ id: z.string(), name: z.string(), slug: z.string() }))
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        slug: z.string(),
+        bio: z.string(),
+      }),
+    )
     .mutation(async ({ input, ctx }) => {
-      const { id, name, slug } = input;
+      const { id, name, slug, bio } = input;
 
       if (badWords.badSlugs.includes(slug)) {
         throw new Error("Slug is not allowed");
@@ -90,6 +106,7 @@ export const profileRouter = createTRPCRouter({
         data: {
           name,
           slug,
+          bio,
         },
       });
 
@@ -168,14 +185,10 @@ export const profileRouter = createTRPCRouter({
         },
       });
 
-      const linkOrderS = profile.linkOrder;
-      let linkOrder: string[] | null = null;
-
-      if (linkOrderS === null) {
-        linkOrder = profile.profileLinks.map((link) => link.id);
-      } else {
-        linkOrder = JSON.parse(linkOrderS) as string[];
-      }
+      const linkOrder = parseProfileLinkOrder({
+        linkOrderS: profile.linkOrder,
+        profileLinks: profile.profileLinks,
+      });
 
       linkOrder.push(profileLink.id);
 
@@ -274,7 +287,7 @@ export const profileRouter = createTRPCRouter({
       };
     }),
 
-  deleteProfileLink: protectedProcedure
+  toggleProfileLinkVisibility: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const { id } = input;
@@ -296,29 +309,71 @@ export const profileRouter = createTRPCRouter({
         throw new Error("Not authorized");
       }
 
+      await db.profileLink.update({
+        where: {
+          id,
+        },
+        data: {
+          visible: !profileLink.visible,
+        },
+      });
+
+      return {
+        success: true,
+        visible: !profileLink.visible,
+      };
+    }),
+
+  deleteProfileLink: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const { id } = input;
+
+      const profileLink = await db.profileLink.findUnique({
+        where: {
+          id,
+        },
+        include: {
+          profile: {
+            include: {
+              profileLinks: true,
+            },
+          },
+        },
+      });
+
+      if (!profileLink) {
+        throw new Error("Link not found");
+      }
+
+      if (profileLink.profile.userId !== ctx.session?.user.id) {
+        throw new Error("Not authorized");
+      }
+
       await db.profileLink.delete({
         where: {
           id,
         },
       });
 
-      const linkOrder = profileLink.profile.linkOrder;
-      if (linkOrder) {
-        const newLinkOrder = JSON.parse(linkOrder) as string[];
-        const index = newLinkOrder.indexOf(id);
-        if (index > -1) {
-          newLinkOrder.splice(index, 1);
-        }
+      const linkOrder = parseProfileLinkOrder({
+        linkOrderS: profileLink.profile.linkOrder,
+        profileLinks: profileLink.profile.profileLinks,
+      });
 
-        await db.profile.update({
-          where: {
-            id: profileLink.profileId,
-          },
-          data: {
-            linkOrder: JSON.stringify(newLinkOrder),
-          },
-        });
+      const index = linkOrder.indexOf(id);
+      if (index > -1) {
+        linkOrder.splice(index, 1);
       }
+
+      await db.profile.update({
+        where: {
+          id: profileLink.profileId,
+        },
+        data: {
+          linkOrder: JSON.stringify(linkOrder),
+        },
+      });
 
       return {
         success: true,

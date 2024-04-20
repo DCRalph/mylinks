@@ -23,8 +23,8 @@ export default function UserMenu({ user }: UserMenuProps) {
                 <Image
                   src={user.user?.image}
                   alt="user avatar"
-                  width={1000}
-                  height={1000}
+                  width={100}
+                  height={100}
                 />
               )}
             </div>
