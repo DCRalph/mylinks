@@ -18,4 +18,3 @@ echo "Running build"
 npm run build
 
 echo "Starting the server"
-npm run start
