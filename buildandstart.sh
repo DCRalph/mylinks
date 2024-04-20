@@ -1,3 +1,6 @@
+sudo systemctl stop startlink
+
+
 echo "Starting build and start process"
 echo "Pulling latest changes from git"
 git pull
@@ -18,3 +21,4 @@ echo "Running build"
 npm run build
 
 echo "Starting the server"
+sudo systemctl start startlink
