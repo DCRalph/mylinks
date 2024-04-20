@@ -36,6 +36,7 @@ export default function DashProfileEditModel({
   const profiles = api.profile.getProfiles.useQuery();
   const deleteProfileMutation = api.profile.deleteProfile.useMutation();
   const reorderProfileLinksMutation = api.profile.changeOrder.useMutation();
+  const clicks = api.profile.getClicks.useQuery({ id: profile.id });
 
   const linkOrder = parseProfileLinkOrder({
     linkOrderS: profile.linkOrder,
@@ -166,6 +167,7 @@ export default function DashProfileEditModel({
           <span className="text-lg font-semibold">
             {profile.altName && `${profile.altName}`}
           </span>
+          <span className="text-xl">Clicks: {clicks.data?.clicks.length}</span>
           <Link
             href={`${env.NEXT_PUBLIC_DOMAIN}/p/${profile.slug}`}
             target="_blank"
@@ -210,7 +212,7 @@ export default function DashProfileEditModel({
               .filter((item) =>
                 profile.profileLinks.find((link) => link.id === item),
               )
-              .map((item, index) => (
+              .map((item) => (
                 <Reorder.Item value={item} key={item}>
                   <DashProfileLink
                     key={item}

@@ -11,7 +11,7 @@ export default function DashLink({ link }: { link: Link }) {
     <div className="flex w-full flex-col rounded-lg bg-white px-4 py-2">
       <div className="flex justify-between">
         <div className="flex flex-col justify-between">
-          <span className="text-sm font-semibold md:text-lg">{link.url}</span>
+          <span className="text-sm font-semibold md:text-lg">{link.name}</span>
           {/* <span className="md:text-lg text-sm font-semibold">{link.slug}</span> */}
           <NextLink
             href={`${env.NEXT_PUBLIC_DOMAIN}/${link.slug}`}

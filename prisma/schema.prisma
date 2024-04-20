@@ -96,7 +96,7 @@ model Profile {
   id     String @id @default(cuid())   
 
   user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
+  userId     String 
 
   name        String
   altName     String?

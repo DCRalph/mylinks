@@ -383,4 +383,28 @@ export const profileRouter = createTRPCRouter({
         success: true,
       };
     }),
+
+  getClicks: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const { id } = input;
+
+      const profile = await db.profile.findUnique({
+        where: {
+          userId: ctx.session.user.id,
+          id,
+        },
+        include: {
+          clicks: true,
+        },
+      });
+
+      if (!profile) {
+        throw new Error("Profile not found");
+      }
+
+      return {
+        clicks: profile.clicks,
+      };
+    }),
 });

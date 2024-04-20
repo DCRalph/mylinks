@@ -26,6 +26,7 @@ export default function DashLinkEditModel({
   const myLinks = api.link.getMyLinks.useQuery();
   const editLinkMutation = api.link.editLink.useMutation();
   const deleteLinkMutation = api.link.deleteLink.useMutation();
+  const clicks = api.link.getClicks.useQuery({ id: link.id });
 
   const editLinkHandler = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,8 +131,9 @@ export default function DashLinkEditModel({
       >
         <ModelCloseBtn setIsClosing={setIsClosing} />
 
-        <div className="col-span-full flex justify-center text-white">
+        <div className="col-span-full flex flex-col gap-4 items-center text-white">
           <h1 className="text-4xl font-semibold">Edit Link</h1>
+          <h2 className="text-xl">Clicks: {clicks.data?.clicks.length}</h2>
         </div>
 
         <div className="col-span-full col-start-1 mx-auto mt-8 flex w-full justify-center md:col-span-6 md:col-start-4">
