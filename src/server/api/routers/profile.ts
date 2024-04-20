@@ -26,12 +26,13 @@ export const profileRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string(),
+        altName: z.string().nullable(),
         slug: z.string(),
-        bio: z.string().optional(),
+        bio: z.string().nullable(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const { name, slug, bio } = input;
+      const { name, altName, slug, bio } = input;
 
       if (badWords.badSlugs.includes(slug)) {
         throw new Error("Slug is not allowed");
@@ -51,6 +52,7 @@ export const profileRouter = createTRPCRouter({
         data: {
           userId: ctx.session.user.id,
           name,
+          altName,
           slug,
           bio,
           linkOrder: "[]",
@@ -67,12 +69,13 @@ export const profileRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         name: z.string(),
+        altName: z.string().nullable(),
         slug: z.string(),
-        bio: z.string(),
+        bio: z.string().nullable(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const { id, name, slug, bio } = input;
+      const { id, name, altName, slug, bio } = input;
 
       if (badWords.badSlugs.includes(slug)) {
         throw new Error("Slug is not allowed");
@@ -105,6 +108,7 @@ export const profileRouter = createTRPCRouter({
         },
         data: {
           name,
+          altName,
           slug,
           bio,
         },

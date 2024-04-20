@@ -27,9 +27,9 @@ export default function ProfilePage({
       <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 p-8">
         <h1 className="text-6xl text-white">{profile.name}</h1>
 
-        {profile.bio != "" && (
+        {profile.bio != null && (
           <div className="pt-8">
-            <p className="text-xl text-zinc-400 ">Bio:</p>
+            {/* <p className="text-xl text-zinc-400 ">Bio:</p> */}
             <p className="max-w-2xl text-lg text-white">{profile.bio}</p>
           </div>
         )}

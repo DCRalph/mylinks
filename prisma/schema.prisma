@@ -99,8 +99,9 @@ model Profile {
   userId     String
 
   name        String
+  altName     String?
   slug        String @unique
-  bio         String @default("")
+  bio         String?
 
   profileLinks ProfileLink[]
 

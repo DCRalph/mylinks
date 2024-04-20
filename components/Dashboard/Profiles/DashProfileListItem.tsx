@@ -24,7 +24,7 @@ export default function DashProfileListItem({
       <div className="flex justify-between">
         <div className="flex flex-col justify-between">
           <span className="text-sm font-semibold md:text-lg">
-            {profile.name}
+            {profile.name} {profile.altName && `(${profile.altName})`}
           </span>
           {/* <span className="text-sm font-semibold md:text-lg">
             {profile.slug}

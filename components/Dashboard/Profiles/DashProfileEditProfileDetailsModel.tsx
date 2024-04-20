@@ -20,6 +20,7 @@ export default function DashEditProfileDetailsModel({
   const [isClosing, setIsClosing] = useState(false);
 
   const [newProfileName, setNewProfileName] = useState(profile.name);
+  const [newProfileAltName, setNewProfileAltName] = useState(profile.altName);
   const [newProfileSlug, setNewProfileSlug] = useState(profile.slug);
   const [newProfileBio, setNewProfileBio] = useState(profile.bio);
 
@@ -29,10 +30,14 @@ export default function DashEditProfileDetailsModel({
   const editProfileLinkHandler = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (newProfileAltName == "") setNewProfileAltName(null);
+    if (newProfileBio == "") setNewProfileBio(null);
+
     editProfileMutation.mutate(
       {
         id: profile.id,
         name: newProfileName,
+        altName: newProfileAltName,
         slug: newProfileSlug,
         bio: newProfileBio,
       },
@@ -134,6 +139,25 @@ export default function DashEditProfileDetailsModel({
 
             <div className="col-span-full">
               <label
+                htmlFor="newProfileAltName"
+                className="mb-2 block text-sm font-medium text-white"
+              >
+                Alt Name (Only visible to you)
+              </label>
+              <input
+                type="text"
+                id="newProfileAltName"
+                className="form_input"
+                placeholder="Alt Name"
+                value={newProfileAltName ?? ""}
+                onChange={(e) => {
+                  setNewProfileAltName(e.target.value);
+                }}
+              />
+            </div>
+
+            <div className="col-span-full">
+              <label
                 htmlFor="newProfileSlug"
                 className="mb-2 block text-sm font-medium text-white"
               >
@@ -163,7 +187,7 @@ export default function DashEditProfileDetailsModel({
                 id="newProfileBio"
                 className="form_input h-64"
                 placeholder="Bio"
-                value={newProfileBio}
+                value={newProfileBio ?? ""}
                 onChange={(e) => {
                   setNewProfileBio(e.target.value);
                 }}
@@ -173,9 +197,6 @@ export default function DashEditProfileDetailsModel({
             <div className="col-span-full flex justify-center gap-4">
               <button type="submit" className="form_btn_blue">
                 Save
-              </button>
-              <button className="form_btn_red" type="button">
-                Delete
               </button>
             </div>
           </form>

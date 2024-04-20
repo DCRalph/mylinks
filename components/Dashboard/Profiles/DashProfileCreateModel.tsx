@@ -17,7 +17,9 @@ export default function DashProfileCreateModel({
   const [isClosing, setIsClosing] = useState(false);
 
   const [newProfileName, setNewProfileName] = useState("");
+  const [newProfileAltName, setNewProfileAltName] = useState<string | null>("");
   const [newProfileSlug, setNewProfileSlug] = useState("");
+  const [newProfileBio, setNewProfileBio] = useState<string | null>("");
 
   const profiles = api.profile.getProfiles.useQuery();
   const createProfileMutation = api.profile.createProfile.useMutation();
@@ -25,8 +27,16 @@ export default function DashProfileCreateModel({
   const createProfileHandler = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (newProfileAltName == "") setNewProfileAltName(null);
+    if (newProfileBio == "") setNewProfileBio(null);
+
     createProfileMutation.mutate(
-      { name: newProfileName, slug: newProfileSlug },
+      {
+        name: newProfileName,
+        altName: newProfileAltName,
+        slug: newProfileSlug,
+        bio: newProfileBio,
+      },
       {
         onSuccess: () => {
           toast.success("Profile created successfully", {
@@ -35,7 +45,9 @@ export default function DashProfileCreateModel({
           });
 
           setNewProfileName("");
+          setNewProfileAltName(null);
           setNewProfileSlug("");
+          setNewProfileBio(null);
 
           setIsClosing(true);
           profiles
@@ -128,6 +140,25 @@ export default function DashProfileCreateModel({
 
             <div className="col-span-full">
               <label
+                htmlFor="newProfileAltName"
+                className="mb-2 block text-sm font-medium text-white"
+              >
+                Alt Name
+              </label>
+              <input
+                type="text"
+                id="newProfileAltName"
+                className="form_input"
+                placeholder="Alt Name"
+                value={newProfileAltName ?? ""}
+                onChange={(e) => {
+                  setNewProfileAltName(e.target.value);
+                }}
+              />
+            </div>
+
+            <div className="col-span-full">
+              <label
                 htmlFor="newProfileSlug"
                 className="mb-2 block text-sm font-medium text-white"
               >
@@ -143,6 +174,24 @@ export default function DashProfileCreateModel({
                   setNewProfileSlug(e.target.value);
                 }}
                 required
+              />
+            </div>
+
+            <div className="col-span-full">
+              <label
+                htmlFor="newProfileBio"
+                className="mb-2 block text-sm font-medium text-white"
+              >
+                Bio
+              </label>
+              <textarea
+                id="newProfileBio"
+                className="form_input h-64"
+                placeholder="Bio"
+                value={newProfileBio ?? ""}
+                onChange={(e) => {
+                  setNewProfileBio(e.target.value);
+                }}
               />
             </div>
 

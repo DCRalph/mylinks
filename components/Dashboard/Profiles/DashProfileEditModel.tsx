@@ -163,6 +163,9 @@ export default function DashProfileEditModel({
 
         <div className="col-span-full flex flex-col items-center gap-2 text-white">
           <h1 className="text-4xl font-semibold">Profile: {profile.name}</h1>
+          <span className="text-lg font-semibold">
+            {profile.altName && `${profile.altName}`}
+          </span>
           <Link
             href={`${env.NEXT_PUBLIC_DOMAIN}/p/${profile.slug}`}
             target="_blank"
