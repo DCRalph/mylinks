@@ -4,35 +4,43 @@ type Icon = {
 };
 
 const defualtIcon: Icon = {
-  name: "generic",
+  name: "Generic",
   icon: "generic.png",
 };
 
 const Icons: Icon[] = [
   defualtIcon,
   {
-    name: "github",
+    name: "Github",
     icon: "github.png",
   },
   {
-    name: "instagram",
+    name: "Instagram",
     icon: "instagram.png",
   },
   {
-    name: "linkedin",
+    name: "Linkedin",
     icon: "linkedin.png",
   },
   {
-    name: "twitter",
+    name: "Twitter old",
     icon: "twitter.svg",
   },
   {
-    name: "youtube",
+    name: "X",
+    icon: "x(twitter).png",
+  },
+  {
+    name: "Youtube",
     icon: "youtube.png",
   },
   {
-    name: "snapchat",
+    name: "Snapchat",
     icon: "snapchat.png",
+  },
+  {
+    name: "Discord",
+    icon: "discord.png",
   },
 ];
 

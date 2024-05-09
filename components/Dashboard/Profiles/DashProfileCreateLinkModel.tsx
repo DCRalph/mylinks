@@ -172,7 +172,7 @@ export default function DashProfileCreateLinkModel({
                 htmlFor="newLinkDescription"
                 className="mb-2 block text-sm font-medium text-white"
               >
-                Description
+                Description (Optional)
               </label>
               <input
                 id="newLinkDescription"

@@ -143,7 +143,7 @@ export default function DashProfileCreateModel({
                 htmlFor="newProfileAltName"
                 className="mb-2 block text-sm font-medium text-white"
               >
-                Alt Name
+                Alt Name (Optional and only visible to you)
               </label>
               <input
                 type="text"
@@ -182,7 +182,7 @@ export default function DashProfileCreateModel({
                 htmlFor="newProfileBio"
                 className="mb-2 block text-sm font-medium text-white"
               >
-                Bio
+                Bio (Optional)
               </label>
               <textarea
                 id="newProfileBio"
