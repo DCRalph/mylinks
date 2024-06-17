@@ -5,6 +5,8 @@ import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import ModelCloseBtn from "components/ModelCloseBtn";
 import { api } from "~/utils/api";
+import { IconDeviceFloppy } from "@tabler/icons-react";
+import toastOptions from "~/utils/toastOptions";
 
 interface DashEditProfileDetailsModelProps {
   profile: Profile;
@@ -43,27 +45,18 @@ export default function DashEditProfileDetailsModel({
       },
       {
         onSuccess: () => {
-          toast.success("Profile edited successfully", {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.success("Profile edited successfully", toastOptions);
 
           setIsClosing(true);
           profiles
             .refetch()
             .then()
             .catch((error: string) => {
-              toast.error(error, {
-                closeOnClick: true,
-                pauseOnHover: true,
-              });
+              toast.error(error, toastOptions);
             });
         },
         onError: (error) => {
-          toast.error(error.message, {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.error(error.message, toastOptions);
         },
       },
     );
@@ -195,8 +188,9 @@ export default function DashEditProfileDetailsModel({
             </div>
 
             <div className="col-span-full flex justify-center gap-4">
-              <button type="submit" className="form_btn_blue">
+              <button type="submit" className="form_btn_blue flex items-center gap-2">
                 Save
+                <IconDeviceFloppy/>
               </button>
             </div>
           </form>

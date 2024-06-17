@@ -5,6 +5,8 @@ import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import ModelCloseBtn from "components/ModelCloseBtn";
 import { api } from "~/utils/api";
+import { IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
+import toastOptions from "~/utils/toastOptions";
 
 interface DashLinkEditModelProps {
   link: Link;
@@ -35,27 +37,18 @@ export default function DashLinkEditModel({
       { id: link.id, name: UrlName, url: UrllongUrl, slug: UrlshortUrl },
       {
         onSuccess: () => {
-          toast.success("Link edited successfully", {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.success("Link edited successfully", toastOptions);
 
           setIsClosing(true);
           myLinks
             .refetch()
             .then()
             .catch((error: string) => {
-              toast.error(error, {
-                closeOnClick: true,
-                pauseOnHover: true,
-              });
+              toast.error(error, toastOptions);
             });
         },
         onError: (error) => {
-          toast.error(error.message, {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.error(error.message, toastOptions);
         },
       },
     );
@@ -66,27 +59,18 @@ export default function DashLinkEditModel({
       { id: link.id },
       {
         onSuccess: () => {
-          toast.success("Link deleted successfully", {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.success("Link deleted successfully", toastOptions);
 
           setIsClosing(true);
           myLinks
             .refetch()
             .then()
             .catch((error: string) => {
-              toast.error(error, {
-                closeOnClick: true,
-                pauseOnHover: true,
-              });
+              toast.error(error, toastOptions);
             });
         },
         onError: (error) => {
-          toast.error(error.message, {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.error(error.message, toastOptions);
         },
       },
     );
@@ -131,7 +115,7 @@ export default function DashLinkEditModel({
       >
         <ModelCloseBtn setIsClosing={setIsClosing} />
 
-        <div className="col-span-full flex flex-col gap-4 items-center text-white">
+        <div className="col-span-full flex flex-col items-center gap-4 text-white">
           <h1 className="text-4xl font-semibold">Edit Link</h1>
           <h2 className="text-xl">Clicks: {clicks.data?.clicks.length}</h2>
         </div>
@@ -196,15 +180,20 @@ export default function DashLinkEditModel({
             </div>
 
             <div className="col-span-full flex justify-center gap-4">
-              <button className="form_btn_blue" type="submit">
+              <button
+                className="form_btn_blue flex items-center gap-2"
+                type="submit"
+              >
                 Save
+                <IconDeviceFloppy />
               </button>
               <button
-                className="form_btn_red"
+                className="form_btn_red flex items-center gap-2"
                 type="button"
                 onClick={deleteLinkHandler}
               >
                 Delete
+                <IconTrash />
               </button>
             </div>
           </form>

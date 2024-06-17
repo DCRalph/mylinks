@@ -13,6 +13,8 @@ import { env } from "~/env";
 import { Reorder } from "framer-motion";
 import DashProfileEditProfileDetailsModel from "./DashProfileEditProfileDetailsModel";
 import parseProfileLinkOrder from "~/utils/parseProfileLinkOrder";
+import { IconPencil, IconSquareRoundedPlus, IconTrash } from "@tabler/icons-react";
+import toastOptions from "~/utils/toastOptions";
 
 type Profile_ProjectLinks = {
   profileLinks: ProfileLink[];
@@ -50,27 +52,18 @@ export default function DashProfileEditModel({
       { id: profile.id },
       {
         onSuccess: () => {
-          toast.success("Profile deleted successfully", {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.success("Profile deleted successfully", toastOptions);
 
           setIsClosing(true);
           profiles
             .refetch()
             .then()
             .catch((error: string) => {
-              toast.error(error, {
-                closeOnClick: true,
-                pauseOnHover: true,
-              });
+              toast.error(error, toastOptions);
             });
         },
         onError: (error) => {
-          toast.error(error.message, {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.error(error.message, toastOptions);
         },
       },
     );
@@ -93,16 +86,10 @@ export default function DashProfileEditModel({
         { profileId: profile.id, order: items },
         {
           onSuccess: () => {
-            toast.success("Profile links reordered successfully", {
-              closeOnClick: true,
-              pauseOnHover: true,
-            });
+            toast.success("Profile links reordered successfully", toastOptions);
           },
           onError: (error) => {
-            toast.error(error.message, {
-              closeOnClick: true,
-              pauseOnHover: true,
-            });
+            toast.error(error.message, toastOptions);
           },
         },
       );
@@ -180,25 +167,28 @@ export default function DashProfileEditModel({
         <div className="col-span-full col-start-1 mx-auto mt-8 flex w-full flex-col justify-center md:col-span-10 md:col-start-2">
           <div className="col-span-full mb-4 flex justify-center gap-4">
             <button
-              className="form_btn_green"
+              className="form_btn_green flex items-center gap-2"
               type="button"
               onClick={() => setIsCreateOpen(true)}
             >
               Add Link
+              <IconSquareRoundedPlus />
+
             </button>
             <button
-              className="form_btn_blue"
-              type="button"
+              className="form_btn_blue flex items-center gap-2"
               onClick={() => setIsEditDetailsOpen(true)}
             >
               Edit Profile
+              <IconPencil/>
             </button>
             <button
-              className="form_btn_red"
+              className="form_btn_red flex items-center gap-2"
               type="button"
               onClick={deleteProfileHandler}
             >
               Delete Profile
+              <IconTrash/>
             </button>
           </div>
 

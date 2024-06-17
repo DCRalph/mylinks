@@ -7,6 +7,7 @@ import { api } from "~/utils/api";
 import { type GetServerSidePropsContext } from "next";
 import { checkRequireSetup } from "~/utils/requireSetup";
 import Footer from "components/footer";
+import { IconLayoutDashboard } from "@tabler/icons-react";
 
 export default function Home() {
   const myUser = api.user.getUser.useQuery();
@@ -18,7 +19,7 @@ export default function Home() {
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="relative min-h-screen bg-zinc-950 pb-32">
+      <main className="flex flex-col min-h-screen bg-zinc-950">
         <Nav user={myUser.data} />
 
         <div className=" mt-16 grid grid-cols-3">
@@ -47,9 +48,10 @@ export default function Home() {
             {myUser.data ? (
               <Link
                 href="/dashboard"
-                className="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
+                className="rounded bg-blue-500 px-4 py-2 font-bold flex items-center gap-2 text-white hover:bg-blue-700"
               >
                 Dashboard
+                <IconLayoutDashboard />
               </Link>
             ) : (
               <button

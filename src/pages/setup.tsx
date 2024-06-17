@@ -8,6 +8,8 @@ import { api } from "~/utils/api";
 import { toast } from "react-toastify";
 import { type FormEvent, useEffect, useState } from "react";
 import Footer from "components/footer";
+import { IconSquareRoundedPlus } from "@tabler/icons-react";
+import toastOptions from "~/utils/toastOptions";
 
 export default function Setup() {
   const myUser = api.user.getUser.useQuery();
@@ -28,19 +30,13 @@ export default function Setup() {
       { username: newUsername },
       {
         onSuccess: () => {
-          toast.success("Username changed successfully", {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.success("Username changed successfully", toastOptions);
 
           myUser
             .refetch()
             .then()
             .catch((error: string) => {
-              toast.error(error, {
-                closeOnClick: true,
-                pauseOnHover: true,
-              });
+              toast.error(error, toastOptions);
             });
 
           setTimeout(() => {
@@ -48,10 +44,7 @@ export default function Setup() {
           }, 1000);
         },
         onError: (error) => {
-          toast.error(error.message, {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.error(error.message, toastOptions);
         },
       },
     );
@@ -64,7 +57,7 @@ export default function Setup() {
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="relative min-h-screen bg-zinc-950">
+      <main className="flex min-h-screen flex-col bg-zinc-950">
         <Nav user={myUser.data} />
 
         <div className="mt-16 grid h-4 grid-cols-12">
@@ -91,8 +84,8 @@ export default function Setup() {
                 <input
                   type="text"
                   id="newUsername"
-                  className="block w-full rounded-lg border-gray-600 bg-gray-700 p-2.5 text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Name"
+                  className="form_input"
+                  placeholder="Username"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
                   required
@@ -100,10 +93,11 @@ export default function Setup() {
               </div>
 
               <button
-                className="col-span-full mt-auto h-min w-full rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-800 sm:w-auto"
+                className="form_btn_blue  flex items-center justify-center gap-2"
                 type="submit"
               >
                 Create
+                <IconSquareRoundedPlus />
               </button>
             </form>
           </div>

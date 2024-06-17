@@ -4,6 +4,8 @@ import DashProfileLinkEditModel from "./DashProfileEditLinkModel";
 import Link from "next/link";
 import { api } from "~/utils/api";
 import { toast } from "react-toastify";
+import { IconEye, IconEyeOff, IconPencil } from "@tabler/icons-react";
+import toastOptions from "~/utils/toastOptions";
 
 export default function DashProfileLink({
   profileLink,
@@ -31,25 +33,16 @@ export default function DashProfileLink({
           const msg = res.visible
             ? "Link is now visible"
             : "Link is now hidden";
-          toast.success(msg, {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.success(msg, toastOptions);
           profiles
             .refetch()
             .then()
             .catch((error: string) => {
-              toast.error(error, {
-                closeOnClick: true,
-                pauseOnHover: true,
-              });
+              toast.error(error, toastOptions);
             });
         },
         onError: (error) => {
-          toast.error(error.message, {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.error(error.message, toastOptions);
         },
       },
     );
@@ -73,21 +66,27 @@ export default function DashProfileLink({
 
         <div className="flex items-center gap-2">
           <button
-            className={`${profileLink.visible ? "form_btn_red" : "form_btn_green"} disabled:cursor-not-allowed disabled:bg-gray-300`}
+            className={`${profileLink.visible ? "form_btn_green" : "form_btn_red"} flex items-center gap-2 disabled:cursor-not-allowed disabled:bg-gray-300`}
             onClick={() => {
               toggleVisibility();
             }}
             disabled={toggleProfileLinkVisibilityMutation.isLoading}
           >
-            {profileLink.visible ? "Hide" : "Show"}
+            {profileLink.visible ? "Shown" : "Hidden"}
+            {profileLink.visible ? (
+              <IconEye/>
+            ) : (
+              <IconEyeOff/>
+            )}
           </button>
           <button
-            className="form_btn_blue"
+            className="form_btn_blue flex items-center gap-2"
             onClick={() => {
               editBtn();
             }}
           >
-            Edit
+            Edit{" "}
+            <IconPencil/>
           </button>
         </div>
       </div>

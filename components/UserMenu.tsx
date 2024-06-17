@@ -3,16 +3,15 @@ import { Menu, Transition } from "@headlessui/react";
 import Image from "next/image";
 import Link from "next/link";
 
-
-import type { inferRouterOutputs } from '@trpc/server';
+import type { inferRouterOutputs } from "@trpc/server";
 import { type AppRouter } from "~/server/api/root";
+import { IconLayoutDashboard, IconLogout, IconSettings, IconUsers } from "@tabler/icons-react";
 
 type UserMenuProps = {
-  user?: inferRouterOutputs<AppRouter>['user']['getUser'];
+  user?: inferRouterOutputs<AppRouter>["user"]["getUser"];
 };
 
 export default function UserMenu({ user }: UserMenuProps) {
-
   return (
     <>
       {user && (
@@ -37,61 +36,62 @@ export default function UserMenu({ user }: UserMenuProps) {
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items className="absolute flex flex-col gap-2 right-0 mt-2 w-56 origin-top-right divide-gray-100 rounded-md bg-zinc-800 p-2 shadow-lg ring-1 ring-black/5 focus:outline-none">
+            <Menu.Items className="absolute right-0 mt-2 flex w-56 origin-top-right flex-col gap-2 divide-gray-100 rounded-md bg-zinc-800 p-2 shadow-lg ring-1 ring-black/5 focus:outline-none">
               <Menu.Item>
                 <div className="flex flex-col">
-                  <h2 className="text-white text-xl font-semibold">
+                  <h2 className="text-xl font-semibold text-white">
                     {user.user?.name}
                   </h2>
 
-                  <span className="text-gray-400 text-sm">
+                  <span className="text-sm text-gray-400">
                     {user.user?.username} - {user.user?.role}
                   </span>
-
-
                 </div>
               </Menu.Item>
 
-              {user.user?.requireSetup == false && (<>
-
-                <Menu.Item>
-                  <Link
-                    className="w-full flex rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
-                    href={"/dashboard"}
-                  >
-                    Dashboard
-                  </Link>
-                </Menu.Item>
-
-                <Menu.Item>
-                  <Link
-                    className="w-full flex rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
-                    href={"/settings"}
-                  >
-                    Settings
-                  </Link>
-                </Menu.Item>
-
-                {user.user?.role === "admin" && (
+              {user.user?.requireSetup == false && (
+                <>
                   <Menu.Item>
                     <Link
-                      className="w-full flex rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-blue-600 no-underline transition hover:bg-white/20"
-                      href={"/admin"}
+                      className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
+                      href={"/dashboard"}
                     >
-                      Admin
+                      Dashboard
+                      <IconLayoutDashboard />
                     </Link>
                   </Menu.Item>
-                )}
 
-              </>)}
+                  <Menu.Item>
+                    <Link
+                      className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
+                      href={"/settings"}
+                    >
+                      Settings
+                      <IconSettings />
+                    </Link>
+                  </Menu.Item>
 
+                  {user.user?.role === "admin" && (
+                    <Menu.Item>
+                      <Link
+                        className="flex items-center gap-2 w-full rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-blue-600 no-underline transition hover:bg-white/20"
+                        href={"/admin"}
+                      >
+                        Admin
+                        <IconUsers  />
+                      </Link>
+                    </Menu.Item>
+                  )}
+                </>
+              )}
 
               <Menu.Item>
                 <button
-                  className="w-full rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-red-600 no-underline transition hover:bg-white/20"
+                  className="w-full flex items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-red-600 no-underline transition hover:bg-white/20"
                   onClick={() => void signOut()}
                 >
                   Sign out
+                  <IconLogout />
                 </button>
               </Menu.Item>
             </Menu.Items>

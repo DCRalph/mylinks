@@ -8,6 +8,7 @@ import { api } from "~/utils/api";
 import { type FormEvent, useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import Footer from "components/footer";
+import toastOptions from "~/utils/toastOptions";
 
 export default function Settings() {
   const myUser = api.user.getUser.useQuery();
@@ -28,26 +29,17 @@ export default function Settings() {
       { name: newUsername },
       {
         onSuccess: () => {
-          toast.success("Username changed successfully", {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.success("Username changed successfully", toastOptions);
 
           myUser
             .refetch()
             .then()
             .catch((error: string) => {
-              toast.error(error, {
-                closeOnClick: true,
-                pauseOnHover: true,
-              });
+              toast.error(error, toastOptions);
             });
         },
         onError: (error) => {
-          toast.error(error.message, {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.error(error.message, toastOptions);
         },
       },
     );
@@ -60,7 +52,7 @@ export default function Settings() {
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="relative min-h-screen bg-zinc-950">
+      <main className="flex flex-col min-h-screen bg-zinc-950">
         <Nav user={myUser.data} />
 
         <div className="mt-16 grid h-4 grid-cols-12">

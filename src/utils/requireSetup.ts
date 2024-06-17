@@ -7,6 +7,8 @@ export const checkRequireSetup = async (
 ) => {
   const session = await getServerAuthSession(context);
 
+  // return true
+
   if (!session) {
     return false;
   }

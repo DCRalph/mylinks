@@ -7,6 +7,8 @@ import { api } from "~/utils/api";
 import ProfileLinkElement from "components/ProfilePage/ProfileLink";
 
 import { defualtIcon, Icons } from "~/utils/profileLinkIcons";
+import { IconSquareRoundedPlus } from "@tabler/icons-react";
+import toastOptions from "~/utils/toastOptions";
 
 interface DashCreateLinkModelProps {
   profileId: string;
@@ -46,10 +48,7 @@ export default function DashProfileCreateLinkModel({
       },
       {
         onSuccess: () => {
-          toast.success("Link created successfully", {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.success("Link created successfully", toastOptions);
 
           setNewLinkTitle("");
           setNewLinkUrl("");
@@ -63,17 +62,11 @@ export default function DashProfileCreateLinkModel({
             .refetch()
             .then()
             .catch((error: string) => {
-              toast.error(error, {
-                closeOnClick: true,
-                pauseOnHover: true,
-              });
+              toast.error(error, toastOptions);
             });
         },
         onError: (error) => {
-          toast.error(error.message, {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.error(error.message, toastOptions);
         },
       },
     );
@@ -293,8 +286,10 @@ export default function DashProfileCreateLinkModel({
             </div>
 
             <div className="col-span-full flex justify-center gap-4">
-              <button type="submit" className="form_btn_blue">
+              <button type="submit" className="form_btn_blue flex items-center gap-2">
                 Create
+                <IconSquareRoundedPlus />
+
               </button>
             </div>
           </form>

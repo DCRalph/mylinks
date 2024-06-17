@@ -4,6 +4,8 @@ import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import ModelCloseBtn from "components/ModelCloseBtn";
 import { api } from "~/utils/api";
+import { IconSquareRoundedPlus } from "@tabler/icons-react";
+import toastOptions from "~/utils/toastOptions";
 
 interface DashProfileCreateModelProps {
   isOpen: boolean;
@@ -39,10 +41,7 @@ export default function DashProfileCreateModel({
       },
       {
         onSuccess: () => {
-          toast.success("Profile created successfully", {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.success("Profile created successfully", toastOptions);
 
           setNewProfileName("");
           setNewProfileAltName(null);
@@ -54,17 +53,11 @@ export default function DashProfileCreateModel({
             .refetch()
             .then()
             .catch((error: string) => {
-              toast.error(error, {
-                closeOnClick: true,
-                pauseOnHover: true,
-              });
+              toast.error(error, toastOptions);
             });
         },
         onError: (error) => {
-          toast.error(error.message, {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.error(error.message, toastOptions);
         },
       },
     );
@@ -196,8 +189,10 @@ export default function DashProfileCreateModel({
             </div>
 
             <div className="col-span-full flex justify-center gap-4">
-              <button type="submit" className="form_btn_blue">
+              <button type="submit" className="form_btn_blue flex items-center gap-2">
                 Create
+                <IconSquareRoundedPlus />
+
               </button>
             </div>
           </form>

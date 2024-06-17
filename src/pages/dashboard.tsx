@@ -12,6 +12,8 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import DashProfileCreateModel from "components/Dashboard/Profiles/DashProfileCreateModel";
 import Footer from "components/footer";
+import { IconSquareRoundedPlus } from "@tabler/icons-react";
+import toastOptions from "~/utils/toastOptions";
 
 export default function Dashboard() {
   const [createProfileModelOpen, setCreateProfileModelOpen] = useState(false);
@@ -33,10 +35,7 @@ export default function Dashboard() {
       { name: newLinkName, url: newLinkUrl, slug: newLinkSlug },
       {
         onSuccess: () => {
-          toast.success("Link created successfully", {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.success("Link created successfully", toastOptions);
 
           setNewLinkName("");
           setNewLinkUrl("");
@@ -46,17 +45,11 @@ export default function Dashboard() {
             .refetch()
             .then()
             .catch((error: string) => {
-              toast.error(error, {
-                closeOnClick: true,
-                pauseOnHover: true,
-              });
+              toast.error(error, toastOptions);
             });
         },
         onError: (error) => {
-          toast.error(error.message, {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.error(error.message, toastOptions);
         },
       },
     );
@@ -69,7 +62,7 @@ export default function Dashboard() {
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="relative min-h-screen bg-zinc-950">
+      <main className="flex flex-col min-h-screen bg-zinc-950">
         <Nav user={myUser.data} />
 
         <div className="mx-8 mt-8 grid grid-cols-12 gap-8">
@@ -90,10 +83,11 @@ export default function Dashboard() {
             <div className="mb-24 mt-4 flex w-full flex-col gap-4">
               <div className="flex w-full justify-center gap-4">
                 <button
-                  className="form_btn_blue"
+                  className="form_btn_blue flex items-center gap-2" 
                   onClick={() => setCreateProfileModelOpen(true)}
                 >
                   Create Profile
+                  <IconSquareRoundedPlus />
                 </button>
               </div>
 
@@ -168,15 +162,17 @@ export default function Dashboard() {
               </div>
 
               <button
-                className="form_btn_blue"
+                className="form_btn_blue flex items-center gap-2 justify-center"
                 disabled={createLinkMutation.isLoading}
                 type="submit"
               >
                 Create
+                <IconSquareRoundedPlus />
+
               </button>
             </form>
 
-            <div className="mb-24 mt-4 flex w-full flex-col gap-4">
+            <div className="mt-4 flex w-full flex-col gap-4">
               {myLinks.data?.links?.map((link) => (
                 <DashLink key={link.id} link={link} />
               ))}

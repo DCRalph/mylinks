@@ -7,6 +7,8 @@ import ModelCloseBtn from "components/ModelCloseBtn";
 import { api } from "~/utils/api";
 import ProfileLinkElement from "components/ProfilePage/ProfileLink";
 import { defualtIcon, Icons } from "~/utils/profileLinkIcons";
+import { IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
+import toastOptions from "~/utils/toastOptions";
 
 interface DashLinkEditModelProps {
   profileLink: ProfileLink;
@@ -55,18 +57,12 @@ export default function DashProfileEditModel({
       },
       {
         onSuccess: () => {
-          toast.success("Link edited successfully", {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.success("Link edited successfully", toastOptions);
 
           setIsClosing(true);
         },
         onError: (error) => {
-          toast.error(error.message, {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.error(error.message, toastOptions);
         },
       },
     );
@@ -78,26 +74,17 @@ export default function DashProfileEditModel({
       { id: profileLink.id },
       {
         onSuccess: () => {
-          toast.success("Link deleted successfully", {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.success("Link deleted successfully", toastOptions);
 
           profiles
             .refetch()
             .then()
             .catch((error: string) => {
-              toast.error(error, {
-                closeOnClick: true,
-                pauseOnHover: true,
-              });
+              toast.error(error, toastOptions);
             });
         },
         onError: (error) => {
-          toast.error(error.message, {
-            closeOnClick: true,
-            pauseOnHover: true,
-          });
+          toast.error(error.message, toastOptions);
         },
       },
     );
@@ -316,15 +303,17 @@ export default function DashProfileEditModel({
             </div>
 
             <div className="col-span-full flex justify-center gap-4">
-              <button type="submit" className="form_btn_blue">
+              <button type="submit" className="form_btn_blue flex items-center gap-2">
                 Save
+                <IconDeviceFloppy size={24} />
               </button>
               <button
-                className="form_btn_red"
+                className="form_btn_red flex items-center gap-2"
                 type="button"
                 onClick={deleteProfileLinkHandler}
               >
                 Delete
+               <IconTrash size={24} />
               </button>
             </div>
           </form>
