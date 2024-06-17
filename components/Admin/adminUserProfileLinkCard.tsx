@@ -5,7 +5,6 @@ import {
   IconEye,
   IconEyeOff,
   IconPencil,
-  IconTrash,
 } from "@tabler/icons-react";
 
 export default function AdminUserProfileLinkCard({

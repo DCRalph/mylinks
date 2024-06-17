@@ -3,7 +3,6 @@ import { db } from "~/server/db";
 
 import {
   createTRPCRouter,
-  protectedAdminProcedure,
   protectedProcedure,
 } from "~/server/api/trpc";
 
