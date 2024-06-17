@@ -1,15 +1,11 @@
 import { z } from "zod";
 import { db } from "~/server/db";
 
-import {
-  createTRPCRouter,
-  protectedAdminProcedure,
-} from "~/server/api/trpc";
-
-import badWords from "~/utils/badWords";
+import { createTRPCRouter, protectedAdminProcedure } from "~/server/api/trpc";
 
 export const adminRouter = createTRPCRouter({
-  getUser: protectedAdminProcedure.input(z.object({ userID: z.string() }))
+  getUser: protectedAdminProcedure
+    .input(z.object({ userID: z.string() }))
     .query(async ({ input }) => {
       const user = await db.user.findUnique({
         where: {
@@ -23,9 +19,9 @@ export const adminRouter = createTRPCRouter({
           },
           Links: true,
           Profiles: {
-            include:{
+            include: {
               profileLinks: true,
-            }
+            },
           },
         },
       });
@@ -34,5 +30,20 @@ export const adminRouter = createTRPCRouter({
         user,
       };
     }),
-    
+
+  getUsers: protectedAdminProcedure.query(async () => {
+    const data = await db.user.findMany({
+      include: {
+        accounts: {
+          select: {
+            provider: true,
+          },
+        },
+        Links: true,
+        Profiles: true,
+      },
+    });
+
+    return data;
+  }),
 });

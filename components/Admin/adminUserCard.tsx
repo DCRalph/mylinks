@@ -1,8 +1,8 @@
 import type { inferRouterOutputs } from "@trpc/server";
 import Link from "next/link";
-import type { userRouter } from "~/server/api/routers/user";
+import type { adminRouter } from "~/server/api/routers/admin";
 
-type RouterOutput = inferRouterOutputs<typeof userRouter>;
+type RouterOutput = inferRouterOutputs<typeof adminRouter>;
 
 type AdminUserCardProps = {
   User: RouterOutput["getUsers"][number];
@@ -24,6 +24,8 @@ export default function AdminUserCard({ User }: AdminUserCardProps) {
             ? "email"
             : User.accounts[0].provider}
         </p>
+
+        <p className="text-lg font-bold">Role: {User.role}</p>
 
         <p className="text-lg font-bold">
           Links: {User.Links.length} - Profiles: {User.Profiles.length}

@@ -1,8 +1,5 @@
-import { db } from "~/server/db";
 import Head from "next/head";
 import { type GetServerSidePropsContext } from "next";
-import { notFound } from "next/navigation";
-import { checkRequireSetup } from "~/utils/requireSetup";
 import { requireAuthAdmin } from "~/utils/requreAuth";
 
 import { api } from "~/utils/api";

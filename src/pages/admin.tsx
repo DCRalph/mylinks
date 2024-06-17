@@ -10,7 +10,7 @@ import AdminUserCard from "components/Admin/adminUserCard";
 
 export default function Admin() {
   const myUser = api.user.getUser.useQuery();
-  const users = api.user.getUsers.useQuery();
+  const users = api.admin.getUsers.useQuery();
 
   return (
     <>

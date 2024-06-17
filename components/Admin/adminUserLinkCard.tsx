@@ -12,7 +12,7 @@ export default function AdminUserLinkCard({ link }: { link: LinkType }) {
           {env.NEXT_PUBLIC_SHORT_DOMAIN}/{link.slug}
           <IconExternalLink />
         </Link>
-        <p className="text-lg font-bold">{link.url}</p>
+        <p className="text-lg font-bold truncate">{link.url}</p>
       </div>
     </div>
   );

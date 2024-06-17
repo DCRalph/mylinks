@@ -10,21 +10,6 @@ import {
 import badWords from "~/utils/badWords";
 
 export const userRouter = createTRPCRouter({
-  getUsers: protectedAdminProcedure.query(async () => {
-    const data = await db.user.findMany({
-      include: {
-        accounts: {
-          select: {
-            provider: true,
-          },
-        },
-        Links: true,
-        Profiles: true,
-      },
-    });
-
-    return data;
-  }),
   getUser: protectedProcedure.query(async ({ ctx }) => {
     const user = await db.user.findUnique({
       where: {
