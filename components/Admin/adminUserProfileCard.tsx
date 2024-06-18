@@ -1,5 +1,5 @@
 import { type Profile, type ProfileLink } from "@prisma/client";
-import { IconExternalLink, IconEye, IconEyeOff } from "@tabler/icons-react";
+import { IconChevronDown, IconChevronUp, IconExternalLink, IconEye, IconEyeOff } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
 import { env } from "~/env";
@@ -14,29 +14,29 @@ export default function AdminUserProfileCard({
 
   return (
     <div className="grid h-min grid-cols-12 rounded-lg border-2 border-zinc-600 bg-zinc-900 text-white shadow-lg">
-      <div className="col-span-8 p-4">
+      <div className="col-span-full lg:col-span-8 p-4">
         <p className="pb-4 text-3xl font-bold">{profile.name} </p>
         <Link
-          className="flex items-center gap-2 text-lg font-bold underline"
+          className="flex items-center gap-2 text-lg font-bold underline break-all"
           href={`${env.NEXT_PUBLIC_DOMAIN}/p/${profile.slug}`}
           target="_blank"
         >
           {env.NEXT_PUBLIC_SHORT_DOMAIN}/p/{profile.slug}
           <IconExternalLink />
         </Link>
-        <p className="text-lg font-bold">{profile.name}</p>
+        <p className="text-lg font-bold break-all">{profile.name}</p>
       </div>
 
-      <div className="col-span-4 p-4">
-        <div className="flex justify-end">
+      <div className="col-span-full lg:col-span-4 p-4">
+        <div className="flex lg:justify-end">
           <button
             className={`${expanded ? "form_btn_green" : "form_btn_red"} flex items-center gap-2 disabled:cursor-not-allowed disabled:bg-gray-300`}
             onClick={() => {
               setExpanded(!expanded);
             }}
           >
-            {expanded ? "Shown" : "Hidden"}
-            {expanded ? <IconEye /> : <IconEyeOff />}
+            {expanded ? "Expanded" : "Collapsed"}
+            {expanded ? <IconChevronDown /> : <IconChevronUp />}
           </button>
         </div>
       </div>

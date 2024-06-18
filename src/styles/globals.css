@@ -20,6 +20,17 @@ body {
   scroll-behavior: smooth;
 }
 
+/* Hide scrollbar for Chrome, Safari and Opera */
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+* {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
 .form_input {
   @apply block w-full rounded-lg border border-zinc-600 bg-zinc-700 p-2.5 text-sm text-white placeholder-zinc-400;
 }
@@ -55,23 +66,22 @@ body {
   );
 }
 
-
 .glowGreen {
   box-shadow: 0 0 15px #00ff00;
 }
 
-.glowRed{
+.glowRed {
   box-shadow: 0 0 15px #ff0000;
 }
 
-.glowGreenText{
+.glowGreenText {
   text-shadow: 0 0 15px #00ff00;
 }
 
-.glowRedText{
+.glowRedText {
   text-shadow: 0 0 15px #ff0000;
 }
 
-.glowOrangeText{
+.glowOrangeText {
   text-shadow: 0 0 15px #ff9900;
 }

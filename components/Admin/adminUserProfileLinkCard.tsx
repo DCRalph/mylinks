@@ -1,11 +1,7 @@
 import { type ProfileLink } from "@prisma/client";
 import { defualtIcon } from "~/utils/profileLinkIcons";
 import Image from "next/image";
-import {
-  IconEye,
-  IconEyeOff,
-  IconPencil,
-} from "@tabler/icons-react";
+import { IconEye, IconEyeOff, IconPencil } from "@tabler/icons-react";
 
 export default function AdminUserProfileLinkCard({
   profileLink,
@@ -19,11 +15,11 @@ export default function AdminUserProfileLinkCard({
   return (
     <div className="grid grid-cols-12 gap-4 rounded-lg border-2 border-zinc-600 bg-zinc-900 p-4 text-white shadow-lg">
       <div className="col-span-8">
-        <p className="text-3xl font-bold">{profileLink.title} </p>
-        <p className="text-lg font-bold text-zinc-400">
+        <p className="break-all text-3xl font-bold">{profileLink.title} </p>
+        <p className="break-all text-lg font-bold text-zinc-400">
           {profileLink.description}
         </p>
-        <p className="text-lg font-bold">{profileLink.url}</p>
+        <p className="break-all text-lg font-bold">{profileLink.url}</p>
       </div>
       <div className="col-span-4">
         <div className="flex justify-end gap-4">
