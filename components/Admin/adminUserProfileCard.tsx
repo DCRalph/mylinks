@@ -1,5 +1,5 @@
 import { type Profile, type ProfileLink } from "@prisma/client";
-import { IconChevronDown, IconChevronUp, IconExternalLink, IconEye, IconEyeOff } from "@tabler/icons-react";
+import { IconChevronDown, IconChevronUp, IconExternalLink } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
 import { env } from "~/env";
