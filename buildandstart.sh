@@ -7,7 +7,7 @@ echo "Pulling latest changes from git"
 git pull
 
 echo "Removing .next folder"
-rm -rf .next
+sudo rm -rf .next
 
 echo "Installing dependencies"
 npm i
