@@ -1,4 +1,4 @@
-import Nav from "components/Nav";
+import Nav from "~/components/Nav";
 import Head from "next/head";
 
 import { type GetServerSidePropsContext } from "next";
@@ -6,12 +6,12 @@ import { api } from "~/utils/api";
 
 import { requireAuth } from "~/utils/requreAuth";
 import { checkRequireSetup } from "~/utils/requireSetup";
-import DashLink from "components/Dashboard/Links/DashLink";
-import DashProfileListItem from "components/Dashboard/Profiles/DashProfileListItem";
+import DashLink from "~/components/Dashboard/Links/DashLink";
+import DashProfileListItem from "~/components/Dashboard/Profiles/DashProfileListItem";
 import { useState } from "react";
 import { toast } from "react-toastify";
-import DashProfileCreateModel from "components/Dashboard/Profiles/DashProfileCreateModel";
-import Footer from "components/footer";
+import DashProfileCreateModel from "~/components/Dashboard/Profiles/DashProfileCreateModel";
+import Footer from "~/components/footer";
 import { IconSquareRoundedPlus } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
 
@@ -62,7 +62,7 @@ export default function Dashboard() {
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex flex-col min-h-screen bg-zinc-950">
+      <main className="flex min-h-screen flex-col bg-zinc-950">
         <Nav user={myUser.data} />
 
         <div className="mx-8 mt-8 grid grid-cols-12 gap-8">
@@ -83,7 +83,7 @@ export default function Dashboard() {
             <div className="mb-24 mt-4 flex w-full flex-col gap-4">
               <div className="flex w-full justify-center gap-4">
                 <button
-                  className="form_btn_blue flex items-center gap-2" 
+                  className="form_btn_blue flex items-center gap-2"
                   onClick={() => setCreateProfileModelOpen(true)}
                 >
                   Create Profile
@@ -162,13 +162,12 @@ export default function Dashboard() {
               </div>
 
               <button
-                className="form_btn_blue flex items-center gap-2 justify-center"
+                className="form_btn_blue flex items-center justify-center gap-2"
                 disabled={createLinkMutation.isLoading}
                 type="submit"
               >
                 Create
                 <IconSquareRoundedPlus />
-
               </button>
             </form>
 

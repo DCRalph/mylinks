@@ -1,12 +1,12 @@
-import Nav from "components/Nav";
+import Nav from "~/components/Nav";
 import Head from "next/head";
 import { api } from "~/utils/api";
 
 import { type GetServerSidePropsContext } from "next";
 import { requireAuthAdmin } from "~/utils/requreAuth";
 import { checkRequireSetup } from "~/utils/requireSetup";
-import Footer from "components/footer";
-import AdminUserCard from "components/Admin/adminUserCard";
+import Footer from "~/components/footer";
+import AdminUserCard from "~/components/Admin/adminUserCard";
 
 export default function Admin() {
   const myUser = api.user.getUser.useQuery();

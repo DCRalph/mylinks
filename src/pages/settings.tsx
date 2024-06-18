@@ -1,4 +1,4 @@
-import Nav from "components/Nav";
+import Nav from "~/components/Nav";
 import Head from "next/head";
 
 import { type GetServerSidePropsContext } from "next";
@@ -7,7 +7,7 @@ import { checkRequireSetup } from "~/utils/requireSetup";
 import { api } from "~/utils/api";
 import { type FormEvent, useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import Footer from "components/footer";
+import Footer from "~/components/footer";
 import toastOptions from "~/utils/toastOptions";
 
 export default function Settings() {
@@ -52,7 +52,7 @@ export default function Settings() {
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex flex-col min-h-screen bg-zinc-950">
+      <main className="flex min-h-screen flex-col bg-zinc-950">
         <Nav user={myUser.data} />
 
         <div className="mt-16 grid h-4 grid-cols-12">

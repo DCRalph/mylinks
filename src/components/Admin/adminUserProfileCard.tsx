@@ -51,7 +51,7 @@ export default function AdminUserProfileCard({
       {expanded && profile.profileLinks.length != 0 && (
         <div className="col-span-12 flex flex-col gap-4 p-4 border-t border-zinc-600">
           {profile.profileLinks.map((link) => (
-            <AdminUserProfileLinkCard key={link.id} profileLink={link} />
+            <AdminUserProfileLinkCard key={link.id} profileLink={link} userID={profile.userId} />
           ))}
         </div>
       )}

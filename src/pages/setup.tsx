@@ -1,4 +1,4 @@
-import Nav from "components/Nav";
+import Nav from "~/components/Nav";
 import Head from "next/head";
 
 import { type GetServerSidePropsContext } from "next";
@@ -7,7 +7,7 @@ import { checkRequireSetup } from "~/utils/requireSetup";
 import { api } from "~/utils/api";
 import { toast } from "react-toastify";
 import { type FormEvent, useEffect, useState } from "react";
-import Footer from "components/footer";
+import Footer from "~/components/footer";
 import { IconSquareRoundedPlus } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
 

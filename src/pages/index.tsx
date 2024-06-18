@@ -1,12 +1,12 @@
 import Head from "next/head";
-import Nav from "components/Nav";
+import Nav from "~/components/Nav";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 
 import { api } from "~/utils/api";
 import { type GetServerSidePropsContext } from "next";
 import { checkRequireSetup } from "~/utils/requireSetup";
-import Footer from "components/footer";
+import Footer from "~/components/footer";
 import { IconLayoutDashboard } from "@tabler/icons-react";
 
 export default function Home() {
@@ -19,7 +19,7 @@ export default function Home() {
         <meta name="description" content="Link sharing website" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex flex-col min-h-screen bg-zinc-950">
+      <main className="flex min-h-screen flex-col bg-zinc-950">
         <Nav user={myUser.data} />
 
         <div className=" mt-16 grid grid-cols-3">
@@ -32,7 +32,7 @@ export default function Home() {
 
         <div className="mx-8 mt-16 flex flex-col items-center">
           <div className="w-full max-w-lg rounded-lg border border-zinc-600 bg-zinc-800 p-4">
-            <h1 className="text-center text-2xl font-bold text-red-600 lg:text-3xl mb-4">
+            <h1 className="mb-4 text-center text-2xl font-bold text-red-600 lg:text-3xl">
               BETA
             </h1>
             <h1 className="text-center text-2xl font-bold text-white lg:text-3xl">
@@ -48,7 +48,7 @@ export default function Home() {
             {myUser.data ? (
               <Link
                 href="/dashboard"
-                className="rounded bg-blue-500 px-4 py-2 font-bold flex items-center gap-2 text-white hover:bg-blue-700"
+                className="flex items-center gap-2 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
               >
                 Dashboard
                 <IconLayoutDashboard />

@@ -3,9 +3,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import ReactDOM from "react-dom";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
-import ModelCloseBtn from "components/ModelCloseBtn";
+import ModelCloseBtn from "~/components/ModelCloseBtn";
 import { api } from "~/utils/api";
-import ProfileLinkElement from "components/ProfilePage/ProfileLink";
+import ProfileLinkElement from "~/components/ProfilePage/ProfileLink";
 import { defualtIcon, Icons } from "~/utils/profileLinkIcons";
 import { IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
@@ -303,7 +303,10 @@ export default function DashProfileEditModel({
             </div>
 
             <div className="col-span-full flex justify-center gap-4">
-              <button type="submit" className="form_btn_blue flex items-center gap-2">
+              <button
+                type="submit"
+                className="form_btn_blue flex items-center gap-2"
+              >
                 Save
                 <IconDeviceFloppy size={24} />
               </button>
@@ -313,7 +316,7 @@ export default function DashProfileEditModel({
                 onClick={deleteProfileLinkHandler}
               >
                 Delete
-               <IconTrash size={24} />
+                <IconTrash size={24} />
               </button>
             </div>
           </form>

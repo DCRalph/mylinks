@@ -2,9 +2,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import ReactDOM from "react-dom";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
-import ModelCloseBtn from "components/ModelCloseBtn";
+import ModelCloseBtn from "~/components/ModelCloseBtn";
 import { api } from "~/utils/api";
-import ProfileLinkElement from "components/ProfilePage/ProfileLink";
+import ProfileLinkElement from "~/components/ProfilePage/ProfileLink";
 
 import { defualtIcon, Icons } from "~/utils/profileLinkIcons";
 import { IconSquareRoundedPlus } from "@tabler/icons-react";
@@ -265,7 +265,6 @@ export default function DashProfileCreateLinkModel({
                   ))}
                 </select>
               </div>
-
             </div>
 
             <div className="col-span-full flex justify-center">
@@ -286,10 +285,12 @@ export default function DashProfileCreateLinkModel({
             </div>
 
             <div className="col-span-full flex justify-center gap-4">
-              <button type="submit" className="form_btn_blue flex items-center gap-2">
+              <button
+                type="submit"
+                className="form_btn_blue flex items-center gap-2"
+              >
                 Create
                 <IconSquareRoundedPlus />
-
               </button>
             </div>
           </form>

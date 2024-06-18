@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { api } from "~/utils/api";
 import { motion } from "framer-motion";
 import DashProfileLink from "./DashProfileLinkListItem";
-import ModelCloseBtn from "components/ModelCloseBtn";
+import ModelCloseBtn from "~/components/ModelCloseBtn";
 import DashProfileCreateLinkModel from "./DashProfileCreateLinkModel";
 import Link from "next/link";
 import { env } from "~/env";
@@ -13,7 +13,11 @@ import { env } from "~/env";
 import { Reorder } from "framer-motion";
 import DashProfileEditProfileDetailsModel from "./DashProfileEditProfileDetailsModel";
 import parseProfileLinkOrder from "~/utils/parseProfileLinkOrder";
-import { IconPencil, IconSquareRoundedPlus, IconTrash } from "@tabler/icons-react";
+import {
+  IconPencil,
+  IconSquareRoundedPlus,
+  IconTrash,
+} from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
 
 type Profile_ProjectLinks = {
@@ -173,14 +177,13 @@ export default function DashProfileEditModel({
             >
               Add Link
               <IconSquareRoundedPlus />
-
             </button>
             <button
               className="form_btn_blue flex items-center gap-2"
               onClick={() => setIsEditDetailsOpen(true)}
             >
               Edit Profile
-              <IconPencil/>
+              <IconPencil />
             </button>
             <button
               className="form_btn_red flex items-center gap-2"
@@ -188,7 +191,7 @@ export default function DashProfileEditModel({
               onClick={deleteProfileHandler}
             >
               Delete Profile
-              <IconTrash/>
+              <IconTrash />
             </button>
           </div>
 

@@ -3,13 +3,13 @@ import { type GetServerSidePropsContext } from "next";
 import { requireAuthAdmin } from "~/utils/requreAuth";
 
 import { api } from "~/utils/api";
-import Nav from "components/Nav";
-import Footer from "components/footer";
+import Nav from "~/components/Nav";
+import Footer from "~/components/footer";
 import { useState } from "react";
 import Link from "next/link";
 import { IconArrowBack, IconDeviceFloppy } from "@tabler/icons-react";
-import AdminUserLinkCard from "components/Admin/adminUserLinkCard";
-import AdminUserProfileCard from "components/Admin/adminUserProfileCard";
+import AdminUserLinkCard from "~/components/Admin/adminUserLinkCard";
+import AdminUserProfileCard from "~/components/Admin/adminUserProfileCard";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const userID = context.query.userID as string;

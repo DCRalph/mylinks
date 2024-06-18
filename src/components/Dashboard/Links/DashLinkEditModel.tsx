@@ -1,54 +1,68 @@
-import { type Profile } from "@prisma/client";
+import { type Link } from "@prisma/client";
 import { useEffect, useState, type ReactNode } from "react";
 import ReactDOM from "react-dom";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
-import ModelCloseBtn from "components/ModelCloseBtn";
+import ModelCloseBtn from "~/components/ModelCloseBtn";
 import { api } from "~/utils/api";
-import { IconDeviceFloppy } from "@tabler/icons-react";
+import { IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
 
-interface DashEditProfileDetailsModelProps {
-  profile: Profile;
+interface DashLinkEditModelProps {
+  link: Link;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
 
-export default function DashEditProfileDetailsModel({
-  profile,
+export default function DashLinkEditModel({
+  link,
   isOpen,
   setIsOpen,
-}: DashEditProfileDetailsModelProps) {
+}: DashLinkEditModelProps) {
   const [isClosing, setIsClosing] = useState(false);
 
-  const [newProfileName, setNewProfileName] = useState(profile.name);
-  const [newProfileAltName, setNewProfileAltName] = useState(profile.altName);
-  const [newProfileSlug, setNewProfileSlug] = useState(profile.slug);
-  const [newProfileBio, setNewProfileBio] = useState(profile.bio);
+  const [UrlName, setUrlName] = useState(link.name);
+  const [UrllongUrl, setUrlLongUrl] = useState(link.url);
+  const [UrlshortUrl, setUrlShortUrl] = useState(link.slug);
 
-  const profiles = api.profile.getProfiles.useQuery();
-  const editProfileMutation = api.profile.editProfile.useMutation();
+  const myLinks = api.link.getMyLinks.useQuery();
+  const editLinkMutation = api.link.editLink.useMutation();
+  const deleteLinkMutation = api.link.deleteLink.useMutation();
+  const clicks = api.link.getClicks.useQuery({ id: link.id });
 
-  const editProfileLinkHandler = async (e: React.FormEvent) => {
+  const editLinkHandler = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (newProfileAltName == "") setNewProfileAltName(null);
-    if (newProfileBio == "") setNewProfileBio(null);
-
-    editProfileMutation.mutate(
-      {
-        id: profile.id,
-        name: newProfileName,
-        altName: newProfileAltName,
-        slug: newProfileSlug,
-        bio: newProfileBio,
-      },
+    editLinkMutation.mutate(
+      { id: link.id, name: UrlName, url: UrllongUrl, slug: UrlshortUrl },
       {
         onSuccess: () => {
-          toast.success("Profile edited successfully", toastOptions);
+          toast.success("Link edited successfully", toastOptions);
 
           setIsClosing(true);
-          profiles
+          myLinks
+            .refetch()
+            .then()
+            .catch((error: string) => {
+              toast.error(error, toastOptions);
+            });
+        },
+        onError: (error) => {
+          toast.error(error.message, toastOptions);
+        },
+      },
+    );
+  };
+
+  const deleteLinkHandler = async () => {
+    deleteLinkMutation.mutate(
+      { id: link.id },
+      {
+        onSuccess: () => {
+          toast.success("Link deleted successfully", toastOptions);
+
+          setIsClosing(true);
+          myLinks
             .refetch()
             .then()
             .catch((error: string) => {
@@ -96,101 +110,90 @@ export default function DashEditProfileDetailsModel({
         transition={{ type: "spring", damping: 12, mass: 0.75 }}
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
         className={
-          "relative m-2 grid h-fit w-full cursor-auto grid-cols-12 overflow-hidden rounded-2xl bg-zinc-800 p-8 shadow-lg"
+          "relative grid h-fit w-full cursor-auto grid-cols-12 overflow-hidden rounded-2xl bg-zinc-800 p-8 shadow-lg"
         }
       >
         <ModelCloseBtn setIsClosing={setIsClosing} />
 
-        <div className="col-span-full flex justify-center text-white">
-          <h1 className="text-4xl font-semibold">Edit details</h1>
+        <div className="col-span-full flex flex-col items-center gap-4 text-white">
+          <h1 className="text-4xl font-semibold">Edit Link</h1>
+          <h2 className="text-xl">Clicks: {clicks.data?.clicks.length}</h2>
         </div>
 
         <div className="col-span-full col-start-1 mx-auto mt-8 flex w-full justify-center md:col-span-6 md:col-start-4">
           <form
-            onSubmit={editProfileLinkHandler}
+            onSubmit={editLinkHandler}
             className="grid w-full grid-cols-2 gap-4"
           >
             <div className="col-span-full">
               <label
-                htmlFor="newProfileName"
+                htmlFor="newName"
                 className="mb-2 block text-sm font-medium text-white"
               >
                 Name
               </label>
               <input
-                type="text"
-                id="newProfileName"
-                className="form_input"
                 placeholder="Name"
-                value={newProfileName}
-                onChange={(e) => {
-                  setNewProfileName(e.target.value);
-                }}
+                type="text"
+                id="newName"
+                className="form_input"
+                value={UrlName}
+                onChange={(e) => setUrlName(e.target.value)}
                 required
               />
             </div>
 
             <div className="col-span-full">
               <label
-                htmlFor="newProfileAltName"
-                className="mb-2 block text-sm font-medium text-white"
-              >
-                Alt Name (Optional and only visible to you)
-              </label>
-              <input
-                type="text"
-                id="newProfileAltName"
-                className="form_input"
-                placeholder="Alt Name"
-                value={newProfileAltName ?? ""}
-                onChange={(e) => {
-                  setNewProfileAltName(e.target.value);
-                }}
-              />
-            </div>
-
-            <div className="col-span-full">
-              <label
-                htmlFor="newProfileSlug"
+                htmlFor="newShortUrl"
                 className="mb-2 block text-sm font-medium text-white"
               >
                 Slug
               </label>
               <input
-                type="text"
-                id="newProfileSlug"
-                className="form_input"
                 placeholder="Slug"
-                value={newProfileSlug}
-                onChange={(e) => {
-                  setNewProfileSlug(e.target.value);
-                }}
+                type="text"
+                id="newShortUrl"
+                className="form_input"
+                value={UrlshortUrl}
+                onChange={(e) => setUrlShortUrl(e.target.value)}
                 required
               />
             </div>
 
             <div className="col-span-full">
               <label
-                htmlFor="newProfileBio"
+                htmlFor="newLongUrl"
                 className="mb-2 block text-sm font-medium text-white"
               >
-                Bio (Optional)
+                Long Url
               </label>
-              <textarea
-                id="newProfileBio"
-                className="form_input h-64"
-                placeholder="Bio"
-                value={newProfileBio ?? ""}
-                onChange={(e) => {
-                  setNewProfileBio(e.target.value);
-                }}
+              <input
+                placeholder="Long Url"
+                type="text"
+                id="newLongUrl"
+                className="form_input"
+                value={UrllongUrl}
+                onChange={(e) => setUrlLongUrl(e.target.value)}
+                required
               />
             </div>
 
             <div className="col-span-full flex justify-center gap-4">
-              <button type="submit" className="form_btn_blue flex items-center gap-2">
+              <button
+                className="form_btn_blue flex items-center gap-2"
+                type="submit"
+              >
                 Save
-                <IconDeviceFloppy/>
+                <IconDeviceFloppy />
+              </button>
+              <button
+                className="form_btn_red flex items-center gap-2"
+                type="button"
+                onClick={deleteLinkHandler}
+              >
+                Delete
+                <IconTrash />
               </button>
             </div>
           </form>

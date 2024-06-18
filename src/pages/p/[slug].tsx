@@ -2,7 +2,7 @@ import { db } from "~/server/db";
 import Head from "next/head";
 import { getClientIp } from "request-ip";
 import { type GetServerSidePropsContext } from "next";
-import ProfilePage from "components/ProfilePage/ProfilePage";
+import ProfilePage from "~/components/ProfilePage/ProfilePage";
 
 import { type Profile, type ProfileLink } from "@prisma/client";
 
