@@ -41,6 +41,10 @@ export const requireSpyPixel = async (
     return false
   }
 
+  if (session.user.admin) {
+    return true;
+  }
+
   if (session.user.spyPixel) {
     return true;
   }
