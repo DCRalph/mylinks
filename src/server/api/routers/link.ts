@@ -59,7 +59,7 @@ export const linkRouter = createTRPCRouter({
       }
 
       if (slug.length > 0) {
-        if (slug.length < 3 && ctx.session.user.role != "admin") {
+        if (slug.length < 3 && ctx.session.user.admin) {
           throw new Error("Slug must be at least 3 characters long");
         }
 
@@ -146,7 +146,7 @@ export const linkRouter = createTRPCRouter({
       }
 
       if (slug.length > 0) {
-        if (slug.length < 3 && ctx.session.user.role != "admin") {
+        if (slug.length < 3 && ctx.session.user.admin) {
           throw new Error("Slug must be at least 3 characters long");
         }
 

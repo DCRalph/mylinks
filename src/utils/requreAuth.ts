@@ -32,6 +32,22 @@ export const requireAuthCB = async (
   return cb({ session });
 };
 
+export const requireSpyPixel = async (
+  context: GetServerSidePropsContext,
+) => {
+  const session = await getServerAuthSession(context);
+
+  if (!session) {
+    return false
+  }
+
+  if (session.user.spyPixel) {
+    return true;
+  }
+
+  return false;
+}
+
 
 export const requireAuthAdmin = async (
   context: GetServerSidePropsContext,
@@ -42,12 +58,14 @@ export const requireAuthAdmin = async (
     return false
   }
 
-  if (session.user.role !== "admin") {
-    return false;
+
+  if (session.user.admin) {
+    return true;
   }
 
-  return true;
+  return false;
 };
+
 
 export const requireAuthAdminCB = async (
   context: GetServerSidePropsContext,
@@ -64,7 +82,7 @@ export const requireAuthAdminCB = async (
     };
   }
 
-  if (session.user.role !== "admin") {
+  if (!session.user.admin) {
     return {
       redirect: {
         destination: "/",

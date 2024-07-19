@@ -69,7 +69,10 @@ model User {
   Links Link[]
   Profiles Profile[]
 
-  role     String?   @default("user")
+  admin Boolean @default(false)
+  spyPixel Boolean @default(false)
+
+  // role     String?   @default("user")
   requireSetup Boolean @default(true)
 }
 

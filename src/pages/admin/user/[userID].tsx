@@ -116,9 +116,9 @@ export default function Slug({ userID }: { userID: string }) {
                   : user.data?.user?.accounts[0].provider}
               </p>
 
-              <p className=" text-lg font-bold">
+              {/* <p className=" text-lg font-bold">
                 Role: {user.data?.user?.role}
-              </p>
+              </p> */}
 
               <p className=" text-lg font-bold">
                 Links: {user.data?.user?.Links.length} - Profiles:{" "}

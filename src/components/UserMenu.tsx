@@ -5,13 +5,24 @@ import Link from "next/link";
 
 import type { inferRouterOutputs } from "@trpc/server";
 import { type AppRouter } from "~/server/api/root";
-import { IconLayoutDashboard, IconLogout, IconSettings, IconUsers } from "@tabler/icons-react";
+import { IconLayoutDashboard, IconLogout, IconSettings, IconSpy, IconUsers } from "@tabler/icons-react";
 
 type UserMenuProps = {
   user?: inferRouterOutputs<AppRouter>["user"]["getUser"];
 };
 
+function getUserPermText(user: UserMenuProps["user"]) {
+  if (!user) return "Not signed in";
+
+  if (user.user?.admin) return "Admin";
+  if (user.user?.spyPixel) return "Spy";
+  return "User";
+}
+
 export default function UserMenu({ user }: UserMenuProps) {
+
+
+
   return (
     <>
       {user && (
@@ -44,8 +55,9 @@ export default function UserMenu({ user }: UserMenuProps) {
                   </h2>
 
                   <span className="text-sm text-gray-400">
-                    {user.user?.username} - {user.user?.role}
+                    {user.user?.username} - {getUserPermText(user)}
                   </span>
+
                 </div>
               </Menu.Item>
 
@@ -71,14 +83,26 @@ export default function UserMenu({ user }: UserMenuProps) {
                     </Link>
                   </Menu.Item>
 
-                  {user.user?.role === "admin" && (
+                  {(user.user?.admin || user.user?.spyPixel) && (
+                    <Menu.Item>
+                      <Link
+                        className="flex items-center gap-2 w-full rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-pink-600 no-underline transition hover:bg-white/20"
+                        href={"/spy-pixel"}
+                      >
+                        Spy Pixel
+                        <IconSpy />
+                      </Link>
+                    </Menu.Item>
+                  )}
+
+                  {user.user?.admin && (
                     <Menu.Item>
                       <Link
                         className="flex items-center gap-2 w-full rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-blue-600 no-underline transition hover:bg-white/20"
                         href={"/admin"}
                       >
                         Admin
-                        <IconUsers  />
+                        <IconUsers />
                       </Link>
                     </Menu.Item>
                   )}

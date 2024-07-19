@@ -25,7 +25,7 @@ export default function AdminUserCard({ User }: AdminUserCardProps) {
             : User.accounts[0].provider}
         </p>
 
-        <p className="text-sm font-bold lg:text-lg">Role: {User.role}</p>
+        {/* <p className="text-sm font-bold lg:text-lg">Role: {User.role}</p> */}
 
         <p className="text-sm font-bold lg:text-lg">
           Links: {User.Links.length} - Profiles: {User.Profiles.length}
