@@ -68,6 +68,7 @@ model User {
 
   Links Link[]
   Profiles Profile[]
+  SpyPixels SpyPixel[]
 
   admin Boolean @default(false)
   spyPixel Boolean @default(false)
@@ -134,6 +135,18 @@ model ProfileLink {
   fgColor       String?
 }
 
+model SpyPixel {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String 
+
+  name      String
+
+  clicks    Click[]
+}
+
 model Click {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -144,12 +157,12 @@ model Click {
   profileId String?
   profile   Profile?  @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
+  spyPixelId String?
+  spyPixel   SpyPixel? @relation(fields: [spyPixelId], references: [id], onDelete: Cascade)
 
   userAgent String?
   ipAddress String?
   referer   String?
-
-  @@index([linkId])
 }
 
 // model invitedUsers {
