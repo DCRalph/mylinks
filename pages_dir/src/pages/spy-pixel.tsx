@@ -25,6 +25,8 @@ export default function SpyPixel() {
           Spy Pixel
         </h1>
 
+        
+
 
 
         <Footer />
@@ -35,9 +37,9 @@ export default function SpyPixel() {
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const needsSetup = await checkRequireSetup(context);
-  const isAdmin = await requireSpyPixel(context);
+  const allowed = await requireSpyPixel(context);
 
-  if (!isAdmin) {
+  if (!allowed) {
     return {
       redirect: {
         destination: "/",
