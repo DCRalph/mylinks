@@ -143,6 +143,8 @@ model SpyPixel {
   userId     String 
 
   name      String
+  
+  slug      String   @unique
 
   clicks    Click[]
 }
@@ -163,6 +165,7 @@ model Click {
   userAgent String?
   ipAddress String?
   referer   String?
+  allHeaders   String?
 }
 
 // model invitedUsers {
