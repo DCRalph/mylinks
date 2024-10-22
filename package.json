@@ -20,6 +20,7 @@
     "@t3-oss/env-nextjs": "^0.11.1",
     "@tabler/icons-react": "^3.19.0",
     "@trpc/next": "^10.45.2",
+    "@trpc/react-query": "^10.45.2",
     "client-only": "^0.0.1",
     "eslint": "^8.57.1",
     "framer-motion": "^11.11.9",
