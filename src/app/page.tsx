@@ -6,15 +6,9 @@ import Nav from "~/components/Nav";
 import Footer from "~/components/footer";
 import { Button } from "~/components/ui/button";
 
-// import { getServerAuthSession } from "~/server/auth";
 import { api } from "~/trpc/react";
 
 export default function Home() {
-  // const hello = await api.post.hello({ text: "from tRPC" });
-  // const session = await getServerAuthSession();
-
-  // void api.post.getLatest.prefetch();
-
   const myUser = api.user.getUser.useQuery();
 
   return (
@@ -49,13 +43,15 @@ export default function Home() {
               Loading...
             </Button>
           ) : myUser.data ? (
-            <Link
-              href="/dashboard"
-              className="form_btn_blue flex items-center gap-2"
-            >
-              <IconLayoutDashboard />
-              Dashboard
-            </Link>
+            <Button asChild>
+              <Link
+                href="/dashboard"
+                className="form_btn_blue flex items-center gap-2"
+              >
+                <IconLayoutDashboard />
+                Dashboard
+              </Link>
+            </Button>
           ) : (
             <Button
               className="form_btn_blue flex items-center gap-2"

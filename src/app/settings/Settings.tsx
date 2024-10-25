@@ -73,19 +73,9 @@ export default function Settings() {
               >
                 Username
               </label>
-              {/* <input
-                type="text"
-                id="userName"
-                className="form_input"
-                placeholder="Username"
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-                required
-              /> */}
               <Input
                 type="text"
                 id="userName"
-                className="form_input"
                 placeholder="Username"
                 value={newUsername}
                 onChange={(e) => setNewUsername(e.target.value)}

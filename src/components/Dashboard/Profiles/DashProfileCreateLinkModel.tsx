@@ -132,7 +132,6 @@ export default function DashProfileCreateLinkModel({
               <Input
                 type="text"
                 id="newLinkTitle"
-                className="form_input"
                 placeholder="Name"
                 value={newLinkTitle}
                 onChange={(e) => {
@@ -152,7 +151,6 @@ export default function DashProfileCreateLinkModel({
               <Input
                 type="text"
                 id="newLinkUrl"
-                className="form_input"
                 placeholder="URL"
                 value={newLinkUrl}
                 onChange={(e) => {
@@ -171,7 +169,6 @@ export default function DashProfileCreateLinkModel({
               </label>
               <Input
                 id="newLinkDescription"
-                className="form_input"
                 placeholder="Description"
                 value={newLinkDescription}
                 onChange={(e) => {
@@ -184,7 +181,7 @@ export default function DashProfileCreateLinkModel({
               <div className="h-full w-20">
                 <Input
                   type="color"
-                  className="form_input h-full"
+                  className="h-full"
                   value={newLinkBgColor}
                   onChange={(e) => {
                     setNewLinkBgColor(e.target.value);
@@ -200,7 +197,6 @@ export default function DashProfileCreateLinkModel({
                 </label>
                 <Input
                   id="newLinkBgColor"
-                  className="form_input"
                   placeholder="Description"
                   value={newLinkBgColor}
                   onChange={(e) => {
@@ -215,7 +211,7 @@ export default function DashProfileCreateLinkModel({
               <div className="h-full w-20">
                 <Input
                   type="color"
-                  className="form_input h-full"
+                  className="h-full"
                   value={newLinkFgColor}
                   onChange={(e) => {
                     setNewLinkFgColor(e.target.value);
@@ -231,7 +227,6 @@ export default function DashProfileCreateLinkModel({
                 </label>
                 <Input
                   id="newLinkFgColor"
-                  className="form_input"
                   placeholder="Description"
                   value={newLinkFgColor}
                   onChange={(e) => {
@@ -253,7 +248,6 @@ export default function DashProfileCreateLinkModel({
                 </label>
                 <select
                   id="newLinkIconUrl"
-                  className="form_input"
                   value={newLinkIconUrl}
                   onChange={(e) => {
                     setNewLinkIconUrl(e.target.value);

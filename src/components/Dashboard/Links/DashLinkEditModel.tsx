@@ -138,7 +138,6 @@ export default function DashLinkEditModel({
                 placeholder="Name"
                 type="text"
                 id="newName"
-                className="form_input"
                 value={UrlName}
                 onChange={(e) => setUrlName(e.target.value)}
                 required
@@ -156,7 +155,6 @@ export default function DashLinkEditModel({
                 placeholder="Slug"
                 type="text"
                 id="newShortUrl"
-                className="form_input"
                 value={UrlshortUrl}
                 onChange={(e) => setUrlShortUrl(e.target.value)}
                 required
@@ -174,7 +172,6 @@ export default function DashLinkEditModel({
                 placeholder="Long Url"
                 type="text"
                 id="newLongUrl"
-                className="form_input"
                 value={UrllongUrl}
                 onChange={(e) => setUrlLongUrl(e.target.value)}
                 required

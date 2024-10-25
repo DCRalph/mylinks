@@ -85,7 +85,6 @@ export default function Setup() {
                 <Input
                   type="text"
                   id="newUsername"
-                  className="form_input"
                   placeholder="Username"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}

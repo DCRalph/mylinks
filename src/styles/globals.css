@@ -31,9 +31,9 @@ body {
   scrollbar-width: none; /* Firefox */
 }
 
-.form_input {
+/* .form_input {
   @apply border-zinc-600 bg-zinc-700 text-white placeholder:text-zinc-300 placeholder:font-light
-}
+} */
 
 .form_btn {
   @apply col-span-full h-min rounded-lg border px-5 py-2.5 text-center text-base font-semibold text-white;
