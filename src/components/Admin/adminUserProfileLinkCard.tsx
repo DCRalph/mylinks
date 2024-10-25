@@ -86,8 +86,8 @@ export default function AdminUserProfileLinkCard({
           className={`${profileLink.visible ? "form_btn_green" : "form_btn_red"} flex items-center gap-2`}
           onClick={toggleVisibility}
         >
-          {profileLink.visible ? "Shown" : "Hidden"}
           {profileLink.visible ? <IconEye /> : <IconEyeOff />}
+          {profileLink.visible ? "Shown" : "Hidden"}
         </Button>
       </div>
 

@@ -86,8 +86,8 @@ export default function Dashboard() {
                   className="form_btn_blue flex items-center gap-2"
                   onClick={() => setCreateProfileModelOpen(true)}
                 >
-                  Create Profile
                   <IconSquareRoundedPlus />
+                  Create Profile
                 </Button>
               </div>
 
@@ -189,12 +189,12 @@ export default function Dashboard() {
                 disabled={createLinkMutation.isPending ? true : false}
                 type="submit"
               >
-                Create
                 {createLinkMutation.isPending ? (
                   <IconLoader2 className="animate-spin" />
                 ) : (
                   <IconSquareRoundedPlus />
                 )}
+                Create
               </Button>
             </form>
 

@@ -309,15 +309,15 @@ export default function DashProfileEditModel({
                 type="submit"
                 className="form_btn_blue flex items-center gap-2"
               >
+                <IconDeviceFloppy />
                 Save
-                <IconDeviceFloppy size={24} />
               </Button>
               <Button
                 className="form_btn_red flex items-center gap-2"
                 onClick={deleteProfileLinkHandler}
               >
+                <IconTrash />
                 Delete
-                <IconTrash size={24} />
               </Button>
             </div>
           </form>

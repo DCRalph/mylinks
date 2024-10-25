@@ -194,8 +194,8 @@ export default function DashEditProfileDetailsModel({
                 type="submit"
                 className="form_btn_blue flex items-center gap-2"
               >
-                Save
                 <IconDeviceFloppy />
+                Save
               </Button>
             </div>
           </form>

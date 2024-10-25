@@ -31,8 +31,8 @@ export default function DashLink({ link }: { link: Link }) {
               setIsOpen(true);
             }}
           >
-            Edit
             <IconPencil />
+            Edit
           </Button>
         </div>
       </div>

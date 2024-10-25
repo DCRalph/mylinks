@@ -36,8 +36,8 @@ export default function AdminUserProfileCard({
               setExpanded(!expanded);
             }}
           >
-            {expanded ? "Expanded" : "Collapsed"}
             {expanded ? <IconChevronDown /> : <IconChevronUp />}
+            {expanded ? "Expanded" : "Collapsed"}
           </Button>
         </div>
       </div>

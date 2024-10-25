@@ -73,12 +73,12 @@ export default function DashProfileLink({
             }}
             disabled={toggleProfileLinkVisibilityMutation.isPending ? true : false}
           >
-            {profileLink.visible ? "Shown" : "Hidden"}
             {profileLink.visible ? (
               <IconEye />
             ) : (
               <IconEyeOff />
             )}
+            {profileLink.visible ? "Shown" : "Hidden"}
           </Button>
           <Button
             className="form_btn_blue flex items-center gap-2"
@@ -86,8 +86,8 @@ export default function DashProfileLink({
               editBtn();
             }}
           >
-            Edit{" "}
             <IconPencil />
+            Edit
           </Button>
         </div>
       </div>

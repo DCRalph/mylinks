@@ -186,15 +186,15 @@ export default function DashLinkEditModel({
                 className="form_btn_blue flex items-center gap-2"
                 type="submit"
               >
-                Save
                 <IconDeviceFloppy />
+                Save
               </Button>
               <Button
                 className="form_btn_red flex items-center gap-2"
                 onClick={deleteLinkHandler}
               >
-                Delete
                 <IconTrash />
+                Delete
               </Button>
             </div>
           </form>

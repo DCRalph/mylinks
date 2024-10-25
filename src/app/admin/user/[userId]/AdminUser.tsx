@@ -135,8 +135,8 @@ export default function Slug({ userID }: { userID: string }) {
                   className="form_btn_blue flex items-center justify-center gap-2"
                   type="submit"
                 >
-                  Change
                   <IconDeviceFloppy />
+                  Change
                 </Button>
               </form>
             </div>

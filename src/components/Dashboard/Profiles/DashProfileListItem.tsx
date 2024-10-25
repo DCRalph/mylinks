@@ -47,8 +47,8 @@ export default function DashProfileListItem({
               editBtn();
             }}
           >
-            Edit{" "}
             <IconPencil/>
+            Edit
           </Button>
         </div>
       </div>

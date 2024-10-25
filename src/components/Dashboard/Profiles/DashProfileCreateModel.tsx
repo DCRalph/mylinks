@@ -195,8 +195,8 @@ export default function DashProfileCreateModel({
                 type="submit"
                 className="form_btn_blue flex items-center gap-2"
               >
-                Create
                 <IconSquareRoundedPlus />
+                Create
               </Button>
             </div>
           </form>

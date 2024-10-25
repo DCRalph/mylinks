@@ -175,22 +175,22 @@ export default function DashProfileEditModel({
               className="form_btn_green flex items-center gap-2"
               onClick={() => setIsCreateOpen(true)}
             >
-              Add Link
               <IconSquareRoundedPlus />
+              Add Link
             </Button>
             <Button
               className="form_btn_blue flex items-center gap-2"
               onClick={() => setIsEditDetailsOpen(true)}
             >
-              Edit Profile
               <IconPencil />
+              Edit Profile
             </Button>
             <Button
               className="form_btn_red flex items-center gap-2"
               onClick={deleteProfileHandler}
             >
-              Delete Profile
               <IconTrash />
+              Delete Profile
             </Button>
           </div>
 

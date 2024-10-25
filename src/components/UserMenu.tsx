@@ -6,6 +6,8 @@ import Link from "next/link";
 import type { inferRouterOutputs } from "@trpc/server";
 import { type AppRouter } from "~/server/api/root";
 import {
+  IconBookmark,
+  IconBookmarks,
   IconLayoutDashboard,
   IconLogout,
   IconSettings,
@@ -71,32 +73,42 @@ export default function UserMenu({ user }: UserMenuProps) {
                       className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
                       href={"/dashboard"}
                     >
-                      Dashboard
                       <IconLayoutDashboard />
+                      Dashboard
                     </Link>
                   </Menu.Item>
 
                   <Menu.Item>
                     <Link
                       className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
-                      href={"/settings"}
+                      href={"/bookmarks"}
                     >
-                      Settings
-                      <IconSettings />
+                      <IconBookmarks />
+                      Bookmarks
                     </Link>
                   </Menu.Item>
 
                   {(user.user?.admin || user.user?.spyPixel) && (
                     <Menu.Item>
                       <Link
-                        className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-pink-600 no-underline transition hover:bg-white/20"
+                        className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
                         href={"/spy-pixel"}
                       >
-                        Spy Pixel
                         <IconSpy />
+                        Spy Pixel
                       </Link>
                     </Menu.Item>
                   )}
+
+                  <Menu.Item>
+                    <Link
+                      className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
+                      href={"/settings"}
+                    >
+                      <IconSettings />
+                      Settings
+                    </Link>
+                  </Menu.Item>
 
                   {user.user?.admin && (
                     <Menu.Item>
@@ -104,8 +116,8 @@ export default function UserMenu({ user }: UserMenuProps) {
                         className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-blue-600 no-underline transition hover:bg-white/20"
                         href={"/admin"}
                       >
-                        Admin
                         <IconUsers />
+                        Admin
                       </Link>
                     </Menu.Item>
                   )}
@@ -128,8 +140,8 @@ export default function UserMenu({ user }: UserMenuProps) {
                   className="flex w-full items-center justify-start gap-2 rounded-md bg-white/10 px-4 py-2 text-start text-base font-semibold text-red-600 no-underline transition hover:bg-white/20"
                   onClick={() => void signOut()}
                 >
-                  Sign out
                   <IconLogout />
+                  Sign out
                 </Button>
               </Menu.Item>
             </Menu.Items>

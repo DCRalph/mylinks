@@ -309,7 +309,7 @@ export const profileRouter = createTRPCRouter({
         throw new Error("Link not found");
       }
 
-      if (profileLink.profile.userId !== ctx.session?.user.id && ctx.session?.user.admin) {
+      if (profileLink.profile.userId !== ctx.session?.user.id || ctx.session?.user.admin) {
         throw new Error("Not authorized");
       }
 

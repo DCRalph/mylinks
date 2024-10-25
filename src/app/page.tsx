@@ -45,16 +45,16 @@ export default function Home() {
 
           {myUser.isPending ? (
             <Button className="form_btn_blue" disabled>
-              Loading...
               <IconLoader2 className="animate-spin" />
+              Loading...
             </Button>
           ) : myUser.data ? (
             <Link
               href="/dashboard"
               className="form_btn_blue flex items-center gap-2"
             >
-              Dashboard
               <IconLayoutDashboard />
+              Dashboard
             </Link>
           ) : (
             <Button
