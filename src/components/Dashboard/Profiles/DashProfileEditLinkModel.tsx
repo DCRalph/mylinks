@@ -9,6 +9,8 @@ import ProfileLinkElement from "~/components/ProfilePage/ProfileLink";
 import { defualtIcon, Icons } from "~/utils/profileLinkIcons";
 import { IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 
 interface DashLinkEditModelProps {
   profileLink: ProfileLink;
@@ -145,7 +147,7 @@ export default function DashProfileEditModel({
               >
                 Name
               </label>
-              <input
+              <Input
                 type="text"
                 id="newLinkName"
                 className="form_input"
@@ -165,7 +167,7 @@ export default function DashProfileEditModel({
               >
                 URL
               </label>
-              <input
+              <Input
                 type="text"
                 id="newLinkUrl"
                 className="form_input"
@@ -185,7 +187,7 @@ export default function DashProfileEditModel({
               >
                 Description (Optional)
               </label>
-              <input
+              <Input
                 id="newLinkDescription"
                 className="form_input"
                 placeholder="Description"
@@ -198,7 +200,7 @@ export default function DashProfileEditModel({
 
             <div className="col-span-full flex gap-4 lg:col-span-1">
               <div className="h-full w-20">
-                <input
+                <Input
                   type="color"
                   className="form_input h-full"
                   value={newLinkBgColor}
@@ -214,7 +216,7 @@ export default function DashProfileEditModel({
                 >
                   Bg Color
                 </label>
-                <input
+                <Input
                   id="newLinkBgColor"
                   className="form_input"
                   placeholder="Description"
@@ -228,7 +230,7 @@ export default function DashProfileEditModel({
 
             <div className="col-span-full flex gap-4 lg:col-span-1">
               <div className="h-full w-20">
-                <input
+                <Input
                   type="color"
                   className="form_input h-full"
                   value={newLinkFgColor}
@@ -244,7 +246,7 @@ export default function DashProfileEditModel({
                 >
                   Fg Color
                 </label>
-                <input
+                <Input
                   id="newLinkFgColor"
                   className="form_input"
                   placeholder="Description"
@@ -303,21 +305,20 @@ export default function DashProfileEditModel({
             </div>
 
             <div className="col-span-full flex justify-center gap-4">
-              <button
+              <Button
                 type="submit"
                 className="form_btn_blue flex items-center gap-2"
               >
+                <IconDeviceFloppy />
                 Save
-                <IconDeviceFloppy size={24} />
-              </button>
-              <button
+              </Button>
+              <Button
                 className="form_btn_red flex items-center gap-2"
-                type="button"
                 onClick={deleteProfileLinkHandler}
               >
+                <IconTrash />
                 Delete
-                <IconTrash size={24} />
-              </button>
+              </Button>
             </div>
           </form>
         </div>

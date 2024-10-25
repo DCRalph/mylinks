@@ -6,6 +6,7 @@ import { api } from "~/trpc/react";
 import { toast } from "react-toastify";
 import { IconEye, IconEyeOff, IconPencil } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
+import { Button } from "~/components/ui/button";
 
 export default function DashProfileLink({
   profileLink,
@@ -65,29 +66,29 @@ export default function DashProfileLink({
         </div>
 
         <div className="flex items-center gap-2">
-          <button
+          <Button
             className={`${profileLink.visible ? "form_btn_green" : "form_btn_red"} flex items-center gap-2 disabled:cursor-not-allowed disabled:bg-gray-300`}
             onClick={() => {
               toggleVisibility();
             }}
-            disabled={toggleProfileLinkVisibilityMutation.isPending}
+            disabled={toggleProfileLinkVisibilityMutation.isPending ? true : false}
           >
-            {profileLink.visible ? "Shown" : "Hidden"}
             {profileLink.visible ? (
               <IconEye />
             ) : (
               <IconEyeOff />
             )}
-          </button>
-          <button
+            {profileLink.visible ? "Shown" : "Hidden"}
+          </Button>
+          <Button
             className="form_btn_blue flex items-center gap-2"
             onClick={() => {
               editBtn();
             }}
           >
-            Edit{" "}
             <IconPencil />
-          </button>
+            Edit
+          </Button>
         </div>
       </div>
 

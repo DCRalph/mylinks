@@ -9,6 +9,8 @@ import ProfileLinkElement from "~/components/ProfilePage/ProfileLink";
 import { defualtIcon, Icons } from "~/utils/profileLinkIcons";
 import { IconSquareRoundedPlus } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 
 interface DashCreateLinkModelProps {
   profileId: string;
@@ -127,7 +129,7 @@ export default function DashProfileCreateLinkModel({
               >
                 Name
               </label>
-              <input
+              <Input
                 type="text"
                 id="newLinkTitle"
                 className="form_input"
@@ -147,7 +149,7 @@ export default function DashProfileCreateLinkModel({
               >
                 URL
               </label>
-              <input
+              <Input
                 type="text"
                 id="newLinkUrl"
                 className="form_input"
@@ -167,7 +169,7 @@ export default function DashProfileCreateLinkModel({
               >
                 Description (Optional)
               </label>
-              <input
+              <Input
                 id="newLinkDescription"
                 className="form_input"
                 placeholder="Description"
@@ -180,7 +182,7 @@ export default function DashProfileCreateLinkModel({
 
             <div className="col-span-full flex gap-4 lg:col-span-1">
               <div className="h-full w-20">
-                <input
+                <Input
                   type="color"
                   className="form_input h-full"
                   value={newLinkBgColor}
@@ -196,7 +198,7 @@ export default function DashProfileCreateLinkModel({
                 >
                   Bg Color
                 </label>
-                <input
+                <Input
                   id="newLinkBgColor"
                   className="form_input"
                   placeholder="Description"
@@ -211,7 +213,7 @@ export default function DashProfileCreateLinkModel({
 
             <div className="col-span-full flex gap-4 lg:col-span-1">
               <div className="h-full w-20">
-                <input
+                <Input
                   type="color"
                   className="form_input h-full"
                   value={newLinkFgColor}
@@ -227,7 +229,7 @@ export default function DashProfileCreateLinkModel({
                 >
                   Fg Color
                 </label>
-                <input
+                <Input
                   id="newLinkFgColor"
                   className="form_input"
                   placeholder="Description"
@@ -285,13 +287,13 @@ export default function DashProfileCreateLinkModel({
             </div>
 
             <div className="col-span-full flex justify-center gap-4">
-              <button
+              <Button
                 type="submit"
                 className="form_btn_blue flex items-center gap-2"
               >
-                Create
                 <IconSquareRoundedPlus />
-              </button>
+                Create
+              </Button>
             </div>
           </form>
         </div>

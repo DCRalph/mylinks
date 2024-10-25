@@ -8,6 +8,7 @@ import DashProfileLinkEditModel from "~/components/Dashboard/Profiles/DashProfil
 import { api } from "~/trpc/react";
 import { toast } from "react-toastify";
 import toastOptions from "~/utils/toastOptions";
+import { Button } from "../ui/button";
 
 export default function AdminUserProfileLinkCard({
   profileLink,
@@ -74,20 +75,20 @@ export default function AdminUserProfileLinkCard({
         </div>
       </div>
       <div className="col-span-full flex gap-4">
-        <button
+        <Button
           className="form_btn_blue flex items-center gap-2"
           onClick={editBtn}
         >
           Edit
           <IconPencil />
-        </button>
-        <button
+        </Button>
+        <Button
           className={`${profileLink.visible ? "form_btn_green" : "form_btn_red"} flex items-center gap-2`}
           onClick={toggleVisibility}
         >
-          {profileLink.visible ? "Shown" : "Hidden"}
           {profileLink.visible ? <IconEye /> : <IconEyeOff />}
-        </button>
+          {profileLink.visible ? "Shown" : "Hidden"}
+        </Button>
       </div>
 
       <DashProfileLinkEditModel

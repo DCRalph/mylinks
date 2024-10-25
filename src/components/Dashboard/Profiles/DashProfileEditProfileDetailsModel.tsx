@@ -7,6 +7,8 @@ import ModelCloseBtn from "~/components/ModelCloseBtn";
 import { api } from "~/trpc/react";
 import { IconDeviceFloppy } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 
 interface DashEditProfileDetailsModelProps {
   profile: Profile;
@@ -117,7 +119,7 @@ export default function DashEditProfileDetailsModel({
               >
                 Name
               </label>
-              <input
+              <Input
                 type="text"
                 id="newProfileName"
                 className="form_input"
@@ -137,7 +139,7 @@ export default function DashEditProfileDetailsModel({
               >
                 Alt Name (Optional and only visible to you)
               </label>
-              <input
+              <Input
                 type="text"
                 id="newProfileAltName"
                 className="form_input"
@@ -156,7 +158,7 @@ export default function DashEditProfileDetailsModel({
               >
                 Slug
               </label>
-              <input
+              <Input
                 type="text"
                 id="newProfileSlug"
                 className="form_input"
@@ -188,13 +190,13 @@ export default function DashEditProfileDetailsModel({
             </div>
 
             <div className="col-span-full flex justify-center gap-4">
-              <button
+              <Button
                 type="submit"
                 className="form_btn_blue flex items-center gap-2"
               >
-                Save
                 <IconDeviceFloppy />
-              </button>
+                Save
+              </Button>
             </div>
           </form>
         </div>

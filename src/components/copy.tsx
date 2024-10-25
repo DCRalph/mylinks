@@ -1,5 +1,6 @@
 import { IconCopy } from "@tabler/icons-react";
 import { useState } from "react";
+import { Button } from "./ui/button";
 
 const copyToClipboard = (str: string) => {
   navigator.clipboard
@@ -35,7 +36,7 @@ export default function Copy({ text }: { text: string }) {
   };
 
   return (
-    <button className="ml-4" onClick={handleCopyClick}>
+    <Button className="ml-4" onClick={handleCopyClick}>
       <IconCopy
         size={24}
         stroke={1.5}
@@ -43,6 +44,6 @@ export default function Copy({ text }: { text: string }) {
           isCopied ? "text-green-500" : "text-white"
         }`}
       />
-    </button>
+    </Button>
   );
 }

@@ -4,8 +4,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '~/server/auth'; // Adjust the import to your authOptions
 import { checkRequireSetup } from '~/utils/requireSetup';
 import React from 'react';
-import SpyPixelPage from './spy-pixel';
-export default async function SpyPixel() {
+import BookmarksPage from './bookmarks';
+
+export default async function Bookmarks() {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -20,5 +21,5 @@ export default async function SpyPixel() {
     redirect('/setup');
   }
 
-  return <SpyPixelPage />;
+  return <BookmarksPage />;
 }
