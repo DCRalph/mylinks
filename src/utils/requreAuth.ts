@@ -1,11 +1,8 @@
-import { type GetServerSidePropsContext } from "next";
 import { type Session } from "next-auth";
 import { getServerAuthSession } from "~/server/auth";
 
-export const requireAuth = async (
-  context: GetServerSidePropsContext
-) => {
-  const session = await getServerAuthSession(context);
+export const requireAuth = async () => {
+  const session = await getServerAuthSession();
 
   if (!session) {
     return false
@@ -15,10 +12,9 @@ export const requireAuth = async (
 };
 
 export const requireAuthCB = async (
-  context: GetServerSidePropsContext,
   cb: ({ session }: { session: Session }) => void,
 ) => {
-  const session = await getServerAuthSession(context);
+  const session = await getServerAuthSession();
 
   if (!session) {
     return {
@@ -32,10 +28,8 @@ export const requireAuthCB = async (
   return cb({ session });
 };
 
-export const requireSpyPixel = async (
-  context: GetServerSidePropsContext,
-) => {
-  const session = await getServerAuthSession(context);
+export const requireSpyPixel = async () => {
+  const session = await getServerAuthSession();
 
   if (!session) {
     return false
@@ -53,10 +47,8 @@ export const requireSpyPixel = async (
 }
 
 
-export const requireAuthAdmin = async (
-  context: GetServerSidePropsContext,
-) => {
-  const session = await getServerAuthSession(context);
+export const requireAuthAdmin = async () => {
+  const session = await getServerAuthSession();
 
   if (!session) {
     return false
@@ -72,10 +64,9 @@ export const requireAuthAdmin = async (
 
 
 export const requireAuthAdminCB = async (
-  context: GetServerSidePropsContext,
   cb: ({ session }: { session: Session }) => void,
 ) => {
-  const session = await getServerAuthSession(context);
+  const session = await getServerAuthSession();
 
   if (!session) {
     return {

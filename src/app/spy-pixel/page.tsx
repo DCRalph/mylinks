@@ -13,7 +13,7 @@ export default async function DashboardPage() {
     redirect('/');
   }
 
-  const needsSetup = await checkRequireSetup(session);
+  const needsSetup = await checkRequireSetup();
 
   if (needsSetup) {
     // User needs to complete setup, redirect to setup page

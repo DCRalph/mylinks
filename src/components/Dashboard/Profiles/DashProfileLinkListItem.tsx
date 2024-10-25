@@ -70,7 +70,7 @@ export default function DashProfileLink({
             onClick={() => {
               toggleVisibility();
             }}
-            disabled={toggleProfileLinkVisibilityMutation.isLoading}
+            disabled={toggleProfileLinkVisibilityMutation.isPending}
           >
             {profileLink.visible ? "Shown" : "Hidden"}
             {profileLink.visible ? (

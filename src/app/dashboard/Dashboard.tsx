@@ -163,7 +163,7 @@ export default function Dashboard() {
 
               <button
                 className="form_btn_blue flex items-center justify-center gap-2"
-                disabled={createLinkMutation.isLoading}
+                disabled={createLinkMutation.isPending}
                 type="submit"
               >
                 Create

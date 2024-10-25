@@ -25,8 +25,10 @@ const badUsernames = [
   "me",
 ];
 
-export default {
+const badWords = {
   badSlugs,
   badUrlFilter,
   badUsernames,
 };
+
+export default badWords;

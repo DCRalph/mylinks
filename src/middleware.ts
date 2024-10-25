@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getServerAuthSession } from "./server/auth";
+// import { getServerAuthSession } from "./server/auth";
 
 const requireAuthPages = ["/dashboard", "/settings"]
 
@@ -14,7 +14,6 @@ export function middleware(request: NextRequest) {
 
   if (requireAuthPages.includes(url.pathname)) {
     console.log('require auth')
-
   }
 
 

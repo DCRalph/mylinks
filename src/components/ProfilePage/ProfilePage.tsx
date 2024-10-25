@@ -20,7 +20,7 @@ export default function ProfilePage({
     .map((id) => {
       return profile.profileLinks.find((link) => link.id === id);
     })
-    .filter((link) => link !== undefined) as ProfileLink[];
+    .filter((link) => link !== undefined);
 
   return (
     <>

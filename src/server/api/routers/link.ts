@@ -108,6 +108,7 @@ export const linkRouter = createTRPCRouter({
       try {
         new URL(url);
       } catch (error) {
+        console.log(error);
         throw new Error("Invalid URL");
       }
 
@@ -214,6 +215,7 @@ export const linkRouter = createTRPCRouter({
       try {
         new URL(url);
       } catch (error) {
+        console.log(error);
         throw new Error("Invalid URL");
       }
 

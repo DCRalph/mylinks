@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { db } from "~/server/db";
 
-import { createTRPCRouter, protectedAdminProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, adminProcedure } from "~/server/api/trpc";
 
 export const adminRouter = createTRPCRouter({
-  getUser: protectedAdminProcedure
+  getUser: adminProcedure
     .input(z.object({ userID: z.string() }))
     .query(async ({ input }) => {
       const user = await db.user.findUnique({
@@ -31,7 +31,7 @@ export const adminRouter = createTRPCRouter({
       };
     }),
 
-  getUsers: protectedAdminProcedure.query(async () => {
+  getUsers: adminProcedure.query(async () => {
     const data = await db.user.findMany({
       include: {
         accounts: {

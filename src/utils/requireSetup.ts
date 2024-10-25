@@ -1,10 +1,9 @@
-import { Session } from "next-auth";
+import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 
-export const checkRequireSetup = async (
-  session: Session | null
-) => {
+export const checkRequireSetup = async () => {
 
+  const session = await getServerAuthSession();
   // return true
 
   if (!session) {

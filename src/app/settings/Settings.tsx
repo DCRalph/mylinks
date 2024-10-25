@@ -83,7 +83,7 @@ export default function Settings() {
 
             <button
               className="form_btn_blue mt-auto"
-              disabled={changeUsernameMutation.isLoading}
+              disabled={changeUsernameMutation.isPending}
               type="submit"
             >
               Change
