@@ -53,7 +53,7 @@ export default function DashProfileLink({
     <div className="flex w-full flex-col rounded-lg bg-white px-4 py-2">
       <div className="flex justify-between">
         <div className="flex flex-col justify-between">
-          <span className="text-sm font-semibold md:text-lg">
+          <span className="text-sm text-black font-semibold md:text-lg">
             {profileLink.title}
           </span>
           <Link

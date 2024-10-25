@@ -115,18 +115,8 @@ export default function Dashboard() {
                 >
                   Name
                 </label>
-                {/* <input
-                  type="text"
-                  id="newLinkName"
-                  className="form_input"
-                  placeholder="Name"
-                  value={newLinkName}
-                  onChange={(e) => setNewLinkName(e.target.value)}
-                  required
-                /> */}
                 <Input
                   id="newLinkName"
-                  className="form_input"
                   placeholder="Name"
                   value={newLinkName}
                   onChange={(e) => setNewLinkName(e.target.value)}
@@ -141,18 +131,8 @@ export default function Dashboard() {
                 >
                   Long URL
                 </label>
-                {/* <input
-                  type="text"
-                  id="newLinkUrl"
-                  className="form_input"
-                  placeholder="Long Url"
-                  value={newLinkUrl}
-                  onChange={(e) => setNewLinkUrl(e.target.value)}
-                  required
-                /> */}
                 <Input
                   id="newLinkUrl"
-                  className="form_input"
                   placeholder="Long Url"
                   value={newLinkUrl}
                   onChange={(e) => setNewLinkUrl(e.target.value)}
@@ -167,17 +147,8 @@ export default function Dashboard() {
                 >
                   Slug (Leave empty for random slug)
                 </label>
-                {/* <input
-                  type="text"
-                  id="newLinkSlug"
-                  className="form_input"
-                  placeholder="Custom slug"
-                  value={newLinkSlug}
-                  onChange={(e) => setNewLinkSlug(e.target.value)}
-                /> */}
                 <Input
                   id="newLinkSlug"
-                  className="form_input"
                   placeholder="Custom slug"
                   value={newLinkSlug}
                   onChange={(e) => setNewLinkSlug(e.target.value)}
