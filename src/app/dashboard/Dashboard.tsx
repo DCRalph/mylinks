@@ -1,17 +1,19 @@
 // app/dashboard/Dashboard.tsx
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Nav from '~/components/Nav';
-import Head from 'next/head';
-import { api } from '~/trpc/react';
-import DashLink from '~/components/Dashboard/Links/DashLink';
-import DashProfileListItem from '~/components/Dashboard/Profiles/DashProfileListItem';
-import { toast } from 'react-toastify';
-import DashProfileCreateModel from '~/components/Dashboard/Profiles/DashProfileCreateModel';
-import Footer from '~/components/footer';
-import { IconSquareRoundedPlus } from '@tabler/icons-react';
-import toastOptions from '~/utils/toastOptions';
+import React, { useState } from "react";
+import Nav from "~/components/Nav";
+import Head from "next/head";
+import { api } from "~/trpc/react";
+import DashLink from "~/components/Dashboard/Links/DashLink";
+import DashProfileListItem from "~/components/Dashboard/Profiles/DashProfileListItem";
+import { toast } from "react-toastify";
+import DashProfileCreateModel from "~/components/Dashboard/Profiles/DashProfileCreateModel";
+import Footer from "~/components/footer";
+import { IconLoader2, IconSquareRoundedPlus } from "@tabler/icons-react";
+import toastOptions from "~/utils/toastOptions";
+import { Input } from "~/components/ui/input";
+import { Button } from "~/components/ui/button";
 
 export default function Dashboard() {
   const [createProfileModelOpen, setCreateProfileModelOpen] = useState(false);
@@ -25,8 +27,6 @@ export default function Dashboard() {
   const myProfiles = api.profile.getProfiles.useQuery();
 
   const createLinkMutation = api.link.createLink.useMutation();
-
-  
 
   const createLinkHandler = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,13 +82,13 @@ export default function Dashboard() {
 
             <div className="mb-24 mt-4 flex w-full flex-col gap-4">
               <div className="flex w-full justify-center gap-4">
-                <button
+                <Button
                   className="form_btn_blue flex items-center gap-2"
                   onClick={() => setCreateProfileModelOpen(true)}
                 >
                   Create Profile
                   <IconSquareRoundedPlus />
-                </button>
+                </Button>
               </div>
 
               {myProfiles.data?.profiles?.map((profile) => (
@@ -115,8 +115,16 @@ export default function Dashboard() {
                 >
                   Name
                 </label>
-                <input
+                {/* <input
                   type="text"
+                  id="newLinkName"
+                  className="form_input"
+                  placeholder="Name"
+                  value={newLinkName}
+                  onChange={(e) => setNewLinkName(e.target.value)}
+                  required
+                /> */}
+                <Input
                   id="newLinkName"
                   className="form_input"
                   placeholder="Name"
@@ -133,8 +141,16 @@ export default function Dashboard() {
                 >
                   Long URL
                 </label>
-                <input
+                {/* <input
                   type="text"
+                  id="newLinkUrl"
+                  className="form_input"
+                  placeholder="Long Url"
+                  value={newLinkUrl}
+                  onChange={(e) => setNewLinkUrl(e.target.value)}
+                  required
+                /> */}
+                <Input
                   id="newLinkUrl"
                   className="form_input"
                   placeholder="Long Url"
@@ -151,8 +167,15 @@ export default function Dashboard() {
                 >
                   Slug (Leave empty for random slug)
                 </label>
-                <input
+                {/* <input
                   type="text"
+                  id="newLinkSlug"
+                  className="form_input"
+                  placeholder="Custom slug"
+                  value={newLinkSlug}
+                  onChange={(e) => setNewLinkSlug(e.target.value)}
+                /> */}
+                <Input
                   id="newLinkSlug"
                   className="form_input"
                   placeholder="Custom slug"
@@ -161,14 +184,18 @@ export default function Dashboard() {
                 />
               </div>
 
-              <button
+              <Button
                 className="form_btn_blue flex items-center justify-center gap-2"
-                disabled={createLinkMutation.isPending}
+                disabled={createLinkMutation.isPending ? true : false}
                 type="submit"
               >
                 Create
-                <IconSquareRoundedPlus />
-              </button>
+                {createLinkMutation.isPending ? (
+                  <IconLoader2 className="animate-spin" />
+                ) : (
+                  <IconSquareRoundedPlus />
+                )}
+              </Button>
             </form>
 
             <div className="mt-4 flex w-full flex-col gap-4">

@@ -8,6 +8,8 @@ import { toast } from "react-toastify";
 import Footer from "~/components/footer";
 import toastOptions from '~/utils/toastOptions';
 import React from "react";
+import { Input } from "~/components/ui/input";
+
 
 export default function Settings() {
   const myUser = api.user.getUser.useQuery();
@@ -70,7 +72,16 @@ export default function Settings() {
               >
                 Username
               </label>
-              <input
+              {/* <input
+                type="text"
+                id="userName"
+                className="form_input"
+                placeholder="Username"
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+                required
+              /> */}
+              <Input
                 type="text"
                 id="userName"
                 className="form_input"
@@ -83,7 +94,7 @@ export default function Settings() {
 
             <button
               className="form_btn_blue mt-auto"
-              disabled={changeUsernameMutation.isPending}
+              disabled={changeUsernameMutation.isPending ? true : false}
               type="submit"
             >
               Change
