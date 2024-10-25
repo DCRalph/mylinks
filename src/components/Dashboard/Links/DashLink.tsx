@@ -4,6 +4,7 @@ import DashLinkEditModel from "./DashLinkEditModel";
 import { env } from "~/env";
 import NextLink from "next/link";
 import { IconPencil } from "@tabler/icons-react";
+import { Button } from "~/components/ui/button";
 
 export default function DashLink({ link }: { link: Link }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,7 +25,7 @@ export default function DashLink({ link }: { link: Link }) {
         </div>
 
         <div className="flex items-center">
-          <button
+          <Button
             className="form_btn_blue flex items-center gap-2"
             onClick={() => {
               setIsOpen(true);
@@ -32,7 +33,7 @@ export default function DashLink({ link }: { link: Link }) {
           >
             Edit
             <IconPencil />
-          </button>
+          </Button>
         </div>
       </div>
 

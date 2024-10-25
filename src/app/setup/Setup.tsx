@@ -9,6 +9,8 @@ import Footer from "~/components/footer";
 import { IconSquareRoundedPlus } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
 import React from "react";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 
 export default function Setup() {
   const myUser = api.user.getUser.useQuery();
@@ -80,7 +82,7 @@ export default function Setup() {
                 >
                   Username
                 </label>
-                <input
+                <Input
                   type="text"
                   id="newUsername"
                   className="form_input"
@@ -91,13 +93,13 @@ export default function Setup() {
                 />
               </div>
 
-              <button
+              <Button
                 className="form_btn_blue  flex items-center justify-center gap-2"
                 type="submit"
               >
                 Create
                 <IconSquareRoundedPlus />
-              </button>
+              </Button>
             </form>
           </div>
         </div>

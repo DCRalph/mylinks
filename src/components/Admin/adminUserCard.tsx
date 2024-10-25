@@ -33,7 +33,6 @@ export default function AdminUserCard({ User }: AdminUserCardProps) {
       </div>
       <div className="col-span-full lg:col-span-4">
         <div className="flex lg:justify-end">
-          {/* <button className="form_btn_blue">Manage</button> */}
           <Link href={`/admin/user/${User.id}`} className="form_btn_blue">
             Manage
           </Link>

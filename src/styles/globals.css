@@ -36,7 +36,7 @@ body {
 }
 
 .form_btn {
-  @apply col-span-full h-min rounded-lg border px-5 py-2.5 text-center text-base font-semibold text-white [&_svg]:!size-fit;
+  @apply col-span-full h-min rounded-lg border px-5 py-2.5 text-center text-base font-semibold text-white;
 }
 
 .form_btn_blue {

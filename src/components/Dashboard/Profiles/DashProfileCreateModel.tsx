@@ -6,6 +6,8 @@ import ModelCloseBtn from "~/components/ModelCloseBtn";
 import { api } from "~/trpc/react";
 import { IconSquareRoundedPlus } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 
 interface DashProfileCreateModelProps {
   isOpen: boolean;
@@ -118,7 +120,7 @@ export default function DashProfileCreateModel({
               >
                 Name
               </label>
-              <input
+              <Input
                 type="text"
                 id="newProfileName"
                 className="form_input"
@@ -138,7 +140,7 @@ export default function DashProfileCreateModel({
               >
                 Alt Name (Optional and only visible to you)
               </label>
-              <input
+              <Input
                 type="text"
                 id="newProfileAltName"
                 className="form_input"
@@ -157,7 +159,7 @@ export default function DashProfileCreateModel({
               >
                 Slug
               </label>
-              <input
+              <Input
                 type="text"
                 id="newProfileSlug"
                 className="form_input"
@@ -189,13 +191,13 @@ export default function DashProfileCreateModel({
             </div>
 
             <div className="col-span-full flex justify-center gap-4">
-              <button
+              <Button
                 type="submit"
                 className="form_btn_blue flex items-center gap-2"
               >
                 Create
                 <IconSquareRoundedPlus />
-              </button>
+              </Button>
             </div>
           </form>
         </div>

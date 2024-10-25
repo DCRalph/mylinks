@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { env } from "~/env";
 import AdminUserProfileLinkCard from "./adminUserProfileLinkCard";
+import { Button } from "../ui/button";
 
 export default function AdminUserProfileCard({
   profile,
@@ -29,7 +30,7 @@ export default function AdminUserProfileCard({
 
       <div className="col-span-full lg:col-span-4 p-4">
         <div className="flex lg:justify-end">
-          <button
+          <Button
             className={`${expanded ? "form_btn_green" : "form_btn_red"} flex items-center gap-2 disabled:cursor-not-allowed disabled:bg-gray-300`}
             onClick={() => {
               setExpanded(!expanded);
@@ -37,7 +38,7 @@ export default function AdminUserProfileCard({
           >
             {expanded ? "Expanded" : "Collapsed"}
             {expanded ? <IconChevronDown /> : <IconChevronUp />}
-          </button>
+          </Button>
         </div>
       </div>
 

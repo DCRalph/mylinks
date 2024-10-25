@@ -5,7 +5,14 @@ import Link from "next/link";
 
 import type { inferRouterOutputs } from "@trpc/server";
 import { type AppRouter } from "~/server/api/root";
-import { IconLayoutDashboard, IconLogout, IconSettings, IconSpy, IconUsers } from "@tabler/icons-react";
+import {
+  IconLayoutDashboard,
+  IconLogout,
+  IconSettings,
+  IconSpy,
+  IconUsers,
+} from "@tabler/icons-react";
+import { Button } from "./ui/button";
 
 type UserMenuProps = {
   user?: inferRouterOutputs<AppRouter>["user"]["getUser"];
@@ -20,7 +27,6 @@ function getUserPermText(user: UserMenuProps["user"]) {
 }
 
 export default function UserMenu({ user }: UserMenuProps) {
-
   return (
     <>
       {user && (
@@ -55,7 +61,6 @@ export default function UserMenu({ user }: UserMenuProps) {
                   <span className="text-sm text-gray-400">
                     {user.user?.username} - {getUserPermText(user)}
                   </span>
-
                 </div>
               </Menu.Item>
 
@@ -84,7 +89,7 @@ export default function UserMenu({ user }: UserMenuProps) {
                   {(user.user?.admin || user.user?.spyPixel) && (
                     <Menu.Item>
                       <Link
-                        className="flex items-center gap-2 w-full rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-pink-600 no-underline transition hover:bg-white/20"
+                        className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-pink-600 no-underline transition hover:bg-white/20"
                         href={"/spy-pixel"}
                       >
                         Spy Pixel
@@ -96,7 +101,7 @@ export default function UserMenu({ user }: UserMenuProps) {
                   {user.user?.admin && (
                     <Menu.Item>
                       <Link
-                        className="flex items-center gap-2 w-full rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-blue-600 no-underline transition hover:bg-white/20"
+                        className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-blue-600 no-underline transition hover:bg-white/20"
                         href={"/admin"}
                       >
                         Admin
@@ -119,27 +124,26 @@ export default function UserMenu({ user }: UserMenuProps) {
               )}
 
               <Menu.Item>
-                <button
-                  className="w-full flex items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-red-600 no-underline transition hover:bg-white/20"
+                <Button
+                  className="flex w-full items-center justify-start gap-2 rounded-md bg-white/10 px-4 py-2 text-start text-base font-semibold text-red-600 no-underline transition hover:bg-white/20"
                   onClick={() => void signOut()}
                 >
                   Sign out
                   <IconLogout />
-                </button>
+                </Button>
               </Menu.Item>
             </Menu.Items>
           </Transition>
         </Menu>
       )}
 
-
       {!user && (
-        <button
+        <Button
           className="h-12 rounded-full bg-white/10 px-6 font-semibold text-white no-underline transition hover:bg-white/20"
           onClick={() => void signIn()}
         >
           Sign in
-        </button>
+        </Button>
       )}
     </>
   );

@@ -19,6 +19,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
+import { Button } from "~/components/ui/button";
 
 type Profile_ProjectLinks = {
   profileLinks: ProfileLink[];
@@ -170,29 +171,27 @@ export default function DashProfileEditModel({
 
         <div className="col-span-full col-start-1 mx-auto mt-8 flex w-full flex-col justify-center md:col-span-10 md:col-start-2">
           <div className="col-span-full mb-4 flex justify-center gap-4">
-            <button
+            <Button
               className="form_btn_green flex items-center gap-2"
-              type="button"
               onClick={() => setIsCreateOpen(true)}
             >
               Add Link
               <IconSquareRoundedPlus />
-            </button>
-            <button
+            </Button>
+            <Button
               className="form_btn_blue flex items-center gap-2"
               onClick={() => setIsEditDetailsOpen(true)}
             >
               Edit Profile
               <IconPencil />
-            </button>
-            <button
+            </Button>
+            <Button
               className="form_btn_red flex items-center gap-2"
-              type="button"
               onClick={deleteProfileHandler}
             >
               Delete Profile
               <IconTrash />
-            </button>
+            </Button>
           </div>
 
           <Reorder.Group

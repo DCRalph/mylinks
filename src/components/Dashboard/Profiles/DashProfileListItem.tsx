@@ -4,6 +4,7 @@ import DashProfileEditModel from "./DashProfileEditModel";
 import Link from "next/link";
 import { env } from "~/env";
 import { IconPencil } from "@tabler/icons-react";
+import { Button } from "~/components/ui/button";
 
 type Profile_ProjectLinks = {
   profileLinks: ProfileLink[];
@@ -40,7 +41,7 @@ export default function DashProfileListItem({
         </div>
 
         <div className="flex items-center">
-          <button
+          <Button
             className="form_btn_blue flex gap-2 items-center"
             onClick={() => {
               editBtn();
@@ -48,7 +49,7 @@ export default function DashProfileListItem({
           >
             Edit{" "}
             <IconPencil/>
-          </button>
+          </Button>
         </div>
       </div>
 

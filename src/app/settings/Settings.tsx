@@ -9,6 +9,7 @@ import Footer from "~/components/footer";
 import toastOptions from '~/utils/toastOptions';
 import React from "react";
 import { Input } from "~/components/ui/input";
+import { Button } from "~/components/ui/button";
 
 
 export default function Settings() {
@@ -92,13 +93,13 @@ export default function Settings() {
               />
             </div>
 
-            <button
+            <Button
               className="form_btn_blue mt-auto"
               disabled={changeUsernameMutation.isPending ? true : false}
               type="submit"
             >
               Change
-            </button>
+            </Button>
           </form>
         </div>
 

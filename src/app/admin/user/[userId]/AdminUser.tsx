@@ -11,6 +11,8 @@ import { IconArrowBack, IconDeviceFloppy } from "@tabler/icons-react";
 import AdminUserLinkCard from "~/components/Admin/adminUserLinkCard";
 import AdminUserProfileCard from "~/components/Admin/adminUserProfileCard";
 import React from "react";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 
 
 
@@ -55,31 +57,31 @@ export default function Slug({ userID }: { userID: string }) {
             <IconArrowBack />
           </Link>
 
-          <button
+          <Button
             onClick={() => setTab("user")}
             className={`${
               tab === "user" ? "bg-white/10" : "bg-transparent"
             } rounded-md px-4 py-2 font-semibold text-white`}
           >
             User
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={() => setTab("links")}
             className={`${
               tab === "links" ? "bg-white/10" : "bg-transparent"
             } rounded-md px-4 py-2 font-semibold text-white`}
           >
             Links
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setTab("profiles")}
             className={`${
               tab === "profiles" ? "bg-white/10" : "bg-transparent"
             } rounded-md px-4 py-2 font-semibold text-white`}
           >
             Profiles
-          </button>
+          </Button>
         </div>
 
         <div className="mx-8 mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
@@ -118,7 +120,7 @@ export default function Slug({ userID }: { userID: string }) {
                   >
                     Username
                   </label>
-                  <input
+                  <Input
                     type="text"
                     id="newUsername"
                     className="form_input"
@@ -129,13 +131,13 @@ export default function Slug({ userID }: { userID: string }) {
                   />
                 </div>
 
-                <button
+                <Button
                   className="form_btn_blue flex items-center justify-center gap-2"
                   type="submit"
                 >
                   Change
                   <IconDeviceFloppy />
-                </button>
+                </Button>
               </form>
             </div>
           )}

@@ -7,6 +7,8 @@ import ModelCloseBtn from "~/components/ModelCloseBtn";
 import { api } from "~/trpc/react";
 import { IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 
 interface DashLinkEditModelProps {
   link: Link;
@@ -132,7 +134,7 @@ export default function DashLinkEditModel({
               >
                 Name
               </label>
-              <input
+              <Input
                 placeholder="Name"
                 type="text"
                 id="newName"
@@ -150,7 +152,7 @@ export default function DashLinkEditModel({
               >
                 Slug
               </label>
-              <input
+              <Input
                 placeholder="Slug"
                 type="text"
                 id="newShortUrl"
@@ -168,7 +170,7 @@ export default function DashLinkEditModel({
               >
                 Long Url
               </label>
-              <input
+              <Input
                 placeholder="Long Url"
                 type="text"
                 id="newLongUrl"
@@ -180,21 +182,20 @@ export default function DashLinkEditModel({
             </div>
 
             <div className="col-span-full flex justify-center gap-4">
-              <button
+              <Button
                 className="form_btn_blue flex items-center gap-2"
                 type="submit"
               >
                 Save
                 <IconDeviceFloppy />
-              </button>
-              <button
+              </Button>
+              <Button
                 className="form_btn_red flex items-center gap-2"
-                type="button"
                 onClick={deleteLinkHandler}
               >
                 Delete
                 <IconTrash />
-              </button>
+              </Button>
             </div>
           </form>
         </div>
