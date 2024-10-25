@@ -8,6 +8,8 @@ import { TRPCReactProvider } from "~/trpc/react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+import { ThemeProvider } from "~/components/theme-provider";
+
 export const metadata: Metadata = {
   title: "Link shortner",
   description: "Next level link shortner",
@@ -20,7 +22,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
       <body id="rootBody">
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark">
+          <TRPCReactProvider>{children}</TRPCReactProvider>
+        </ThemeProvider>
         <ToastContainer theme="dark" />
       </body>
     </html>

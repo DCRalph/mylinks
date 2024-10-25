@@ -123,7 +123,6 @@ export default function DashProfileCreateModel({
               <Input
                 type="text"
                 id="newProfileName"
-                className="form_input"
                 placeholder="Name"
                 value={newProfileName}
                 onChange={(e) => {
@@ -143,7 +142,6 @@ export default function DashProfileCreateModel({
               <Input
                 type="text"
                 id="newProfileAltName"
-                className="form_input"
                 placeholder="Alt Name"
                 value={newProfileAltName ?? ""}
                 onChange={(e) => {
@@ -162,7 +160,6 @@ export default function DashProfileCreateModel({
               <Input
                 type="text"
                 id="newProfileSlug"
-                className="form_input"
                 placeholder="Slug"
                 value={newProfileSlug}
                 onChange={(e) => {
@@ -181,7 +178,7 @@ export default function DashProfileCreateModel({
               </label>
               <textarea
                 id="newProfileBio"
-                className="form_input h-64"
+                className="h-64"
                 placeholder="Bio"
                 value={newProfileBio ?? ""}
                 onChange={(e) => {

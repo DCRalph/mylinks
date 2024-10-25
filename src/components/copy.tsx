@@ -1,6 +1,8 @@
 import { IconCopy } from "@tabler/icons-react";
 import { useState } from "react";
-import { Button } from "./ui/button";
+import { toast } from "react-toastify";
+import toastOptions from "~/utils/toastOptions";
+
 
 const copyToClipboard = (str: string) => {
   navigator.clipboard
@@ -23,6 +25,8 @@ export default function Copy({ text }: { text: string }) {
     copyToClipboard(text);
     setIsCopied(true);
 
+    toast.success("Copied to clipboard", toastOptions);
+
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
@@ -36,14 +40,11 @@ export default function Copy({ text }: { text: string }) {
   };
 
   return (
-    <Button className="ml-4" onClick={handleCopyClick}>
+    <button onClick={handleCopyClick}>
       <IconCopy
-        size={24}
-        stroke={1.5}
-        className={`transition-all duration-300 ease-in-out hover:scale-125 active:scale-90 ${
-          isCopied ? "text-green-500" : "text-white"
-        }`}
+        className={`transition-all duration-300 ease-in-out hover:scale-125 active:scale-90 font-extrabold ${isCopied ? "text-green-500" : "text-white"
+          }`}
       />
-    </Button>
+    </button>
   );
 }
