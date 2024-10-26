@@ -238,7 +238,10 @@ export const profileRouter = createTRPCRouter({
         throw new Error("Link not found");
       }
 
-      if (profileLink.profile.userId !== ctx.session?.user.id && ctx.session?.user.admin) {
+      if (
+        profileLink.profile.userId !== ctx.session?.user.id &&
+        ctx.session?.user.admin
+      ) {
         throw new Error("Not authorized");
       }
 
@@ -309,7 +312,13 @@ export const profileRouter = createTRPCRouter({
         throw new Error("Link not found");
       }
 
-      if (profileLink.profile.userId !== ctx.session?.user.id || ctx.session?.user.admin) {
+      // check if users ids match or if user is admin
+      // but if user is a admin, they can toggle any link
+
+      if (
+        profileLink.profile.userId !== ctx.session?.user.id &&
+        !ctx.session?.user.admin
+      ) {
         throw new Error("Not authorized");
       }
 

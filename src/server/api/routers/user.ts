@@ -4,12 +4,20 @@ import { db } from "~/server/db";
 import {
   createTRPCRouter,
   protectedProcedure,
+  publicProcedure,
 } from "~/server/api/trpc";
 
 import badWords from "~/utils/badWords";
 
 export const userRouter = createTRPCRouter({
-  getUser: protectedProcedure.query(async ({ ctx }) => {
+  getUser: publicProcedure.query(async ({ ctx }) => {
+
+    if (!ctx.session?.user.id) {
+      return {
+        user: null,
+      };
+    }
+
     const user = await db.user.findUnique({
       where: {
         id: ctx.session?.user.id,

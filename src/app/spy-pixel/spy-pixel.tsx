@@ -30,7 +30,7 @@ export default function SpyPixelPage() {
           </div>
         </div>
 
-        <div className="container mx-auto p-8">
+        <div className="container mx-auto p-8 mt-8">
           <div className="flex justify-end mb-4">
             <Button onClick={() => setCreateDialogOpen(true)} className="form_btn_blue">
               <IconSquareRoundedPlus />

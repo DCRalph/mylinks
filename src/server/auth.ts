@@ -11,7 +11,6 @@ import GoogleProvider from "next-auth/providers/google";
 
 import type { User as PUser } from "@prisma/client";
 
-
 import { env } from "~/env";
 import { db } from "~/server/db";
 
@@ -38,7 +37,7 @@ import { db } from "~/server/db";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
-    user: PUser
+    user: PUser;
   }
 }
 
@@ -48,6 +47,10 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
+  pages: {
+    signIn: "/signin",
+  },
+
   callbacks: {
     session: ({ session, user }) => {
       if (session.user) {
@@ -62,7 +65,7 @@ export const authOptions: NextAuthOptions = {
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
       // allowDangerousEmailAccountLinking: true,
-    })
+    }),
 
     // DiscordProvider({
     //   clientId: env.DISCORD_CLIENT_ID,

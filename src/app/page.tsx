@@ -7,9 +7,12 @@ import Footer from "~/components/footer";
 import { Button } from "~/components/ui/button";
 
 import { api } from "~/trpc/react";
+// import { useSession } from "next-auth/react";
 
 export default function Home() {
   const myUser = api.user.getUser.useQuery();
+
+  // const session = useSession();
 
   return (
     <main className="flex min-h-screen flex-col bg-zinc-950">
@@ -42,7 +45,7 @@ export default function Home() {
               <IconLoader2 className="animate-spin" />
               Loading...
             </Button>
-          ) : myUser.data ? (
+          ) : myUser.data?.user ? (
             <Button asChild>
               <Link
                 href="/dashboard"

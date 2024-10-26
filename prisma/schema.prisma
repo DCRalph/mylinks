@@ -70,6 +70,10 @@ model User {
   Profiles Profile[]
   SpyPixels SpyPixel[]
 
+
+  bookmarkFolder   BookmarkFolder? 
+
+
   admin Boolean @default(false)
   spyPixel Boolean @default(false)
 
@@ -166,6 +170,47 @@ model Click {
   ipAddress String?
   referer   String?
   allHeaders   String?
+}
+
+model BookmarkFolder {
+  id               String            @id @default(cuid()) 
+  createdAt        DateTime          @default(now())
+  
+  user             User?             @relation(fields: [userId], references: [id])
+  userId           String?           @unique         // Root folder for user, nullable for subfolders
+  
+  type             String            @default("folder")
+  name             String
+  
+  // Self-referencing relation for nested folders
+  parentFolder     BookmarkFolder?   @relation("Subfolders", fields: [parentFolderId], references: [id])
+  parentFolderId   String?
+  subfolders       BookmarkFolder[]  @relation("Subfolders")
+
+  bookmarks        Bookmark[]
+}
+
+model Bookmark {
+  id               String         @id @default(cuid())
+  createdAt        DateTime       @default(now())
+
+  folder           BookmarkFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  folderId         String
+
+  tags             BookmarkTag[]
+
+  name             String
+  url              String
+}
+
+model BookmarkTag {
+  id               String         @id @default(cuid())
+  createdAt        DateTime       @default(now())
+
+  bookmark         Bookmark?      @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+  bookmarkId       String?
+
+  name             String
 }
 
 // model invitedUsers {

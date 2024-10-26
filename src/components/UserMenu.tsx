@@ -30,7 +30,7 @@ function getUserPermText(user: UserMenuProps["user"]) {
 export default function UserMenu({ user }: UserMenuProps) {
   return (
     <>
-      {user && (
+      {user?.user != null && (
         <Menu as="div" className="relative inline-block">
           <Menu.Button>
             <div className="h-12 w-12 overflow-hidden rounded-full">
@@ -148,7 +148,7 @@ export default function UserMenu({ user }: UserMenuProps) {
         </Menu>
       )}
 
-      {!user && (
+      {user?.user == null && (
         <Button
           className="h-12 rounded-full bg-white/10 px-6 font-semibold text-white no-underline transition hover:bg-white/20"
           onClick={() => void signIn()}
