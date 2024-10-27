@@ -58,15 +58,18 @@ const FolderItem = ({ folder, icon, bgColor, onClick }: FolderProps) => {
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (folder == null) return;
     deleteFolderMutation.mutate(
       { folderId: folder.id },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
           toast.success("Folder deleted", ToastOptions);
           setIsDeleteDialogOpen(false);
-          utils.bookmarks.getFolder.invalidate().catch(console.error);
+          await utils.bookmarks.getFolder.invalidate().catch(console.error);
+          await utils.bookmarks.getAllBookmarks
+            .invalidate()
+            .catch(console.error);
         },
         onError: (error) => {
           toast.error("Failed to delete Folder", ToastOptions);

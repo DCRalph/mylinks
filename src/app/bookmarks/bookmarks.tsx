@@ -18,6 +18,7 @@ import {
 import SkeletonItem from "~/components/Bookmarks/SkeletonItem";
 import { Button } from "~/components/ui/button";
 import AddBookmark from "~/components/Bookmarks/AddBookmark";
+import AddFolder from "~/components/Bookmarks/AddFolder";
 
 export default function BookmarksPage() {
   const utils = api.useUtils();
@@ -27,6 +28,7 @@ export default function BookmarksPage() {
     folderId: currentFolderId,
   });
   const [addBookmarkOpen, setAddBookmarkOpen] = useState(false);
+  const [addFolderOpen, setAddFolderOpen] = useState(false);
 
   const handleFolderClick = async (folderId: string) => {
     setCurrentFolderId(folderId);
@@ -63,6 +65,14 @@ export default function BookmarksPage() {
           >
             <IconSquareRoundedPlus />
             Add Bookmark
+          </Button>
+
+          <Button
+            className="form_btn_blue flex items-center gap-2"
+            onClick={() => setAddFolderOpen(true)}
+          >
+            <IconSquareRoundedPlus />
+            Add Folder
           </Button>
 
           <Button
@@ -126,6 +136,12 @@ export default function BookmarksPage() {
       <AddBookmark
         isOpen={addBookmarkOpen}
         setIsOpen={setAddBookmarkOpen}
+        currentFolderId={currentFolder.data?.id ?? ""}
+      />
+
+      <AddFolder
+        isOpen={addFolderOpen}
+        setIsOpen={setAddFolderOpen}
         currentFolderId={currentFolder.data?.id ?? ""}
       />
     </>

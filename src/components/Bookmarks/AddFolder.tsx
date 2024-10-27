@@ -65,7 +65,7 @@ const SelectItems = ({
   );
 };
 
-const AddBookmark = ({
+const AddFolder = ({
   isOpen,
   setIsOpen,
   currentFolderId,
@@ -73,10 +73,9 @@ const AddBookmark = ({
   const utils = api.useUtils();
   const allBookmarks = api.bookmarks.getAllBookmarks.useQuery();
 
-  const addBookmarkMutation = api.bookmarks.createBookmark.useMutation();
+  const addFolderMutatuion = api.bookmarks.createFolder.useMutation();
 
   const [newBookmarkName, setNewBookmarkName] = useState("");
-  const [newBookmarkUrl, setNewBookmarkUrl] = useState("");
   const [newBookmarkFolderId, setNewBookmarkFolderId] = useState<
     string | undefined
   >(currentFolderId);
@@ -86,31 +85,30 @@ const AddBookmark = ({
   }, [currentFolderId]);
 
   const handleAddBookmark = () => {
-    if (!newBookmarkName || !newBookmarkUrl || !newBookmarkFolderId) {
+    if (!newBookmarkName || !newBookmarkFolderId) {
       toast.error("Please fill out all fields", ToastOptions);
       return;
     }
 
-    addBookmarkMutation.mutate(
+    addFolderMutatuion.mutate(
       {
         name: newBookmarkName,
-        url: newBookmarkUrl,
         folderId: newBookmarkFolderId,
       },
       {
         onSuccess: async () => {
-          toast.success("Bookmark added", ToastOptions);
+          toast.success("Folder added", ToastOptions);
 
           setNewBookmarkName("");
-          setNewBookmarkUrl("");
           setNewBookmarkFolderId(allBookmarks.data?.id);
 
           setIsOpen(false);
           await utils.bookmarks.getFolder.invalidate().catch(console.error);
           await utils.bookmarks.getAllBookmarks.invalidate().catch(console.error);
+
         },
         onError: (error) => {
-          toast.error("Failed to add bookmark", ToastOptions);
+          toast.error("Failed to add folder", ToastOptions);
           console.error(error);
         },
       },
@@ -123,15 +121,14 @@ const AddBookmark = ({
       onOpenChange={(isOpen) => {
         setIsOpen(isOpen);
         setNewBookmarkName("");
-        setNewBookmarkUrl("");
         setNewBookmarkFolderId(currentFolderId);
       }}
     >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add bookmark</DialogTitle>
+          <DialogTitle>Add Folder</DialogTitle>
           <DialogDescription>
-            Add a new bookmark to your collection
+            Add a new folder to your collection
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -144,17 +141,6 @@ const AddBookmark = ({
               className="col-span-3"
               value={newBookmarkName}
               onChange={(e) => setNewBookmarkName(e.target.value)}
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="url" className="text-right">
-              Url
-            </Label>
-            <Input
-              id="url"
-              className="col-span-3"
-              value={newBookmarkUrl}
-              onChange={(e) => setNewBookmarkUrl(e.target.value)}
             />
           </div>
 
@@ -192,4 +178,4 @@ const AddBookmark = ({
   );
 };
 
-export default AddBookmark;
+export default AddFolder;
