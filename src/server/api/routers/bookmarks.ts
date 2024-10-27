@@ -96,6 +96,21 @@ const getFolder = protectedProcedure
           subfolders: true,
         },
       });
+
+      if (!folder) {
+        folder = await db.bookmarkFolder.create({
+          data: {
+            name: "Root",
+            userId,
+          },
+          include: {
+            bookmarks: true,
+            subfolders: true,
+          },
+        });
+      }
+
+
     } else {
       folder = await db.bookmarkFolder.findUnique({
         where: {
