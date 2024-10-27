@@ -163,7 +163,7 @@ const createBookmark = protectedProcedure
   .input(
     z.object({
       name: z.string(),
-      url: z.string(),
+      url: z.string().url(),
       folderId: z.string(),
     }),
   )

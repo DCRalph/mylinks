@@ -38,7 +38,12 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
   const deleteBookmarkMutation = api.bookmarks.deleteBookmark.useMutation();
 
   // trim the url to show only the domain
-  const url = new URL(bookmark.url);
+  let url;
+  try {
+    url = new URL(bookmark.url).hostname;
+  } catch (e) {
+    url = bookmark.url;
+  }
 
   const openBookmark = (e: React.MouseEvent) => {
     // console.log(e);
@@ -98,9 +103,7 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
         </div>
         <div className="pointer-events-none flex flex-col">
           <h4 className="text-lg font-medium">{bookmark.name}</h4>
-          <p className="text-dark-200/70 text-sm dark:text-white/70">
-            {url.hostname}
-          </p>
+          <p className="text-dark-200/70 text-sm dark:text-white/70">{url}</p>
         </div>
         <div className="absolute right-2 top-2">
           <DropdownMenu onOpenChange={setIsDropdownOpen}>
