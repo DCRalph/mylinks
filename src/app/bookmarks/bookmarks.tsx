@@ -2,21 +2,33 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Head from "next/head";
 import Nav from "~/components/Nav";
 import Footer from "~/components/footer";
 import FolderItem from "~/components/Bookmarks/FolderItem";
 import BookmarkItem from "~/components/Bookmarks/BookmarkItem";
 import { api } from "~/trpc/react";
+import {
+  IconArrowBackUp,
+  IconFolderFilled,
+  IconReload,
+  IconSquareRoundedPlus,
+} from "@tabler/icons-react";
+import SkeletonItem from "~/components/Bookmarks/SkeletonItem";
+import { Button } from "~/components/ui/button";
+import AddBookmark from "~/components/Bookmarks/AddBookmark";
 
 export default function BookmarksPage() {
+  const utils = api.useUtils();
   const myUser = api.user.getUser.useQuery();
-  const [currentFolderId, setCurrentFolderId] = useState<string>("root");
-  // const rootFolderQuery = api.bookmarks.getRootFolder.useQuery();
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const currentFolder = api.bookmarks.getFolder.useQuery({
     folderId: currentFolderId,
   });
+  const [addBookmarkOpen, setAddBookmarkOpen] = useState(false);
+  
+
 
   const handleFolderClick = async (folderId: string) => {
     setCurrentFolderId(folderId);
@@ -26,11 +38,10 @@ export default function BookmarksPage() {
     if (currentFolder?.data?.parentFolderId) {
       setCurrentFolderId(currentFolder.data?.parentFolderId);
     } else {
-      setCurrentFolderId("root"); // Go back to root
+      setCurrentFolderId(null); // Go back to root
     }
   };
 
-  if (!currentFolder) return <p>Loading...</p>;
 
   return (
     <>
@@ -47,32 +58,75 @@ export default function BookmarksPage() {
           <h1 className="text-5xl font-bold text-white">Bookmarks</h1>
         </div>
 
-        <div className="flex flex-col items-center py-8">
-          {currentFolder?.data?.parentFolderId && (
-            <button onClick={goBack} className="mb-4 text-blue-400">
-              &larr; Go Back
-            </button>
-          )}
+        {/* create bookmark */}
+        <div className="mx-8 mt-8 flex w-full justify-start gap-4 xl:mx-16">
+          <Button
+            className="form_btn_blue flex items-center gap-2"
+            onClick={() => setAddBookmarkOpen(true)}
+          >
+            <IconSquareRoundedPlus />
+            Add Bookmark
+          </Button>
 
-          <div className="grid grid-cols-4 gap-4">
-            {currentFolder.data?.subfolders.map((folder) => (
-              <FolderItem
-                key={folder.id}
-                folder={folder}
-                onClick={() => handleFolderClick(folder.id)}
-              />
-            ))}
-            {currentFolder.data?.bookmarks.map((bookmark) => (
-              <BookmarkItem
-                key={bookmark.id}
-                bookmark={bookmark}
-              />
-            ))}
+          <Button
+            className="form_btn_blue flex items-center gap-2"
+            onClick={() => {
+              utils.bookmarks.getFolder.invalidate().catch(console.error);
+              utils.bookmarks.getFolder.reset();
+            }}
+          >
+            <IconReload />
+            Refresh
+          </Button>
+        </div>
+
+        <div className="flex w-full flex-col px-8 py-8 xl:px-16">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {currentFolder.isLoading && (
+              <>
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <SkeletonItem key={index} index={index} />
+                ))}
+              </>
+            )}
+            {!currentFolder.isLoading && (
+              <>
+                {/* {Array.from({ length: 3 }).map((_, index) => (
+                  <SkeletonItem key={index} index={index} />
+                ))} */}
+                {currentFolder?.data?.parentFolderId && (
+                  <FolderItem
+                    key={"goback"}
+                    icon={<IconArrowBackUp className="h-full w-full" />}
+                    bgColor="#FF402F"
+                    onClick={() => goBack()}
+                  />
+                )}
+                {currentFolder.data?.subfolders.map((folder) => (
+                  <FolderItem
+                    key={folder.id}
+                    folder={folder}
+                    icon={<IconFolderFilled className="h-full w-full" />}
+                    bgColor={folder.color}
+                    onClick={() => handleFolderClick(folder.id)}
+                  />
+                ))}
+                {currentFolder.data?.bookmarks.map((bookmark) => (
+                  <BookmarkItem
+                    key={bookmark.id}
+                    bookmark={bookmark}
+                    bgColor={bookmark.color}
+                  />
+                ))}
+              </>
+            )}
           </div>
         </div>
 
         <Footer />
       </main>
+
+      <AddBookmark isOpen={addBookmarkOpen} setIsOpen={setAddBookmarkOpen} currentFolderId={currentFolder.data?.id ?? ""} />
     </>
   );
 }

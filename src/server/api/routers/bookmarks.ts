@@ -2,17 +2,21 @@ import { z } from "zod";
 import { db } from "~/server/db";
 // get db type
 import type { PrismaClient } from "@prisma/client";
-import { randomUUID } from "crypto";
 
-import badWords from "~/utils/badWords";
+// import badWords from "~/utils/badWords";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
-async function fetchFolderWithSubfolders(folderId: string, db: PrismaClient) {
+async function fetchFolderWithSubfolders(
+  folderId: string,
+  userId: string,
+  db: PrismaClient,
+  includeBookmarks = true,
+) {
   const folder = await db.bookmarkFolder.findUnique({
-    where: { id: folderId },
+    where: { id: folderId, userId: userId },
     include: {
-      bookmarks: true,
+      bookmarks: includeBookmarks,
       subfolders: {
         include: {
           bookmarks: true,
@@ -28,7 +32,7 @@ async function fetchFolderWithSubfolders(folderId: string, db: PrismaClient) {
   if (folder.subfolders.length > 0) {
     const subfolders = await Promise.all(
       folder.subfolders.map((subfolder) =>
-        fetchFolderWithSubfolders(subfolder.id, db),
+        fetchFolderWithSubfolders(subfolder.id, userId, db),
       ),
     );
 
@@ -66,7 +70,7 @@ const getAllBookmarks = protectedProcedure.query(async ({ ctx }) => {
     throw new Error("Root folder not found");
   }
 
-  const bookmarks = await fetchFolderWithSubfolders(root.id, db);
+  const bookmarks = await fetchFolderWithSubfolders(root.id, userId, db);
 
   return bookmarks;
 });
@@ -96,7 +100,7 @@ const getRootFolder = protectedProcedure.query(async ({ ctx }) => {
 });
 
 const getFolder = protectedProcedure
-  .input(z.object({ folderId: z.string() }))
+  .input(z.object({ folderId: z.string().nullable() }))
   .query(async ({ input, ctx }) => {
     const userId = ctx.session?.user.id;
     if (!userId) {
@@ -105,7 +109,7 @@ const getFolder = protectedProcedure
 
     let folder;
 
-    if (input.folderId === "root") {
+    if (!input.folderId) {
       folder = await db.bookmarkFolder.findFirst({
         where: {
           userId,
@@ -120,6 +124,7 @@ const getFolder = protectedProcedure
       folder = await db.bookmarkFolder.findUnique({
         where: {
           id: input.folderId,
+          userId,
         },
         include: {
           bookmarks: true,
@@ -128,8 +133,6 @@ const getFolder = protectedProcedure
       });
     }
 
-    // todo check if user has access to this folder
-
     if (!folder) {
       throw new Error("Folder not found");
     }
@@ -137,8 +140,114 @@ const getFolder = protectedProcedure
     return folder;
   });
 
+const deleteBookmark = protectedProcedure
+  .input(z.object({ bookmarkId: z.string() }))
+  .mutation(async ({ input, ctx }) => {
+    const userId = ctx.session?.user.id;
+
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const bookmark = await db.bookmark.findFirst({
+      where: {
+        id: input.bookmarkId,
+      },
+    });
+
+    if (!bookmark) {
+      throw new Error("Bookmark not found");
+    }
+
+    await db.bookmark.delete({
+      where: {
+        id: input.bookmarkId,
+      },
+    });
+
+    return true;
+  });
+
+const createBookmark = protectedProcedure
+  .input(
+    z.object({
+      name: z.string(),
+      url: z.string(),
+      folderId: z.string(),
+    }),
+  )
+  .mutation(async ({ input, ctx }) => {
+    const userId = ctx.session?.user.id;
+
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const folder = await db.bookmarkFolder.findUnique({
+      where: {
+        id: input.folderId,
+        userId,
+      },
+    });
+
+    if (!folder) {
+      throw new Error("Folder not found");
+    }
+
+    // if (badWords.some((word) => input.name.includes(word))) {
+    //   throw new Error("Name contains bad words");
+    // }
+
+    // if (badWords.some((word) => input.url.includes(word))) {
+    //   throw new Error("URL contains bad words");
+    // }
+
+    const bookmark = await db.bookmark.create({
+      data: {
+        userId: userId,
+        name: input.name,
+        url: input.url,
+        folderId: input.folderId,
+      },
+    });
+
+    return bookmark;
+  });
+
+  const deleteFolder = protectedProcedure
+  .input(z.object({ folderId: z.string() }))
+  .mutation(async ({ input, ctx }) => {
+    const userId = ctx.session?.user.id;
+
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const folder = await db.bookmarkFolder.findUnique({
+      where: {
+        id: input.folderId,
+        userId,
+      },
+    });
+
+    if (!folder) {
+      throw new Error("Folder not found");
+    }
+
+    await db.bookmarkFolder.delete({
+      where: {
+        id: input.folderId,
+      },
+    });
+
+    return true;
+  });
+
 export const bookmakrsRouter = createTRPCRouter({
   getAllBookmarks,
-  getRootFolder,
+  // getRootFolder,
   getFolder,
+  deleteBookmark,
+  createBookmark,
+  deleteFolder,
 });
