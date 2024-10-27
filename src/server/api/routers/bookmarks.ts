@@ -75,30 +75,6 @@ const getAllBookmarks = protectedProcedure.query(async ({ ctx }) => {
   return bookmarks;
 });
 
-const getRootFolder = protectedProcedure.query(async ({ ctx }) => {
-  const userId = ctx.session?.user.id;
-  if (!userId) {
-    throw new Error("Not authenticated");
-  }
-
-  const folder = await db.bookmarkFolder.findFirst({
-    where: {
-      userId,
-      parentFolderId: null,
-    },
-    include: {
-      bookmarks: true,
-      subfolders: true,
-    },
-  });
-
-  if (!folder) {
-    throw new Error("Root folder not found");
-  }
-
-  return folder;
-});
-
 const getFolder = protectedProcedure
   .input(z.object({ folderId: z.string().nullable() }))
   .query(async ({ input, ctx }) => {
@@ -245,7 +221,6 @@ const createBookmark = protectedProcedure
 
 export const bookmakrsRouter = createTRPCRouter({
   getAllBookmarks,
-  // getRootFolder,
   getFolder,
   deleteBookmark,
   createBookmark,

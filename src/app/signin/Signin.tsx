@@ -4,7 +4,7 @@ import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import { IconBook, IconLink } from "@tabler/icons-react";
+import { IconLink } from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import toastOptions from "~/utils/toastOptions";

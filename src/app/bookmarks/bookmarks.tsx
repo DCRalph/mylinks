@@ -27,8 +27,6 @@ export default function BookmarksPage() {
     folderId: currentFolderId,
   });
   const [addBookmarkOpen, setAddBookmarkOpen] = useState(false);
-  
-
 
   const handleFolderClick = async (folderId: string) => {
     setCurrentFolderId(folderId);
@@ -41,7 +39,6 @@ export default function BookmarksPage() {
       setCurrentFolderId(null); // Go back to root
     }
   };
-
 
   return (
     <>
@@ -70,9 +67,9 @@ export default function BookmarksPage() {
 
           <Button
             className="form_btn_blue flex items-center gap-2"
-            onClick={() => {
-              utils.bookmarks.getFolder.invalidate().catch(console.error);
-              utils.bookmarks.getFolder.reset();
+            onClick={async () => {
+              await utils.bookmarks.getFolder.invalidate().catch(console.error);
+              await utils.bookmarks.getFolder.reset().catch(console.error);
             }}
           >
             <IconReload />
@@ -126,7 +123,11 @@ export default function BookmarksPage() {
         <Footer />
       </main>
 
-      <AddBookmark isOpen={addBookmarkOpen} setIsOpen={setAddBookmarkOpen} currentFolderId={currentFolder.data?.id ?? ""} />
+      <AddBookmark
+        isOpen={addBookmarkOpen}
+        setIsOpen={setAddBookmarkOpen}
+        currentFolderId={currentFolder.data?.id ?? ""}
+      />
     </>
   );
 }
