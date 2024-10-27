@@ -96,15 +96,15 @@ const AddFolder = ({
         folderId: newBookmarkFolderId,
       },
       {
-        onSuccess: async () => {
+        onSuccess:  () => {
           toast.success("Folder added", ToastOptions);
 
           setNewBookmarkName("");
           setNewBookmarkFolderId(allBookmarks.data?.id);
 
           setIsOpen(false);
-          await utils.bookmarks.getFolder.invalidate().catch(console.error);
-          await utils.bookmarks.getAllBookmarks.invalidate().catch(console.error);
+          utils.bookmarks.getFolder.invalidate().catch(console.error);
+          utils.bookmarks.getAllBookmarks.invalidate().catch(console.error);
 
         },
         onError: (error) => {

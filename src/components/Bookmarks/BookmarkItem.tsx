@@ -68,11 +68,11 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
     deleteBookmarkMutation.mutate(
       { bookmarkId: bookmark.id },
       {
-        onSuccess: async () => {
+        onSuccess: () => {
           toast.success("Bookmark deleted", ToastOptions);
           setIsDeleteDialogOpen(false);
-          await utils.bookmarks.getFolder.invalidate().catch(console.error);
-          await utils.bookmarks.getAllBookmarks
+          utils.bookmarks.getFolder.invalidate().catch(console.error);
+          utils.bookmarks.getAllBookmarks
             .invalidate()
             .catch(console.error);
         },

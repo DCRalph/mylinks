@@ -63,11 +63,11 @@ const FolderItem = ({ folder, icon, bgColor, onClick }: FolderProps) => {
     deleteFolderMutation.mutate(
       { folderId: folder.id },
       {
-        onSuccess: async () => {
+        onSuccess:  () => {
           toast.success("Folder deleted", ToastOptions);
           setIsDeleteDialogOpen(false);
-          await utils.bookmarks.getFolder.invalidate().catch(console.error);
-          await utils.bookmarks.getAllBookmarks
+          utils.bookmarks.getFolder.invalidate().catch(console.error);
+          utils.bookmarks.getAllBookmarks
             .invalidate()
             .catch(console.error);
         },
