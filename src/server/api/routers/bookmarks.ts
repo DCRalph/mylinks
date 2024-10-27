@@ -64,10 +64,15 @@ const getAllBookmarks = protectedProcedure.query(async ({ ctx }) => {
     throw new Error("Not authenticated");
   }
 
-  const root = await _getRootFolder(userId, db);
+  let root = await _getRootFolder(userId, db);
 
   if (!root) {
-    throw new Error("Root folder not found");
+    root = await db.bookmarkFolder.create({
+      data: {
+        name: "Root",
+        userId,
+      },
+    });
   }
 
   const bookmarks = await fetchFolderWithSubfolders(root.id, userId, db);
