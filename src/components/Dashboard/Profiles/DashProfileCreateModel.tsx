@@ -8,6 +8,7 @@ import { IconSquareRoundedPlus } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { Textarea } from "~/components/ui/textarea";
 
 interface DashProfileCreateModelProps {
   isOpen: boolean;
@@ -176,7 +177,7 @@ export default function DashProfileCreateModel({
               >
                 Bio (Optional)
               </label>
-              <textarea
+              <Textarea
                 id="newProfileBio"
                 className="h-64"
                 placeholder="Bio"

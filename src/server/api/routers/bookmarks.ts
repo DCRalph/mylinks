@@ -143,6 +143,7 @@ const deleteBookmark = protectedProcedure
     const bookmark = await db.bookmark.findFirst({
       where: {
         id: input.bookmarkId,
+        userId,
       },
     });
 
@@ -153,6 +154,7 @@ const deleteBookmark = protectedProcedure
     await db.bookmark.delete({
       where: {
         id: input.bookmarkId,
+        userId
       },
     });
 
@@ -228,6 +230,7 @@ const createBookmark = protectedProcedure
     await db.bookmarkFolder.delete({
       where: {
         id: input.folderId,
+        userId
       },
     });
 

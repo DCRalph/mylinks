@@ -1,5 +1,5 @@
 import { signIn, signOut } from "next-auth/react";
-import { Menu, Transition } from "@headlessui/react";
+import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -32,7 +32,7 @@ export default function UserMenu({ user }: UserMenuProps) {
     <>
       {user?.user != null && (
         <Menu as="div" className="relative inline-block">
-          <Menu.Button>
+          <MenuButton>
             <div className="h-12 w-12 overflow-hidden rounded-full">
               {user.user?.image && (
                 <Image
@@ -43,7 +43,7 @@ export default function UserMenu({ user }: UserMenuProps) {
                 />
               )}
             </div>
-          </Menu.Button>
+          </MenuButton>
           <Transition
             enter="transition ease-out duration-100"
             enterFrom="transform opacity-0 scale-95"
@@ -52,8 +52,8 @@ export default function UserMenu({ user }: UserMenuProps) {
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items className="absolute right-0 mt-2 flex w-56 origin-top-right flex-col gap-2 divide-gray-100 rounded-md bg-zinc-800 p-2 shadow-lg ring-1 ring-black/5 focus:outline-none">
-              <Menu.Item>
+            <MenuItems className="absolute right-0 mt-2 flex w-56 origin-top-right flex-col gap-2 divide-gray-100 rounded-md bg-zinc-800 p-2 shadow-lg ring-1 ring-black/5 focus:outline-none">
+              <MenuItem>
                 <div className="flex flex-col">
                   <h2 className="text-xl font-semibold text-white">
                     {user.user?.name}
@@ -63,11 +63,11 @@ export default function UserMenu({ user }: UserMenuProps) {
                     {user.user?.username} - {getUserPermText(user)}
                   </span>
                 </div>
-              </Menu.Item>
+              </MenuItem>
 
               {user.user?.requireSetup == false && (
                 <>
-                  <Menu.Item>
+                  <MenuItem>
                     <Link
                       className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
                       href={"/dashboard"}
@@ -75,9 +75,9 @@ export default function UserMenu({ user }: UserMenuProps) {
                       <IconLayoutDashboard />
                       Dashboard
                     </Link>
-                  </Menu.Item>
+                  </MenuItem>
 
-                  <Menu.Item>
+                  <MenuItem>
                     <Link
                       className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
                       href={"/bookmarks"}
@@ -85,10 +85,10 @@ export default function UserMenu({ user }: UserMenuProps) {
                       <IconBookmarks />
                       Bookmarks
                     </Link>
-                  </Menu.Item>
+                  </MenuItem>
 
                   {(user.user?.admin || user.user?.spyPixel) && (
-                    <Menu.Item>
+                    <MenuItem>
                       <Link
                         className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
                         href={"/spy-pixel"}
@@ -96,10 +96,10 @@ export default function UserMenu({ user }: UserMenuProps) {
                         <IconSpy />
                         Spy Pixel
                       </Link>
-                    </Menu.Item>
+                    </MenuItem>
                   )}
 
-                  <Menu.Item>
+                  <MenuItem>
                     <Link
                       className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
                       href={"/settings"}
@@ -107,10 +107,10 @@ export default function UserMenu({ user }: UserMenuProps) {
                       <IconSettings />
                       Settings
                     </Link>
-                  </Menu.Item>
+                  </MenuItem>
 
                   {user.user?.admin && (
-                    <Menu.Item>
+                    <MenuItem>
                       <Link
                         className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-blue-600 no-underline transition hover:bg-white/20"
                         href={"/admin"}
@@ -118,23 +118,23 @@ export default function UserMenu({ user }: UserMenuProps) {
                         <IconUsers />
                         Admin
                       </Link>
-                    </Menu.Item>
+                    </MenuItem>
                   )}
                 </>
               )}
 
               {user.user?.requireSetup == true && (
-                <Menu.Item>
+                <MenuItem>
                   <Link
                     className="flex w-full items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-left font-semibold text-white no-underline transition hover:bg-white/20"
                     href={"/setup"}
                   >
                     Setup
                   </Link>
-                </Menu.Item>
+                </MenuItem>
               )}
 
-              <Menu.Item>
+              <MenuItem>
                 <Button
                   className="flex w-full items-center justify-start gap-2 rounded-md bg-white/10 px-4 py-2 text-start text-base font-semibold text-red-600 no-underline transition hover:bg-white/20"
                   onClick={() => void signOut()}
@@ -142,15 +142,15 @@ export default function UserMenu({ user }: UserMenuProps) {
                   <IconLogout />
                   Sign out
                 </Button>
-              </Menu.Item>
-            </Menu.Items>
+              </MenuItem>
+            </MenuItems>
           </Transition>
         </Menu>
       )}
 
       {user?.user == null && (
         <Button
-          className="h-12 rounded-full bg-white/10 px-6 font-semibold text-white no-underline transition hover:bg-white/20"
+          className="h-12 sora rounded-full bg-white/10 px-6 font-semibold text-white no-underline transition hover:bg-white/20"
           onClick={() => void signIn()}
         >
           Sign in

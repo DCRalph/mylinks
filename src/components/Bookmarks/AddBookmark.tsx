@@ -183,7 +183,7 @@ const AddBookmark = ({
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit" onClick={handleAddBookmark}>
+          <Button type="submit" className="form_btn_white" onClick={handleAddBookmark}>
             Save changes
           </Button>
         </DialogFooter>

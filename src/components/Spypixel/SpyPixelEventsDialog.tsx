@@ -7,41 +7,48 @@ import {
   DialogFooter,
 } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
-import { Table, TableHead, TableRow, TableCell, TableBody } from "~/components/ui/table"; // Import ShadCN table components
+import { Table, TableRow, TableCell, TableBody, TableHeader } from "~/components/ui/table"; // Import ShadCN table components
 
 import { type Click } from "@prisma/client";
 
 type SpyPixelEventsDialogProps = {
   isOpen: boolean;
-  onClose: () => void;
+  setIsOpen: (isOpen: boolean) => void;
   clicks: Click[]; // Adjust based on your data fetching method
 };
 
-const SpyPixelEventsDialog = ({ isOpen, onClose, clicks }: SpyPixelEventsDialogProps) => {
+
+const SpyPixelEventsDialog = ({ isOpen, setIsOpen, clicks }: SpyPixelEventsDialogProps) => {
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="!max-w-none w-10/12">
+    <Dialog open={isOpen} onOpenChange={() => setIsOpen(false)}>
+      <DialogContent className="!max-w-none sm:w-10/12">
         <DialogHeader>
           <DialogTitle>Spy Pixel Events</DialogTitle>
-          <DialogDescription>View detailed click events associated with this spy pixel.</DialogDescription>
+          <DialogDescription>View detailed events associated with this spy pixel.</DialogDescription>
         </DialogHeader>
-      {/* // todo fix the table */}
-        <div className="overflow-x-auto mt-4 max-w-full">
+        {/* // todo fix the table */}
+        <div className="overflow-x-auto mt-4 max-w-full overflow-y-scroll h-96">
           {clicks.length ? (
-            <Table className="w-full">
-              <TableHead className="w-full">
-                <TableRow className="w-full">
-                  {/* <TableCell>ID</TableCell> */}
-                  <TableCell>Created At</TableCell>
-                  <TableCell>User Agent</TableCell>
-                  <TableCell>IP Address</TableCell>
-                  <TableCell>Referer</TableCell>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableCell className="min-w-56">Created At</TableCell>
+                  <TableCell className="min-w-96 grow">User Agent</TableCell>
+                  <TableCell className="min-w-40">IP Address</TableCell>
+                  <TableCell className="min-w-40">Referer</TableCell>
                 </TableRow>
-              </TableHead>
+              </TableHeader>
               <TableBody>
+                {/* {invoices.map((invoice) => (
+                  <TableRow key={invoice.invoice}>
+                    <TableCell className="font-medium">{invoice.invoice}</TableCell>
+                    <TableCell>{invoice.paymentStatus}</TableCell>
+                    <TableCell>{invoice.paymentMethod}</TableCell>
+                    <TableCell className="text-right">{invoice.totalAmount}</TableCell>
+                  </TableRow>
+                ))} */}
                 {clicks.map((click) => (
                   <TableRow key={click.id}>
-                    {/* <TableCell>{click.id}</TableCell> */}
                     <TableCell>{new Date(click.createdAt).toLocaleString()}</TableCell>
                     <TableCell>{click.userAgent}</TableCell>
                     <TableCell>{click.ipAddress}</TableCell>
@@ -55,7 +62,7 @@ const SpyPixelEventsDialog = ({ isOpen, onClose, clicks }: SpyPixelEventsDialogP
           )}
         </div>
         <DialogFooter>
-          <Button variant="default" onClick={onClose}>
+          <Button variant="default" onClick={() => setIsOpen(false)}>
             Close
           </Button>
         </DialogFooter>

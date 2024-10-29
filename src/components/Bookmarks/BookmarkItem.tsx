@@ -148,12 +148,15 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
           <AlertDialogFooter>
             <Button
               variant="default"
+              className="form_btn_white"
               onClick={() => setIsDeleteDialogOpen(false)}
             >
               Cancel
             </Button>
 
-            <Button variant="destructive" onClick={confirmDelete}>
+            <Button variant="destructive" onClick={confirmDelete}
+              className="form_btn_red"
+            >
               Confirm Delete
             </Button>
           </AlertDialogFooter>

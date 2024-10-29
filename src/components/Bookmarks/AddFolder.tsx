@@ -169,7 +169,7 @@ const AddFolder = ({
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit" onClick={handleAddBookmark}>
+          <Button type="submit" onClick={handleAddBookmark} className="form_btn_white">
             Save changes
           </Button>
         </DialogFooter>

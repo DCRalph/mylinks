@@ -53,15 +53,16 @@ export default function BookmarksPage() {
       <main className="flex min-h-screen flex-col bg-zinc-950">
         <Nav user={myUser.data} />
 
-        <div className="mt-16 flex justify-center">
+        <div className="mt-8 flex justify-center">
           <h1 className="text-5xl font-bold text-white">Bookmarks</h1>
         </div>
 
         {/* create bookmark */}
-        <div className="mx-8 mt-8 flex w-full justify-start gap-4 xl:mx-16">
+        <div className="px-8 mt-8 flex flex-wrap w-full justify-center gap-2 md:gap-4 xl:px-16">
           <Button
-            className="form_btn_blue flex items-center gap-2"
+            className="form_btn_blue flex items-center gap-2 "
             onClick={() => setAddBookmarkOpen(true)}
+            size={"sm"}
           >
             <IconSquareRoundedPlus />
             Add Bookmark
@@ -70,6 +71,7 @@ export default function BookmarksPage() {
           <Button
             className="form_btn_blue flex items-center gap-2"
             onClick={() => setAddFolderOpen(true)}
+            size={"sm"}
           >
             <IconSquareRoundedPlus />
             Add Folder
@@ -81,6 +83,7 @@ export default function BookmarksPage() {
               await utils.bookmarks.getFolder.invalidate().catch(console.error);
               await utils.bookmarks.getFolder.reset().catch(console.error);
             }}
+            size={"sm"}
           >
             <IconReload />
             Refresh

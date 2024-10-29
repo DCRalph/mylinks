@@ -115,7 +115,7 @@ export default function SignIn({
     <div className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-2">
       <div className="flex flex-col items-start justify-center gap-4 bg-zinc-900 p-8 text-zinc-100 lg:p-12">
         <div className="space-y-2">
-          <h1 className="flex gap-2 text-4xl font-bold tracking-tight sm:text-5xl">
+          <h1 className="flex gap-2 text-4xl font-bold tracking-tight sm:text-5xl sora">
             Welcome to{" "}
             <span className="flex gap-2 font-extrabold text-cyan-400">
               <IconLink className="h-12 w-12" />
@@ -165,7 +165,7 @@ export default function SignIn({
             </div>
             <Button
               variant={"outline"}
-              className="w-full text-zinc-100"
+              className="w-full text-zinc-100 sora"
               onClick={() => credSignIn()}
             >
               Sign in
@@ -177,7 +177,7 @@ export default function SignIn({
               <div key={provider.name}>
                 <Button
                   variant="outline"
-                  className="flex w-full text-zinc-100"
+                  className="flex w-full text-zinc-100 sora"
                   onClick={() => signIn(provider.id)}
                 >
                   {provider.icon && (

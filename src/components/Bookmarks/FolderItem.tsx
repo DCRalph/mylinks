@@ -146,11 +146,12 @@ const FolderItem = ({ folder, icon, bgColor, onClick }: FolderProps) => {
             <Button
               variant="default"
               onClick={() => setIsDeleteDialogOpen(false)}
+              className="form_btn_white"
             >
               Cancel
             </Button>
 
-            <Button variant="destructive" onClick={confirmDelete}>
+            <Button variant="destructive" onClick={confirmDelete} className="form_btn_red">
               Confirm Delete
             </Button>
           </AlertDialogFooter>

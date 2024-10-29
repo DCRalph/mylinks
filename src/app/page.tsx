@@ -1,5 +1,5 @@
 "use client";
-import { IconLayoutDashboard, IconLoader2 } from "@tabler/icons-react";
+import { IconBook, IconLayoutDashboard, IconLoader2 } from "@tabler/icons-react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import Nav from "~/components/Nav";
@@ -27,7 +27,7 @@ export default function Home() {
 
       <div className="mx-8 mt-16 flex flex-col items-center">
         <div className="w-full max-w-lg rounded-lg border border-zinc-600 bg-zinc-800 p-4">
-          <h1 className="mb-4 text-center text-2xl font-bold text-red-600 lg:text-3xl">
+          <h1 className="mb-4 text-center text-2xl font-bold text-red-600 lg:text-3xl gobold">
             BETA
           </h1>
           <h1 className="text-center text-2xl font-bold text-white lg:text-3xl">
@@ -46,6 +46,7 @@ export default function Home() {
               Loading...
             </Button>
           ) : myUser.data?.user ? (
+            <>
             <Button asChild>
               <Link
                 href="/dashboard"
@@ -55,6 +56,16 @@ export default function Home() {
                 Dashboard
               </Link>
             </Button>
+            <Button asChild>
+              <Link
+                href="/bookmarks"
+                className="form_btn_blue flex items-center gap-2"
+              >
+                <IconBook />
+                Bookmarks
+              </Link>
+            </Button>
+            </>
           ) : (
             <Button
               className="form_btn_blue flex items-center gap-2"

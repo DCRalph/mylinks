@@ -58,7 +58,14 @@ export default function SpyPixelDialog({ spyPixel, isOpen, onClose }: SpyPixelDi
           <p><strong>Created At:</strong> {new Date(spyPixel.createdAt ?? '').toLocaleDateString()}</p>
           <p><strong>Events:</strong> {clicks.data?.length}</p>
         </div>
-        <DialogFooter className="">
+        {clicks.data && (
+            <SpyPixelEventsDialog
+              isOpen={isEventDialogOpen}
+              setIsOpen={setEventDialogOpen}
+              clicks={clicks.data}
+            />
+        )}
+        <DialogFooter>
           <Button variant={"default"} onClick={() => { setEventDialogOpen(true) }}>Events</Button>
           <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
             <AlertDialogTrigger asChild>
@@ -73,19 +80,14 @@ export default function SpyPixelDialog({ spyPixel, isOpen, onClose }: SpyPixelDi
 
                 <Button variant="destructive" onClick={handleDeleteSpyPixel}>Confirm Delete</Button>
               </AlertDialogFooter>
+
             </AlertDialogContent>
           </AlertDialog>
           <Button onClick={onClose}>Close</Button>
         </DialogFooter>
       </DialogContent>
 
-      {clicks.data && (
-        <SpyPixelEventsDialog
-          isOpen={isEventDialogOpen}
-          onClose={() => setEventDialogOpen(false)}
-          clicks={clicks.data}
-        />
-      )}
+
     </Dialog>
   );
 }
