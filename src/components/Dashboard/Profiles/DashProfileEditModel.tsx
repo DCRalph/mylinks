@@ -21,6 +21,15 @@ import {
 import toastOptions from "~/utils/toastOptions";
 import { Button } from "~/components/ui/button";
 
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
+
 type Profile_ProjectLinks = {
   profileLinks: ProfileLink[];
 } & Profile;
@@ -52,13 +61,23 @@ export default function DashProfileEditModel({
 
   const [items, setItems] = useState(linkOrder);
 
-  const deleteProfileHandler = async () => {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [reorderTimeout, setReorderTimeout] = useState<NodeJS.Timeout | null>(
+    null,
+  );
+
+  const deleteProfileHandler = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
     deleteProfileMutation.mutate(
       { id: profile.id },
       {
         onSuccess: () => {
           toast.success("Profile deleted successfully", toastOptions);
 
+          setIsDeleteDialogOpen(false);
           setIsClosing(true);
           profiles
             .refetch()
@@ -73,10 +92,6 @@ export default function DashProfileEditModel({
       },
     );
   };
-
-  const [reorderTimeout, setReorderTimeout] = useState<NodeJS.Timeout | null>(
-    null,
-  );
 
   const reorderHandler = async (items: string[]) => {
     setItems(items);
@@ -212,7 +227,6 @@ export default function DashProfileEditModel({
                       profile.profileLinks.find((link) => link.id === item)!
                     }
                   />
-                  {/* <span className="text-white">{item} {index}</span> */}
                 </Reorder.Item>
               ))}
           </Reorder.Group>
@@ -230,6 +244,37 @@ export default function DashProfileEditModel({
           setIsOpen={setIsEditDetailsOpen}
         />
       </motion.div>
+
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            Are you sure you want to delete this profile and all its links?
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <Button
+              variant="default"
+              className="form_btn_white"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              className="form_btn_red"
+            >
+              Confirm Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 

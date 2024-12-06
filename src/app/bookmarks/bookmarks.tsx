@@ -110,6 +110,7 @@ export default function BookmarksPage() {
                     icon={<IconArrowBackUp className="h-full w-full" />}
                     bgColor="#FF402F"
                     onClick={() => goBack()}
+                    parentFolderId={currentFolder.data?.parentFolderId}
                   />
                 )}
                 {currentFolder.data?.subfolders.map((folder) => (
@@ -126,6 +127,7 @@ export default function BookmarksPage() {
                     key={bookmark.id}
                     bookmark={bookmark}
                     bgColor={bookmark.color}
+                    
                   />
                 ))}
               </>

@@ -1,6 +1,6 @@
+// components/BookmarkItem.tsx
 import { useState } from "react";
 import { IconDotsVertical, IconExternalLink } from "@tabler/icons-react";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +22,7 @@ import { Button } from "../ui/button";
 import { api } from "~/trpc/react";
 import { toast } from "react-toastify";
 import ToastOptions from "~/utils/toastOptions";
+import { EditDialog } from "./EditDialog";
 
 interface BookmarkItemProps {
   bookmark: Bookmark;
@@ -32,12 +33,11 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
   const utils = api.useUtils();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const deleteBookmarkMutation = api.bookmarks.deleteBookmark.useMutation();
 
-  // trim the url to show only the domain
   let url;
   try {
     url = new URL(bookmark.url).hostname;
@@ -46,18 +46,45 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
   }
 
   const openBookmark = (e: React.MouseEvent) => {
-    // console.log(e);
-    if (!e.target || (e.target as HTMLElement).id != "bookmark-" + bookmark.id)
+    if (!e.target || (e.target as HTMLElement).id !== "bookmark-" + bookmark.id)
       return;
     window.open(bookmark.url, "_blank");
   };
 
-  const editBtn = () => {
-    setIsEditDialogOpen(true);
+  const onDragStart = (e: React.DragEvent) => {
+    setIsDragging(true);
+    e.dataTransfer.setData("type", "bookmark");
+    e.dataTransfer.setData("bookmarkId", bookmark.id);
+    e.dataTransfer.effectAllowed = "move";
+
+    const draggedElement = e.currentTarget as HTMLElement;
+    const rect = draggedElement.getBoundingClientRect();
+    const clone = draggedElement.cloneNode(true) as HTMLElement;
+
+    // Style the clone so it won't be visible on the screen
+    clone.style.position = "absolute";
+    clone.style.top = "-9999px";
+    clone.style.left = "-9999px";
+    clone.style.width = `${rect.width}px`;
+    clone.style.height = `${rect.height}px`;
+
+    document.body.appendChild(clone);
+
+    e.dataTransfer.setDragImage(clone, rect.width / 2, rect.height / 2);
+
+    setTimeout(() => {
+      if (document.body.contains(clone)) {
+        document.body.removeChild(clone);
+      }
+    }, 0);
   };
 
-  const moveBtn = () => {
-    setIsMoveDialogOpen(true);
+  const onDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  const editBtn = () => {
+    setIsEditDialogOpen(true);
   };
 
   const deleteBtn = () => {
@@ -72,9 +99,7 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
           toast.success("Bookmark deleted", ToastOptions);
           setIsDeleteDialogOpen(false);
           utils.bookmarks.getFolder.invalidate().catch(console.error);
-          utils.bookmarks.getAllBookmarks
-            .invalidate()
-            .catch(console.error);
+          utils.bookmarks.getAllBookmarks.invalidate().catch(console.error);
         },
         onError: (error) => {
           toast.error("Failed to delete bookmark", ToastOptions);
@@ -91,16 +116,19 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
         className={`group relative flex h-20 w-full flex-1 cursor-pointer gap-5 rounded-xl border p-2.5 transition-colors duration-200 ${
           isDropdownOpen
             ? "border-zinc-600 bg-zinc-800"
-            : "border-zinc-900 bg-zinc-900 hover:border-zinc-600 hover:bg-zinc-800"
+            : isDragging
+              ? "border-purple-700 bg-purple-700/30"
+              : "border-zinc-900 bg-zinc-900 hover:border-zinc-600 hover:bg-zinc-800"
         }`}
-        onClick={(e: React.MouseEvent) => {
-          openBookmark(e);
-        }}
+        onClick={openBookmark}
         id={"bookmark-" + bookmark.id}
+        draggable={true}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
       >
         <div
           className={`pointer-events-none aspect-square h-full rounded-lg bg-opacity-20 p-3`}
-          style={{ backgroundColor: bgColor + "" }}
+          style={{ backgroundColor: bgColor }}
         >
           <IconExternalLink className="h-full w-full" />
         </div>
@@ -125,7 +153,6 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
               <DropdownMenuLabel>Bookmark</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={editBtn}>Edit</DropdownMenuItem>
-              <DropdownMenuItem onClick={moveBtn}>Move</DropdownMenuItem>
               <DropdownMenuItem className="text-red-600" onClick={deleteBtn}>
                 Delete
               </DropdownMenuItem>
@@ -154,7 +181,9 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
               Cancel
             </Button>
 
-            <Button variant="destructive" onClick={confirmDelete}
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
               className="form_btn_red"
             >
               Confirm Delete
@@ -162,6 +191,17 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      <EditDialog
+        isOpen={isEditDialogOpen}
+        setIsOpen={setIsEditDialogOpen}
+        isFolder={false}
+        id={bookmark.id}
+        initialName={bookmark.name}
+        initialColor={bookmark.color}
+        initialUrl={bookmark.url}
+        initialFolderId={bookmark.folderId}
+      />
     </>
   );
 };

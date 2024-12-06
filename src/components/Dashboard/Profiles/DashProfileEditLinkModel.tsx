@@ -12,6 +12,15 @@ import toastOptions from "~/utils/toastOptions";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
+
 interface DashLinkEditModelProps {
   profileLink: ProfileLink;
   isOpen: boolean;
@@ -44,6 +53,8 @@ export default function DashProfileEditModel({
   const editProfileLinkMutation = api.profile.editProfileLink.useMutation();
   const deleteProfileLinkMutation = api.profile.deleteProfileLink.useMutation();
 
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
   const editProfileLinkHandler = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -60,7 +71,6 @@ export default function DashProfileEditModel({
       {
         onSuccess: () => {
           toast.success("Link edited successfully", toastOptions);
-
           setIsClosing(true);
         },
         onError: (error) => {
@@ -71,13 +81,18 @@ export default function DashProfileEditModel({
   };
 
   const deleteProfileLinkHandler = async () => {
-    setIsClosing(true);
+    // Instead of deleting right away, open confirmation dialog
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
     deleteProfileLinkMutation.mutate(
       { id: profileLink.id },
       {
         onSuccess: () => {
           toast.success("Link deleted successfully", toastOptions);
-
+          setIsDeleteDialogOpen(false);
+          setIsClosing(true);
           profiles
             .refetch()
             .then()
@@ -215,7 +230,7 @@ export default function DashProfileEditModel({
                 </label>
                 <Input
                   id="newLinkBgColor"
-                  placeholder="Description"
+                  placeholder="Color"
                   value={newLinkBgColor}
                   onChange={(e) => {
                     setNewLinkBgColor(e.target.value);
@@ -244,7 +259,7 @@ export default function DashProfileEditModel({
                 </label>
                 <Input
                   id="newLinkFgColor"
-                  placeholder="Description"
+                  placeholder="Color"
                   value={newLinkFgColor}
                   onChange={(e) => {
                     setNewLinkFgColor(e.target.value);
@@ -287,7 +302,6 @@ export default function DashProfileEditModel({
                   id: profileLink.id,
                   profileId: "",
                   visible: true,
-
                   title: newLinkTitle,
                   url: newLinkUrl,
                   description: newLinkDescription,
@@ -309,6 +323,7 @@ export default function DashProfileEditModel({
               <Button
                 className="form_btn_red flex items-center gap-2"
                 onClick={deleteProfileLinkHandler}
+                type="button"
               >
                 <IconTrash />
                 Delete
@@ -317,6 +332,37 @@ export default function DashProfileEditModel({
           </form>
         </div>
       </motion.div>
+
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            Are you sure you want to delete this link?
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <Button
+              variant="default"
+              className="form_btn_white"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              className="form_btn_red"
+            >
+              Confirm Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 

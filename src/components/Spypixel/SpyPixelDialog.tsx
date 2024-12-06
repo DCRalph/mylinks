@@ -66,24 +66,24 @@ export default function SpyPixelDialog({ spyPixel, isOpen, onClose }: SpyPixelDi
             />
         )}
         <DialogFooter>
-          <Button variant={"default"} onClick={() => { setEventDialogOpen(true) }}>Events</Button>
+          <Button variant={"default"} onClick={() => { setEventDialogOpen(true) }} className="form_btn_blue">Events</Button>
           <AlertDialog open={isDeleting} onOpenChange={setIsDeleting}>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive">Delete</Button>
+              <Button variant="destructive" className="form_btn_red">Delete</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <Button variant="default" onClick={() => setIsDeleting(false)}>Cancel</Button>
+                <Button variant="default" onClick={() => setIsDeleting(false)} className="form_btn_white">Cancel</Button>
 
-                <Button variant="destructive" onClick={handleDeleteSpyPixel}>Confirm Delete</Button>
+                <Button variant="destructive" onClick={handleDeleteSpyPixel} className="form_btn_red">Confirm Delete</Button>
               </AlertDialogFooter>
 
             </AlertDialogContent>
           </AlertDialog>
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose} className="form_btn_white">Close</Button>
         </DialogFooter>
       </DialogContent>
 

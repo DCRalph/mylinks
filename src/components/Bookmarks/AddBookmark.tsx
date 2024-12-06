@@ -15,12 +15,12 @@ import ToastOptions from "~/utils/toastOptions";
 import {
   Select,
   SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
 
-import { type Bookmark, type BookmarkFolder } from "@prisma/client";
+import { SelectItems, type AllBookmarks } from "./SelectItems";
+
 import { useEffect, useState } from "react";
 
 interface BookmarkItemProps {
@@ -28,42 +28,6 @@ interface BookmarkItemProps {
   setIsOpen: (isOpen: boolean) => void;
   currentFolderId: string;
 }
-
-type AllBookmarks = BookmarkFolder & {
-  bookmarks: Bookmark[];
-  subfolders: AllBookmarks[];
-};
-
-const SelectItems = ({
-  folder,
-  depth,
-}: {
-  folder: AllBookmarks;
-  depth: number;
-}) => {
-  const newDepth = depth + 1;
-
-  return (
-    <>
-      <SelectItem value={folder.id}>
-        <div className="flex items-center gap-2">
-          <div
-            className="h-4 w-4 rounded-sm"
-            style={{
-              backgroundColor: folder.color,
-              marginLeft: `${depth * 0.5}rem`,
-            }}
-          ></div>
-          <span>{folder.name}</span>
-        </div>
-      </SelectItem>
-
-      {folder.subfolders.map((subfolder) => (
-        <SelectItems key={subfolder.id} folder={subfolder} depth={newDepth} />
-      ))}
-    </>
-  );
-};
 
 const AddBookmark = ({
   isOpen,
@@ -77,6 +41,8 @@ const AddBookmark = ({
 
   const [newBookmarkName, setNewBookmarkName] = useState("");
   const [newBookmarkUrl, setNewBookmarkUrl] = useState("");
+  const [newBookmarkColor, setNewBookmarkColor] = useState("#000000");
+
   const [newBookmarkFolderId, setNewBookmarkFolderId] = useState<
     string | undefined
   >(currentFolderId);
@@ -96,9 +62,10 @@ const AddBookmark = ({
         name: newBookmarkName,
         url: newBookmarkUrl,
         folderId: newBookmarkFolderId,
+        color: newBookmarkColor,
       },
       {
-        onSuccess:  () => {
+        onSuccess: () => {
           toast.success("Bookmark added", ToastOptions);
 
           setNewBookmarkName("");
@@ -159,15 +126,26 @@ const AddBookmark = ({
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="bookmark" className="text-right">
-              Bookmark
+            <Label htmlFor="color" className="text-right">
+              Color
             </Label>
+            <Input
+              id="color"
+              className="col-span-3"
+              type="color"
+              value={newBookmarkColor}
+              onChange={(e) => setNewBookmarkColor(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right">Folder</Label>
             <Select
               value={newBookmarkFolderId}
               onValueChange={(value) => setNewBookmarkFolderId(value)}
             >
               <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select a bookmark" />
+                <SelectValue placeholder="Select a folder" />
               </SelectTrigger>
               <SelectContent>
                 {allBookmarks.data && (
@@ -183,7 +161,11 @@ const AddBookmark = ({
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit" className="form_btn_white" onClick={handleAddBookmark}>
+          <Button
+            type="submit"
+            className="form_btn_white"
+            onClick={handleAddBookmark}
+          >
             Save changes
           </Button>
         </DialogFooter>

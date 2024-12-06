@@ -10,6 +10,15 @@ import toastOptions from "~/utils/toastOptions";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
+
 interface DashLinkEditModelProps {
   link: Link;
   isOpen: boolean;
@@ -31,6 +40,8 @@ export default function DashLinkEditModel({
   const editLinkMutation = api.link.editLink.useMutation();
   const deleteLinkMutation = api.link.deleteLink.useMutation();
   const clicks = api.link.getClicks.useQuery({ id: link.id });
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const editLinkHandler = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,13 +67,18 @@ export default function DashLinkEditModel({
     );
   };
 
-  const deleteLinkHandler = async () => {
+  const deleteLinkHandler = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
     deleteLinkMutation.mutate(
       { id: link.id },
       {
         onSuccess: () => {
           toast.success("Link deleted successfully", toastOptions);
 
+          setIsDeleteDialogOpen(false);
           setIsClosing(true);
           myLinks
             .refetch()
@@ -189,6 +205,7 @@ export default function DashLinkEditModel({
               <Button
                 className="form_btn_red flex items-center gap-2"
                 onClick={deleteLinkHandler}
+                type="button"
               >
                 <IconTrash />
                 Delete
@@ -197,6 +214,37 @@ export default function DashLinkEditModel({
           </form>
         </div>
       </motion.div>
+
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            Are you sure you want to delete this link?
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <Button
+              variant="default"
+              className="form_btn_white"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              className="form_btn_red"
+            >
+              Confirm Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 
