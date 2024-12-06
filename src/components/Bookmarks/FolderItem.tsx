@@ -197,8 +197,11 @@ const FolderItem = ({
             ? "border-zinc-600 bg-zinc-800"
             : isDragging
               ? "border-purple-700 bg-purple-700/30"
-              : "border-zinc-900 bg-zinc-900 hover:border-zinc-600 hover:bg-zinc-800"
-        } ${isDragOver && !isDragging ? "border-dashed border-blue-500 bg-blue-900/30" : ""}`}
+              : isDragOver
+                ? "border-dashed border-blue-500 bg-blue-900/30"
+                : // default
+                  "border-zinc-900 bg-zinc-900 hover:border-zinc-600 hover:bg-zinc-800"
+        }`}
         onClick={handleFolderClick}
         id={"folder-" + folder?.id}
         onDragOver={onDragOver}

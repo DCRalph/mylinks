@@ -118,7 +118,8 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
             ? "border-zinc-600 bg-zinc-800"
             : isDragging
               ? "border-purple-700 bg-purple-700/30"
-              : "border-zinc-900 bg-zinc-900 hover:border-zinc-600 hover:bg-zinc-800"
+              : // default
+                "border-zinc-900 bg-zinc-900 hover:border-zinc-600 hover:bg-zinc-800"
         }`}
         onClick={openBookmark}
         id={"bookmark-" + bookmark.id}
@@ -191,7 +192,7 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
+
       <EditDialog
         isOpen={isEditDialogOpen}
         setIsOpen={setIsEditDialogOpen}
