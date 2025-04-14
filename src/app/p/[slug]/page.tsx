@@ -1,14 +1,14 @@
 import { db } from "~/server/db";
 import Head from "next/head";
-import React from "react";
+import React, { use } from "react";
 import ProfilePage from "~/components/ProfilePage/ProfilePage";
 
 import { headers } from 'next/headers'
 
 
-export default async function Slug({ params }: { params: { slug: string } }) {
+export default async function Slug({ params }: { params: Promise<{ slug: string }> }) {
 
-  const slug = params.slug;
+  const { slug } = use(params);
 
   const profile = await db.profile.findUnique({
     where: {
@@ -28,7 +28,7 @@ export default async function Slug({ params }: { params: { slug: string } }) {
     };
   }
 
-  const headersInstance = headers()
+  const headersInstance = await headers();
 
   const userIp = headersInstance.get('x-real-ip') ?? "unknown";
   const userUserAgent = headersInstance.get('user-agent') ?? "unknown";

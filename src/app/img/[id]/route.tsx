@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "~/server/db";
+import { use } from "react";
 
 // Base64 for a 1x1 PNG
 const imageBase64 =
@@ -63,9 +64,9 @@ const tracking = async (req: Request, id: string) => {
 // Dynamic route handler
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = params; // Extract the dynamic [id] from the URL
+  const { id } = use(params); // Extract the dynamic [id] from the URL
 
   // Trigger the tracking function (asynchronously)
   tracking(req, id).catch(console.error);

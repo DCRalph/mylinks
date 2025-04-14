@@ -20,7 +20,11 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable}`}>
+    <html
+      lang="en"
+      className={`${GeistSans.variable}`}
+      suppressHydrationWarning
+    >
       <body id="rootBody">
         <ThemeProvider attribute="class" defaultTheme="dark">
           <TRPCReactProvider>{children}</TRPCReactProvider>

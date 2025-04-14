@@ -6,7 +6,6 @@ import type { PrismaClient } from "@prisma/client";
 // import badWords from "~/utils/badWords";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { color } from "framer-motion";
 
 async function fetchFolderWithSubfolders(
   folderId: string,
@@ -98,18 +97,16 @@ const getFolder = protectedProcedure
         },
       });
 
-      if (!folder) {
-        folder = await db.bookmarkFolder.create({
-          data: {
-            name: "Root",
-            userId,
-          },
-          include: {
-            bookmarks: true,
-            subfolders: true,
-          },
-        });
-      }
+      folder ??= await db.bookmarkFolder.create({
+        data: {
+          name: "Root",
+          userId,
+        },
+        include: {
+          bookmarks: true,
+          subfolders: true,
+        },
+      });
     } else {
       folder = await db.bookmarkFolder.findUnique({
         where: {

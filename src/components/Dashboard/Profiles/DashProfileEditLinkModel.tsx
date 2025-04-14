@@ -11,6 +11,7 @@ import { IconDeviceFloppy, IconTrash } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import Image from "next/image";
 
 import {
   AlertDialog,
@@ -25,12 +26,14 @@ interface DashLinkEditModelProps {
   profileLink: ProfileLink;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  isAdmin?: boolean;
 }
 
 export default function DashProfileEditModel({
   profileLink,
   isOpen,
   setIsOpen,
+  isAdmin = false,
 }: DashLinkEditModelProps) {
   const [isClosing, setIsClosing] = useState(false);
 
@@ -50,25 +53,21 @@ export default function DashProfileEditModel({
   );
 
   const profiles = api.profile.getProfiles.useQuery();
-  const editProfileLinkMutation = api.profile.editProfileLink.useMutation();
-  const deleteProfileLinkMutation = api.profile.deleteProfileLink.useMutation();
+  const utils = api.useUtils();
 
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const editProfileLinkHandler = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    editProfileLinkMutation.mutate(
-      {
-        id: profileLink.id,
-        title: newLinkTitle,
-        url: newLinkUrl,
-        description: newLinkDescription,
-        bgColor: newLinkBgColor,
-        fgColor: newLinkFgColor,
-        iconUrl: newLinkIconUrl,
-      },
-      {
+  // Use admin mutations if in admin context, otherwise use profile mutations
+  const editProfileLinkMutation = isAdmin
+    ? api.admin.updateProfileLink.useMutation({
+        onSuccess: async () => {
+          toast.success("Link edited successfully", toastOptions);
+          setIsClosing(true);
+          await utils.admin.getUser.invalidate();
+        },
+        onError: (error) => {
+          toast.error(error.message, toastOptions);
+        },
+      })
+    : api.profile.editProfileLink.useMutation({
         onSuccess: () => {
           toast.success("Link edited successfully", toastOptions);
           setIsClosing(true);
@@ -76,19 +75,21 @@ export default function DashProfileEditModel({
         onError: (error) => {
           toast.error(error.message, toastOptions);
         },
-      },
-    );
-  };
+      });
 
-  const deleteProfileLinkHandler = async () => {
-    // Instead of deleting right away, open confirmation dialog
-    setIsDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    deleteProfileLinkMutation.mutate(
-      { id: profileLink.id },
-      {
+  const deleteProfileLinkMutation = isAdmin
+    ? api.admin.deleteProfileLink.useMutation({
+        onSuccess: async () => {
+          toast.success("Link deleted successfully", toastOptions);
+          setIsDeleteDialogOpen(false);
+          setIsClosing(true);
+          await utils.admin.getUser.invalidate();
+        },
+        onError: (error) => {
+          toast.error(error.message, toastOptions);
+        },
+      })
+    : api.profile.deleteProfileLink.useMutation({
         onSuccess: () => {
           toast.success("Link deleted successfully", toastOptions);
           setIsDeleteDialogOpen(false);
@@ -103,8 +104,31 @@ export default function DashProfileEditModel({
         onError: (error) => {
           toast.error(error.message, toastOptions);
         },
-      },
-    );
+      });
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const editProfileLinkHandler = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    editProfileLinkMutation.mutate({
+      id: profileLink.id,
+      title: newLinkTitle,
+      url: newLinkUrl,
+      description: newLinkDescription,
+      bgColor: newLinkBgColor,
+      fgColor: newLinkFgColor,
+      iconUrl: newLinkIconUrl,
+    });
+  };
+
+  const deleteProfileLinkHandler = async () => {
+    // Instead of deleting right away, open confirmation dialog
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    deleteProfileLinkMutation.mutate({ id: profileLink.id });
   };
 
   useEffect(() => {
@@ -264,114 +288,119 @@ export default function DashProfileEditModel({
                   onChange={(e) => {
                     setNewLinkFgColor(e.target.value);
                   }}
-                  required
                 />
               </div>
             </div>
 
-            {/* iconUrl */}
-            <div className="col-span-full flex items-center gap-4">
-              <div className="w-full">
-                <label
-                  htmlFor="newLinkIconUrl"
-                  className="mb-2 block text-sm font-medium text-white"
-                >
-                  Icon URL
-                </label>
-                <select
-                  id="newLinkIconUrl"
-                  value={newLinkIconUrl}
-                  onChange={(e) => {
-                    setNewLinkIconUrl(e.target.value);
-                  }}
-                  required
-                >
-                  {Icons.map((icon) => (
-                    <option key={icon.name} value={icon.icon}>
-                      {icon.name}
-                    </option>
-                  ))}
-                </select>
+            <div className="col-span-full">
+              <label
+                htmlFor="newLinkIconUrl"
+                className="mb-2 block text-sm font-medium text-white"
+              >
+                Icon
+              </label>
+              <div className="grid grid-cols-4 gap-2 md:grid-cols-6 lg:grid-cols-8">
+                {Icons.map((icon) => (
+                  <div
+                    key={icon.icon}
+                    className={`flex aspect-square cursor-pointer items-center justify-center rounded-lg border-2 ${
+                      newLinkIconUrl === icon.icon
+                        ? "border-blue-500 bg-blue-500 bg-opacity-20"
+                        : "border-zinc-700 bg-zinc-800"
+                    }`}
+                    onClick={() => setNewLinkIconUrl(icon.icon)}
+                  >
+                    <Image
+                      src={`/profileLinkIcons/${icon.icon}`}
+                      alt={icon.name}
+                      width={30}
+                      height={30}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="col-span-full flex justify-center">
-              <ProfileLinkElement
-                key={profileLink.id}
-                link={{
-                  id: profileLink.id,
-                  profileId: "",
-                  visible: true,
-                  title: newLinkTitle,
-                  url: newLinkUrl,
-                  description: newLinkDescription,
-                  bgColor: newLinkBgColor,
-                  fgColor: newLinkFgColor,
-                  iconUrl: newLinkIconUrl,
-                }}
-              />
-            </div>
-
-            <div className="col-span-full flex justify-center gap-4">
+            <div className="col-span-full mt-4 flex justify-center gap-4">
               <Button
                 type="submit"
                 className="form_btn_blue flex items-center gap-2"
+                disabled={editProfileLinkMutation.isPending}
               >
                 <IconDeviceFloppy />
-                Save
+                {editProfileLinkMutation.isPending
+                  ? "Saving..."
+                  : "Save Changes"}
               </Button>
               <Button
+                type="button"
                 className="form_btn_red flex items-center gap-2"
                 onClick={deleteProfileLinkHandler}
-                type="button"
+                disabled={deleteProfileLinkMutation.isPending}
               >
                 <IconTrash />
-                Delete
+                {deleteProfileLinkMutation.isPending
+                  ? "Deleting..."
+                  : "Delete Link"}
               </Button>
             </div>
           </form>
         </div>
-      </motion.div>
 
+        <div className="col-span-full mt-8 flex justify-center">
+          <div className="w-full max-w-md">
+            <h2 className="mb-4 text-center text-xl font-semibold text-white">
+              Preview
+            </h2>
+            <ProfileLinkElement
+              link={{
+                ...profileLink,
+                title: newLinkTitle,
+                url: newLinkUrl,
+                description: newLinkDescription,
+                bgColor: newLinkBgColor,
+                fgColor: newLinkFgColor,
+                iconUrl: newLinkIconUrl,
+              }}
+            />
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+
+  return (
+    <>
+      {isOpen && ReactDOM.createPortal(content, document.body)}
       <AlertDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogTitle>Delete Link</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this link? This action cannot be
+              undone.
+            </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogDescription>
-            Are you sure you want to delete this link?
-          </AlertDialogDescription>
           <AlertDialogFooter>
             <Button
-              variant="default"
-              className="form_btn_white"
+              variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
             >
               Cancel
             </Button>
-
             <Button
               variant="destructive"
               onClick={confirmDelete}
-              className="form_btn_red"
+              disabled={deleteProfileLinkMutation.isPending}
             >
-              Confirm Delete
+              {deleteProfileLinkMutation.isPending ? "Deleting..." : "Delete"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </motion.div>
+    </>
   );
-
-  if (!isOpen) return <></>;
-
-  const rootElement = document.getElementById("rootBody");
-  if (!rootElement) {
-    throw new Error("Root element not found");
-  }
-
-  return ReactDOM.createPortal(content, rootElement);
 }
