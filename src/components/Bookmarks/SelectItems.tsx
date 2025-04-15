@@ -1,16 +1,16 @@
+import { SelectItem } from "~/components/ui/select";
 
-import {
-  SelectItem,
-} from "~/components/ui/select";
+import { type AppRouter } from "~/server/api/root";
+import type { inferProcedureOutput } from "@trpc/server";
 
-import { type Bookmark, type BookmarkFolder } from "@prisma/client";
+// type AllBookmarks = BookmarkFolder & {
+//   bookmarks: Bookmark[];
+//   subfolders: AllBookmarks[];
+// };
 
-
-
-type AllBookmarks = BookmarkFolder & {
-  bookmarks: Bookmark[];
-  subfolders: AllBookmarks[];
-};
+type AllBookmarks = inferProcedureOutput<
+  AppRouter["bookmarks"]["getAllBookmarks"]
+>;
 
 const SelectItems = ({
   folder,
@@ -37,7 +37,11 @@ const SelectItems = ({
       </SelectItem>
 
       {folder.subfolders.map((subfolder) => (
-        <SelectItems key={subfolder.id} folder={subfolder} depth={newDepth} />
+        <SelectItems
+          key={subfolder.id}
+          folder={subfolder as unknown as AllBookmarks} // i hate this but it works
+          depth={newDepth}
+        />
       ))}
     </>
   );

@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { SelectItems, type AllBookmarks } from "./SelectItems";
+import { SelectItems } from "./SelectItems";
 
 interface EditDialogProps {
   isOpen: boolean;
@@ -45,7 +45,9 @@ const EditDialog = ({
   const utils = api.useUtils();
   const editBookmarkMutation = api.bookmarks.editBookmark.useMutation();
   const editFolderMutation = api.bookmarks.editFolder.useMutation();
-  const allBookmarks = api.bookmarks.getAllBookmarks.useQuery();
+  const allBookmarks = api.bookmarks.getAllBookmarks.useQuery(undefined, {
+    enabled: isOpen,
+  });
 
   const [name, setName] = useState(initialName);
   const [color, setColor] = useState(initialColor);
@@ -89,7 +91,7 @@ const EditDialog = ({
           newName: name,
           newUrl: url,
           newColor: color,
-          newFolderId: folderId 
+          newFolderId: folderId,
         },
 
         {
@@ -183,7 +185,7 @@ const EditDialog = ({
                 {allBookmarks.data && (
                   <>
                     <SelectItems
-                      folder={allBookmarks.data as AllBookmarks}
+                      folder={allBookmarks.data}
                       depth={0}
                     />
                   </>
@@ -193,10 +195,18 @@ const EditDialog = ({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="default" onClick={() => setIsOpen(false)} className="form_btn_white">
+          <Button
+            variant="default"
+            onClick={() => setIsOpen(false)}
+            className="form_btn_white"
+          >
             Cancel
           </Button>
-          <Button variant="default" onClick={handleSave} className="form_btn_blue">
+          <Button
+            variant="default"
+            onClick={handleSave}
+            className="form_btn_blue"
+          >
             Save changes
           </Button>
         </DialogFooter>

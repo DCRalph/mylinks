@@ -19,25 +19,30 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 
-import { SelectItems, type AllBookmarks } from "./SelectItems";
+import { SelectItems } from "./SelectItems";
 
 import { useEffect, useState } from "react";
-
+import { type Bookmark } from "@prisma/client";
 interface BookmarkItemProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   currentFolderId: string;
+  editingBookmark: Bookmark | null;
 }
 
 const AddBookmark = ({
   isOpen,
   setIsOpen,
   currentFolderId,
+  editingBookmark,
 }: BookmarkItemProps) => {
   const utils = api.useUtils();
-  const allBookmarks = api.bookmarks.getAllBookmarks.useQuery();
+  const allBookmarks = api.bookmarks.getAllBookmarks.useQuery(undefined, {
+    enabled: isOpen,
+  });
 
   const addBookmarkMutation = api.bookmarks.createBookmark.useMutation();
+  const editBookmarkMutation = api.bookmarks.editBookmark.useMutation();
 
   const [newBookmarkName, setNewBookmarkName] = useState("");
   const [newBookmarkUrl, setNewBookmarkUrl] = useState("");
@@ -47,9 +52,23 @@ const AddBookmark = ({
     string | undefined
   >(currentFolderId);
 
+  const isEditing = !!editingBookmark;
+
+  // Load editing data when available
   useEffect(() => {
-    setNewBookmarkFolderId(currentFolderId);
-  }, [currentFolderId]);
+    if (editingBookmark) {
+      setNewBookmarkName(editingBookmark.name ?? "");
+      setNewBookmarkUrl(editingBookmark.url);
+      setNewBookmarkColor(editingBookmark.color);
+      setNewBookmarkFolderId(editingBookmark.folderId);
+    } else {
+      // Reset fields when not editing
+      setNewBookmarkName("");
+      setNewBookmarkUrl("");
+      setNewBookmarkColor("#000000");
+      setNewBookmarkFolderId(currentFolderId);
+    }
+  }, [editingBookmark, currentFolderId]);
 
   const handleAddBookmark = () => {
     if (!newBookmarkName || !newBookmarkUrl || !newBookmarkFolderId) {
@@ -57,31 +76,52 @@ const AddBookmark = ({
       return;
     }
 
-    addBookmarkMutation.mutate(
-      {
-        name: newBookmarkName,
-        url: newBookmarkUrl,
-        folderId: newBookmarkFolderId,
-        color: newBookmarkColor,
-      },
-      {
-        onSuccess: () => {
-          toast.success("Bookmark added", ToastOptions);
-
-          setNewBookmarkName("");
-          setNewBookmarkUrl("");
-          setNewBookmarkFolderId(allBookmarks.data?.id);
-
-          setIsOpen(false);
-          utils.bookmarks.getFolder.invalidate().catch(console.error);
-          utils.bookmarks.getAllBookmarks.invalidate().catch(console.error);
+    if (isEditing && editingBookmark) {
+      // Update existing bookmark
+      editBookmarkMutation.mutate(
+        {
+          bookmarkId: editingBookmark.id,
+          newName: newBookmarkName,
+          newUrl: newBookmarkUrl,
+          newColor: newBookmarkColor,
+          newFolderId: newBookmarkFolderId,
         },
-        onError: (error) => {
-          toast.error("Failed to add bookmark", ToastOptions);
-          console.error(error);
+        {
+          onSuccess: () => {
+            toast.success("Bookmark updated", ToastOptions);
+            setIsOpen(false);
+            void utils.bookmarks.getFolder.invalidate();
+            void utils.bookmarks.getAllBookmarks.invalidate();
+          },
+          onError: (error) => {
+            toast.error("Failed to update bookmark", ToastOptions);
+            console.error(error);
+          },
         },
-      },
-    );
+      );
+    } else {
+      // Add new bookmark
+      addBookmarkMutation.mutate(
+        {
+          name: newBookmarkName,
+          url: newBookmarkUrl,
+          folderId: newBookmarkFolderId,
+          color: newBookmarkColor,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Bookmark added", ToastOptions);
+            setIsOpen(false);
+            void utils.bookmarks.getFolder.invalidate();
+            void utils.bookmarks.getAllBookmarks.invalidate();
+          },
+          onError: (error) => {
+            toast.error("Failed to add bookmark", ToastOptions);
+            console.error(error);
+          },
+        },
+      );
+    }
   };
 
   return (
@@ -89,16 +129,20 @@ const AddBookmark = ({
       open={isOpen}
       onOpenChange={(isOpen) => {
         setIsOpen(isOpen);
-        setNewBookmarkName("");
-        setNewBookmarkUrl("");
-        setNewBookmarkFolderId(currentFolderId);
+        // Only reset if we're closing the dialog
+        if (!isOpen && !editingBookmark) {
+          setNewBookmarkName("");
+          setNewBookmarkUrl("");
+          setNewBookmarkFolderId(currentFolderId);
+        }
       }}
     >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add bookmark</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit" : "Add"} bookmark</DialogTitle>
           <DialogDescription>
-            Add a new bookmark to your collection
+            {isEditing ? "Edit an existing" : "Add a new"} bookmark to your
+            collection
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -151,7 +195,7 @@ const AddBookmark = ({
                 {allBookmarks.data && (
                   <>
                     <SelectItems
-                      folder={allBookmarks.data as AllBookmarks}
+                      folder={allBookmarks.data}
                       depth={0}
                     />
                   </>
@@ -166,7 +210,7 @@ const AddBookmark = ({
             className="form_btn_white"
             onClick={handleAddBookmark}
           >
-            Save changes
+            {isEditing ? "Save changes" : "Add bookmark"}
           </Button>
         </DialogFooter>
       </DialogContent>

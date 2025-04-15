@@ -5,7 +5,11 @@ import type { PrismaClient } from "@prisma/client";
 
 // import badWords from "~/utils/badWords";
 
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  adminProcedure,
+} from "~/server/api/trpc";
 
 async function fetchFolderWithSubfolders(
   folderId: string,
@@ -19,7 +23,19 @@ async function fetchFolderWithSubfolders(
       bookmarks: includeBookmarks,
       subfolders: {
         include: {
+          bookmarks: includeBookmarks,
+          _count: {
+            select: {
+              bookmarks: true,
+              subfolders: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
           bookmarks: true,
+          subfolders: true,
         },
       },
     },
@@ -93,7 +109,22 @@ const getFolder = protectedProcedure
         },
         include: {
           bookmarks: true,
-          subfolders: true,
+          subfolders: {
+            include: {
+              _count: {
+                select: {
+                  bookmarks: true,
+                  subfolders: true,
+                },
+              },
+            },
+          },
+          _count: {
+            select: {
+              bookmarks: true,
+              subfolders: true,
+            },
+          },
         },
       });
 
@@ -101,10 +132,26 @@ const getFolder = protectedProcedure
         data: {
           name: "Root",
           userId,
+          color: "#3b82f6",
         },
         include: {
           bookmarks: true,
-          subfolders: true,
+          subfolders: {
+            include: {
+              _count: {
+                select: {
+                  bookmarks: true,
+                  subfolders: true,
+                },
+              },
+            },
+          },
+          _count: {
+            select: {
+              bookmarks: true,
+              subfolders: true,
+            },
+          },
         },
       });
     } else {
@@ -115,7 +162,23 @@ const getFolder = protectedProcedure
         },
         include: {
           bookmarks: true,
-          subfolders: true,
+          subfolders: {
+            include: {
+              _count: {
+                select: {
+                  bookmarks: true,
+                  subfolders: true,
+                },
+              },
+            },
+          },
+          parentFolder: true,
+          _count: {
+            select: {
+              bookmarks: true,
+              subfolders: true,
+            },
+          },
         },
       });
     }
@@ -426,6 +489,226 @@ const editFolder = protectedProcedure
     return true;
   });
 
+const getFolderPath = protectedProcedure
+  .input(z.object({ folderId: z.string().nullable() }))
+  .query(async ({ input, ctx }) => {
+    const userId = ctx.session?.user.id;
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const path: { id: string; name: string }[] = [];
+    let currentFolderId = input.folderId;
+
+    // Loop until we reach the root folder (parentFolderId is null)
+    while (currentFolderId) {
+      const folder = await db.bookmarkFolder.findUnique({
+        where: {
+          id: currentFolderId,
+          userId,
+        },
+        select: {
+          id: true,
+          name: true,
+          parentFolderId: true,
+          parentFolder: {
+            select: {
+              id: true,
+              name: true,
+              parentFolderId: true,
+            },
+          },
+        },
+      });
+
+      if (!folder) break;
+
+      // Add the current folder to the beginning of the path array
+      path.unshift({ id: folder.id, name: folder.name });
+
+      if (
+        folder.parentFolderId === null // root folder
+      ) {
+        break;
+      }
+
+      // Move to the parent folder
+      currentFolderId = folder.parentFolderId;
+    }
+
+    // REMOVE ROOT FOLDER
+    path.shift();
+
+    // Add root folder
+    path.unshift({ id: "", name: "Bookmarks" });
+
+    return path;
+  });
+
+// Admin procedure to create sample bookmarks and folders
+const createSampleBookmarks = adminProcedure.mutation(async ({ ctx }) => {
+  const userId = ctx.session.user.id;
+
+  // Get or create root folder
+  let rootFolder = await db.bookmarkFolder.findFirst({
+    where: {
+      userId,
+      parentFolderId: null,
+    },
+  });
+
+  rootFolder ??= await db.bookmarkFolder.create({
+    data: {
+      name: "Root",
+      userId,
+      color: "#3b82f6",
+    },
+  });
+
+  const exampleFolder = await db.bookmarkFolder.create({
+    data: {
+      name: "Example Folder",
+      userId,
+      color: "#3b82f6",
+      parentFolderId: rootFolder.id,
+    },
+  });
+
+  // Create sample folders
+  const folders = [
+    {
+      name: "Work Resources",
+      color: "#ef4444", // red
+      bookmarks: [
+        {
+          name: "Google Workspace",
+          url: "https://workspace.google.com/",
+          color: "#ef4444",
+        },
+        {
+          name: "Microsoft Office 365",
+          url: "https://www.office.com/",
+          color: "#ef4444",
+        },
+        {
+          name: "Notion Workspace",
+          url: "https://www.notion.so/",
+          color: "#ef4444",
+        },
+      ],
+    },
+    {
+      name: "Learning",
+      color: "#8b5cf6", // purple
+      bookmarks: [
+        {
+          name: "Coursera",
+          url: "https://www.coursera.org/",
+          color: "#8b5cf6",
+        },
+        {
+          name: "Udemy Courses",
+          url: "https://www.udemy.com/",
+          color: "#8b5cf6",
+        },
+        {
+          name: "MDN Web Docs",
+          url: "https://developer.mozilla.org/",
+          color: "#8b5cf6",
+        },
+      ],
+    },
+    {
+      name: "Entertainment",
+      color: "#f59e0b", // amber
+      bookmarks: [
+        {
+          name: "Netflix",
+          url: "https://www.netflix.com/",
+          color: "#f59e0b",
+        },
+        {
+          name: "YouTube",
+          url: "https://www.youtube.com/",
+          color: "#f59e0b",
+        },
+        {
+          name: "Spotify",
+          url: "https://open.spotify.com/",
+          color: "#f59e0b",
+        },
+        {
+          name: "Twitch",
+          url: "https://www.twitch.tv/",
+          color: "#f59e0b",
+        },
+      ],
+    },
+  ];
+
+  // Create the folders and their bookmarks
+  for (const folderData of folders) {
+    const folder = await db.bookmarkFolder.create({
+      data: {
+        name: folderData.name,
+        color: folderData.color,
+        userId,
+        parentFolderId: exampleFolder.id,
+      },
+    });
+
+    for (const bookmarkData of folderData.bookmarks) {
+      await db.bookmark.create({
+        data: {
+          name: bookmarkData.name,
+          url: bookmarkData.url,
+          color: bookmarkData.color,
+          userId,
+          folderId: folder.id,
+        },
+      });
+    }
+  }
+
+  // Create direct bookmarks in root folder
+  const rootBookmarks = [
+    {
+      name: "GitHub",
+      url: "https://github.com/",
+      color: "#3b82f6", // blue
+    },
+    {
+      name: "Stack Overflow",
+      url: "https://stackoverflow.com/",
+      color: "#f97316", // orange
+    },
+    {
+      name: "Google",
+      url: "https://www.google.com/",
+      color: "#22c55e", // green
+    },
+    {
+      name: "ChatGPT",
+      url: "https://chat.openai.com/",
+      color: "#10b981", // emerald
+    },
+  ];
+
+  for (const bookmarkData of rootBookmarks) {
+    await db.bookmark.create({
+      data: {
+        name: bookmarkData.name,
+        url: bookmarkData.url,
+        color: bookmarkData.color,
+        userId,
+        folderId: exampleFolder.id,
+      },
+    });
+  }
+
+  return { success: true };
+});
+
 export const bookmakrsRouter = createTRPCRouter({
   getAllBookmarks,
   getFolder,
@@ -436,4 +719,6 @@ export const bookmakrsRouter = createTRPCRouter({
   moveItem,
   editBookmark,
   editFolder,
+  getFolderPath,
+  createSampleBookmarks,
 });

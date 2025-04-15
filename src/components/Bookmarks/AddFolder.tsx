@@ -20,23 +20,29 @@ import {
 } from "~/components/ui/select";
 
 import { useEffect, useState } from "react";
-import { SelectItems, type AllBookmarks } from "./SelectItems";
+import { SelectItems } from "./SelectItems";
+import { type BookmarkFolder } from "@prisma/client";
 
 interface BookmarkItemProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   currentFolderId: string;
+  editingFolder: BookmarkFolder | null;
 }
 
 const AddFolder = ({
   isOpen,
   setIsOpen,
   currentFolderId,
+  editingFolder,
 }: BookmarkItemProps) => {
   const utils = api.useUtils();
-  const allBookmarks = api.bookmarks.getAllBookmarks.useQuery();
+  const allBookmarks = api.bookmarks.getAllBookmarks.useQuery(undefined, {
+    enabled: isOpen,
+  });
 
-  const addFolderMutatuion = api.bookmarks.createFolder.useMutation();
+  const addFolderMutation = api.bookmarks.createFolder.useMutation();
+  const editFolderMutation = api.bookmarks.editFolder.useMutation();
 
   const [newFolderName, setNewFolderName] = useState("");
   const [newFolderColor, setNewFolderColor] = useState("#000000");
@@ -44,39 +50,72 @@ const AddFolder = ({
     string | undefined
   >(currentFolderId);
 
-  useEffect(() => {
-    setNewFolderFolderId(currentFolderId);
-  }, [currentFolderId]);
+  const isEditing = !!editingFolder;
 
-  const handleAddBookmark = () => {
+  // Load editing data when available
+  useEffect(() => {
+    if (editingFolder) {
+      setNewFolderName(editingFolder.name);
+      setNewFolderColor(editingFolder.color);
+      setNewFolderFolderId(editingFolder.parentFolderId ?? undefined);
+    } else {
+      // Reset fields when not editing
+      setNewFolderName("");
+      setNewFolderColor("#000000");
+      setNewFolderFolderId(currentFolderId);
+    }
+  }, [editingFolder, currentFolderId]);
+
+  const handleSubmit = () => {
     if (!newFolderName || !newFolderFolderId) {
       toast.error("Please fill out all fields", ToastOptions);
       return;
     }
 
-    addFolderMutatuion.mutate(
-      {
-        name: newFolderName,
-        folderId: newFolderFolderId,
-        color: newFolderColor,
-      },
-      {
-        onSuccess: () => {
-          toast.success("Folder added", ToastOptions);
-
-          setNewFolderName("");
-          setNewFolderFolderId(allBookmarks.data?.id);
-
-          setIsOpen(false);
-          utils.bookmarks.getFolder.invalidate().catch(console.error);
-          utils.bookmarks.getAllBookmarks.invalidate().catch(console.error);
+    if (isEditing && editingFolder) {
+      // Update existing folder
+      editFolderMutation.mutate(
+        {
+          folderId: editingFolder.id,
+          newName: newFolderName,
+          newColor: newFolderColor,
+          newFolderId: newFolderFolderId,
         },
-        onError: (error) => {
-          toast.error("Failed to add folder", ToastOptions);
-          console.error(error);
+        {
+          onSuccess: () => {
+            toast.success("Folder updated", ToastOptions);
+            setIsOpen(false);
+            void utils.bookmarks.getFolder.invalidate();
+            void utils.bookmarks.getAllBookmarks.invalidate();
+          },
+          onError: (error) => {
+            toast.error("Failed to update folder", ToastOptions);
+            console.error(error);
+          },
         },
-      },
-    );
+      );
+    } else {
+      // Add new folder
+      addFolderMutation.mutate(
+        {
+          name: newFolderName,
+          folderId: newFolderFolderId,
+          color: newFolderColor,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Folder added", ToastOptions);
+            setIsOpen(false);
+            void utils.bookmarks.getFolder.invalidate();
+            void utils.bookmarks.getAllBookmarks.invalidate();
+          },
+          onError: (error) => {
+            toast.error("Failed to add folder", ToastOptions);
+            console.error(error);
+          },
+        },
+      );
+    }
   };
 
   return (
@@ -84,15 +123,19 @@ const AddFolder = ({
       open={isOpen}
       onOpenChange={(isOpen) => {
         setIsOpen(isOpen);
-        setNewFolderName("");
-        setNewFolderFolderId(currentFolderId);
+        // Only reset if we're closing the dialog
+        if (!isOpen && !editingFolder) {
+          setNewFolderName("");
+          setNewFolderFolderId(currentFolderId);
+        }
       }}
     >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Folder</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit" : "Add"} Folder</DialogTitle>
           <DialogDescription>
-            Add a new folder to your collection
+            {isEditing ? "Edit an existing" : "Add a new"} folder to your
+            collection
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -134,7 +177,7 @@ const AddFolder = ({
                 {allBookmarks.data && (
                   <>
                     <SelectItems
-                      folder={allBookmarks.data as AllBookmarks}
+                      folder={allBookmarks.data}
                       depth={0}
                     />
                   </>
@@ -146,10 +189,10 @@ const AddFolder = ({
         <DialogFooter>
           <Button
             type="submit"
-            onClick={handleAddBookmark}
+            onClick={handleSubmit}
             className="form_btn_white"
           >
-            Save changes
+            {isEditing ? "Save changes" : "Add folder"}
           </Button>
         </DialogFooter>
       </DialogContent>

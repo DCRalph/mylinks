@@ -15,6 +15,8 @@ import { api } from "~/trpc/react";
 import ComingSoonSection, {
   type RoadmapFeature,
 } from "~/components/ComingSoonSection";
+import Image from "next/image";
+import { FeaturesSection } from "~/components/FeaturesSection";
 
 export default function Home() {
   const myUser = api.user.getUser.useQuery();
@@ -114,7 +116,8 @@ export default function Home() {
     {
       id: "better-account-management",
       title: "Better Account Management",
-      description: "Manage your account with ease. Link to your social media, email, and more.",
+      description:
+        "Manage your account with ease. Link to your social media, email, and more.",
       status: "planned",
       icon: (
         <svg
@@ -259,90 +262,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section
-        id="features"
-        className="mx-auto max-w-7xl px-6 py-24 sm:px-8 lg:px-12"
-      >
-        <div className="mb-12 text-center">
-          <h2 className="sora mb-4 text-3xl font-bold text-white sm:text-4xl">
-            Powerful Features
-          </h2>
-          <p className="mx-auto max-w-2xl text-lg text-zinc-400">
-            Everything you need to manage, track, and optimize your links
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {/* Feature 1 */}
-          <div className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/80 p-6 backdrop-blur-sm">
-            <div className="mb-4 w-fit rounded-full bg-blue-500/10 p-3">
-              <IconLink className="h-6 w-6 text-blue-400" />
-            </div>
-            <h3 className="mb-2 text-xl font-semibold text-white">
-              Custom Short Links
-            </h3>
-            <p className="text-zinc-400">
-              Create branded, memorable links that are easy to share and
-              remember.
-            </p>
-
-            {/* Feature Screenshot Placeholder */}
-            <div className="mt-6 aspect-video w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
-              <div className="flex h-full flex-col items-center justify-center p-4 text-center">
-                <p className="text-sm text-zinc-500">
-                  Custom links interface screenshot
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Feature 2 */}
-          <div className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/80 p-6 backdrop-blur-sm">
-            <div className="mb-4 w-fit rounded-full bg-indigo-500/10 p-3">
-              <IconExternalLink className="h-6 w-6 text-indigo-400" />
-            </div>
-            <h3 className="mb-2 text-xl font-semibold text-white">
-              Advanced Analytics
-            </h3>
-            <p className="text-zinc-400">
-              Track clicks, geographic data, devices, and referrers in
-              real-time.
-            </p>
-
-            {/* Feature Screenshot Placeholder */}
-            <div className="mt-6 aspect-video w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
-              <div className="flex h-full flex-col items-center justify-center p-4 text-center">
-                <p className="text-sm text-zinc-500">
-                  Analytics dashboard screenshot
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Feature 3 */}
-          <div className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/80 p-6 backdrop-blur-sm">
-            <div className="mb-4 w-fit rounded-full bg-green-500/10 p-3">
-              <IconBrandGithub className="h-6 w-6 text-green-400" />
-            </div>
-            <h3 className="mb-2 text-xl font-semibold text-white">
-              Bookmark Manager
-            </h3>
-            <p className="text-zinc-400">
-              Organize and manage your links with tags, folders, and search
-              functionality.
-            </p>
-
-            {/* Feature Screenshot Placeholder */}
-            <div className="mt-6 aspect-video w-full overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
-              <div className="flex h-full flex-col items-center justify-center p-4 text-center">
-                <p className="text-sm text-zinc-500">
-                  Bookmark manager screenshot
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <FeaturesSection />
 
       {/* CTA Section */}
       <section className="mx-auto max-w-7xl px-6 pb-24 sm:px-8 lg:px-12">
