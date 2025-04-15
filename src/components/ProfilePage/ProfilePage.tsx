@@ -15,6 +15,20 @@ import parseProfileLinkOrder from "~/utils/parseProfileLinkOrder";
 import { api } from "~/trpc/react";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "~/components/ui/chart";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
 
 type Profile_ProjectLinks = {
   profileLinks: ProfileLink[];
@@ -247,6 +261,22 @@ function ProfileAnalytics({ profileId }: { profileId: string }) {
     );
   }
 
+  // Format data for shadcn chart
+  const chartData = data.clicksByDay.map((day) => ({
+    date: day.timestamp ? new Date(day.timestamp).getDate() : "?",
+    views: day.count || 0,
+    fullDate: day.timestamp ? formatDate(day.timestamp?.toString() || "") : "?",
+    isToday: isToday(day.timestamp?.toString() || ""),
+  }));
+
+  // Define chart data type for TypeScript
+  type ChartDataItem = {
+    date: number | string;
+    views: number;
+    fullDate: string;
+    isToday: boolean;
+  };
+
   return (
     <div className="glass-card relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-md">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -323,53 +353,27 @@ function ProfileAnalytics({ profileId }: { profileId: string }) {
         )}
       </div>
 
-      {/* Chart */}
-      <div className="h-40">
-        <div className="flex h-full items-end justify-between gap-1">
-          {data.clicksByDay.map((day, i) => {
-            // Safely extract counts for max calculation
-            const counts = data.clicksByDay.map((d) =>
-              typeof d.count === "number" ? d.count : 0,
-            );
-            const maxCount = Math.max(...counts, 1);
-            const height = day.count
-              ? Math.max(15, (day.count / maxCount) * 100)
-              : 4;
-
-            // Check if this is today's data using the date string directly
-            const isCurrentDay = isToday(day.timestamp?.toString() ?? "");
-            // Also check based on the last item in our date-ordered array
-            const isLastDay = i === data.clicksByDay.length - 1;
-            const highlightBar =
-              isCurrentDay || (isLastDay && day.date && isToday(day.date));
-
-            return (
-              <div
-                key={i}
-                className="flex flex-1 h-full flex-col items-center justify-end"
-              >
-                <div
-                  className={`w-full rounded-t ${
-                    highlightBar
-                      ? "bg-gradient-to-t from-indigo-600/80 to-indigo-400/80 hover:from-indigo-600 hover:to-indigo-400"
-                      : "bg-gradient-to-t from-blue-600/70 to-blue-400/70 hover:from-blue-600/90 hover:to-blue-400/90"
-                  }`}
-                  style={{ height: `${height}%` }}
-                  title={`${day.count} views on ${formatDate(
-                    day.timestamp?.toString() ?? "",
-                  )}${highlightBar ? " (Today)" : ""}`}
-                ></div>
-                <span
-                  className={`mt-2 text-xs ${
-                    highlightBar ? "font-medium text-blue-400" : "text-zinc-400"
-                  }`}
-                >
-                  {day.timestamp ? new Date(day.timestamp).getDate() : "?"}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+      {/* ShadCN Chart */}
+      <div className="mt-4">
+        <ChartContainer
+          config={{
+            views: {
+              color: "#4F46E5",
+            },
+            today: {
+              color: "#818CF8",
+            },
+          }}
+        >
+          <ResponsiveContainer>
+            <BarChart data={chartData}>
+              <Bar dataKey="views" radius={[4, 4, 0, 0]} fill="#4F46E5" />
+              <XAxis dataKey="fullDate" tickLine={false} axisLine={true} />
+              <YAxis />
+              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartContainer>
       </div>
 
       {/* Current Period Stats */}
@@ -423,11 +427,20 @@ function ProfileLinkCard({ link }: { link: ProfileLink }) {
         <div
           className="aspect-square h-full rounded-lg p-2"
           style={{
-            background: `linear-gradient(135deg, ${bgColor}, ${adjustColorBrightness(bgColor, 30)})`,
+            background: `${bgColor}`,
             color: fgColor,
           }}
         >
-          <IconExternalLink className="h-full w-full" />
+          {icon && (
+            <Image
+              src={icon}
+              alt={link.title}
+              className="h-full w-full"
+              width={48}
+              height={48}
+            />
+          )}
+          {!icon && <IconExternalLink className="h-full w-full" />}
         </div>
 
         <div className="flex flex-1 flex-col justify-center">
@@ -446,17 +459,17 @@ function ProfileLinkCard({ link }: { link: ProfileLink }) {
 }
 
 // Helper function to adjust color brightness for gradients
-function adjustColorBrightness(hex: string, percent: number) {
-  // Parse the hex color
-  let r = parseInt(hex.slice(1, 3), 16);
-  let g = parseInt(hex.slice(3, 5), 16);
-  let b = parseInt(hex.slice(5, 7), 16);
+// function adjustColorBrightness(hex: string, percent: number) {
+//   // Parse the hex color
+//   let r = parseInt(hex.slice(1, 3), 16);
+//   let g = parseInt(hex.slice(3, 5), 16);
+//   let b = parseInt(hex.slice(5, 7), 16);
 
-  // Adjust brightness
-  r = Math.min(255, Math.max(0, r + percent));
-  g = Math.min(255, Math.max(0, g + percent));
-  b = Math.min(255, Math.max(0, b + percent));
+//   // Adjust brightness
+//   r = Math.min(255, Math.max(0, r + percent));
+//   g = Math.min(255, Math.max(0, g + percent));
+//   b = Math.min(255, Math.max(0, b + percent));
 
-  // Convert back to hex
-  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-}
+//   // Convert back to hex
+//   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+// }

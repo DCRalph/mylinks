@@ -4,7 +4,7 @@ import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import { IconLink } from "@tabler/icons-react";
+import { IconChevronRight, IconLink } from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import toastOptions from "~/utils/toastOptions";
@@ -72,11 +72,11 @@ export default function SignIn({
   const [password, setPassword] = useState("");
 
   const credSignIn = async () => {
-    toast.error(
-      "Email and password disabled. Please use google sign in",
-      toastOptions,
-    );
-    return;
+    // toast.error(
+    //   "Email and password disabled. Please use google sign in",
+    //   toastOptions,
+    // );
+    // return;
 
     if (!email || !password) {
       toast.error("Please enter your email and password", toastOptions);
@@ -112,84 +112,116 @@ export default function SignIn({
   };
 
   return (
-    <div className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-2">
-      <div className="flex flex-col items-start justify-center gap-4 bg-zinc-900 p-8 text-zinc-100 lg:p-12">
-        <div className="space-y-2">
-          <h1 className="flex gap-2 text-4xl font-bold tracking-tight sm:text-5xl sora">
-            Welcome to{" "}
-            <span className="flex gap-2 font-extrabold text-cyan-400">
-              <IconLink className="h-12 w-12" />
-              link2it
-            </span>
-          </h1>
-          <p className="text-lg">
-            Unlock the power of our cutting-edge tools and services. Sign in to
-            get started.
-          </p>
-        </div>
+    <main className="flex min-h-screen flex-col overflow-hidden bg-gradient-to-br from-zinc-950 to-zinc-900">
+      {/* Decorative elements */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute -left-20 top-10 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl"></div>
+        <div className="absolute -right-20 bottom-20 h-80 w-80 rounded-full bg-purple-500/10 blur-3xl"></div>
+        <div className="absolute left-1/3 top-1/3 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl"></div>
       </div>
-      <div className="relative flex items-center justify-center bg-zinc-100 p-8 text-zinc-900 lg:p-12">
-        <div className="absolute left-0 top-0 p-4">
-          <Link href={"/"}>
-            <Button variant={"outline"} className="text-zinc-100">Back</Button>
-          </Link>
-        </div>
-        <div className="w-full max-w-md space-y-4">
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold">Sign in to your account</h2>
-            <p className="text-zinc-900">
-              Enter your email and password to access your account.
-            </p>
-          </div>
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                placeholder="Enter your email"
-                className="text-zinc-100"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                className="text-zinc-100"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <Button
-              variant={"outline"}
-              className="w-full text-zinc-100 sora"
-              onClick={() => credSignIn()}
-            >
-              Sign in
-            </Button>
-            <Separator />
-            <p className="">Or sign in with</p>
 
-            {filteredProviders.map((provider) => (
-              <div key={provider.name}>
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 py-12 sm:px-8 lg:px-12">
+        {/* Sign In Content */}
+        <div className="flex flex-1 flex-col items-center justify-center">
+          <div className="mb-4 text-center">
+            <h1 className="sora text-4xl font-bold tracking-tight text-white sm:text-5xl">
+              <span className="flex items-center justify-center gap-2">
+                <IconLink className="h-12 w-12 text-blue-500" />
+                <span className="bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">
+                  link2it
+                </span>
+              </span>
+            </h1>
+          </div>
+
+          <div className="w-full max-w-md">
+            {/* Back Button */}
+            <div className="mb-4 flex">
+              <Link href="/">
                 <Button
                   variant="outline"
-                  className="flex w-full text-zinc-100 sora"
-                  onClick={() => signIn(provider.id)}
+                  className="flex h-10 items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm font-medium text-white backdrop-blur-sm transition-all hover:translate-y-[-1px] hover:border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-400 active:translate-y-[1px]"
                 >
-                  {provider.icon && (
-                    <div className="mr-2 h-4 w-4">{provider.icon}</div>
-                  )}
-                  Sign in with {provider.name}
+                  <IconChevronRight className="h-4 w-4 rotate-180" />
+                  Back
+                </Button>
+              </Link>
+            </div>
+
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/70 p-8 backdrop-blur-md">
+              <div className="mb-6 space-y-2">
+                <h2 className="text-2xl font-bold text-white">Sign in</h2>
+                <p className="text-zinc-400">
+                  Enter your credentials to continue
+                </p>
+              </div>
+
+              <div className="grid gap-5">
+                <div className="grid gap-2">
+                  <Label htmlFor="email" className="text-zinc-300">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    placeholder="Enter your email"
+                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="password" className="text-zinc-300">
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <Button
+                  variant="default"
+                  className="h-11 bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-3 text-base font-medium text-white shadow-lg shadow-blue-500/20 transition-all hover:translate-y-[-1px] hover:shadow-xl hover:shadow-blue-500/30 active:translate-y-[1px]"
+                  onClick={() => credSignIn()}
+                >
+                  Sign in
                 </Button>
               </div>
-            ))}
+
+              {filteredProviders.length > 0 && (
+                <>
+                  <div className="my-6 flex items-center gap-3">
+                    <Separator className="flex-1 bg-zinc-800" />
+                    <span className="text-sm text-zinc-400">
+                      or continue with
+                    </span>
+                    <Separator className="flex-1 bg-zinc-800" />
+                  </div>
+
+                  <div className="grid gap-3">
+                    {filteredProviders.map((provider) => (
+                      <Button
+                        key={provider.name}
+                        variant="outline"
+                        className="flex h-11 items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800/50 px-5 py-3 text-base font-medium text-white backdrop-blur-sm transition-all hover:translate-y-[-1px] hover:border-blue-500/50 hover:bg-zinc-700/50 active:translate-y-[1px]"
+                        onClick={() => signIn(provider.id)}
+                      >
+                        {provider.icon && (
+                          <div className="mr-2 h-5 w-5">{provider.icon}</div>
+                        )}
+                        Sign in with {provider.name}
+                      </Button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

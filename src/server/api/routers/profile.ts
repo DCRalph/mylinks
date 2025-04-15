@@ -57,11 +57,6 @@ function getDateRange(
   return dates;
 }
 
-// Helper to log the click data for debugging
-function logClickData(message: string, data: unknown) {
-  console.log(`[CLICK DATA DEBUG] ${message}:`, JSON.stringify(data, null, 2));
-}
-
 export const profileRouter = createTRPCRouter({
   getProfiles: protectedProcedure.query(async ({ ctx }) => {
     const profiles = await db.profile.findMany({
@@ -544,19 +539,6 @@ export const profileRouter = createTRPCRouter({
       // Create full date range with all days (in UTC)
       const dateRange = getDateRange(adjustedStartDate, endDate);
 
-      // Debug the date range
-      console.log("Date calculations:");
-      console.log("Local now:", now.toLocaleString());
-      console.log("Timezone offset:", now.getTimezoneOffset() + " minutes");
-      console.log("UTC now:", now.toUTCString());
-      console.log("adjustedStartDate:", adjustedStartDate.toUTCString());
-      console.log("endDate:", endDate.toUTCString());
-      console.log("Date range length:", dateRange.length);
-      console.log(
-        "Date range dates:",
-        dateRange.map((d) => d.date),
-      );
-
       // Get click data
       const clickData = await db.click.findMany({
         where: {
@@ -570,19 +552,6 @@ export const profileRouter = createTRPCRouter({
           createdAt: true,
         },
       });
-
-      console.log("Click data:", clickData.length, "clicks found");
-      if (clickData.length > 0) {
-        console.log(
-          "First click:",
-          clickData[0]?.createdAt?.toISOString() ?? "unknown",
-        );
-        console.log(
-          "Last click:",
-          clickData[clickData.length - 1]?.createdAt?.toISOString() ??
-            "unknown",
-        );
-      }
 
       // Group clicks by day - adjusted for UTC
       const clicksByDay: Record<string, number> = {};
@@ -600,15 +569,8 @@ export const profileRouter = createTRPCRouter({
 
         if (clicksByDay[dateStr] !== undefined) {
           clicksByDay[dateStr] += 1;
-        } else {
-          console.warn(`Click on ${dateStr} falls outside of date range`);
-          console.warn(`  Original date: ${click.createdAt.toISOString()}`);
-          console.warn(`  Adjusted date: ${utcAdjustedDate.toISOString()}`);
         }
       });
-
-      // Debug the grouped clicks
-      console.log("Grouped clicks by day:", clicksByDay);
 
       // Create the final formatted data with all days included
       const formattedData = dateRange.map((day) => ({

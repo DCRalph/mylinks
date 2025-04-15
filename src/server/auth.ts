@@ -8,32 +8,13 @@ import {
 import { type Adapter } from "next-auth/adapters";
 // import DiscordProvider from "next-auth/providers/discord";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 
 import type { User as PUser } from "@prisma/client";
 
 import { env } from "~/env";
 import { db } from "~/server/db";
-
-/**
- * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
- * object and keep type safety.
- *
- * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
- */
-// declare module "next-auth" {
-//   interface Session extends DefaultSession {
-//     user: {
-//       id: string;
-//       // ...other properties
-//       // role: UserRole;
-//     } & DefaultSession["user"];
-//   }
-
-//   // interface User {
-//   //   // ...other properties
-//   //   // role: UserRole;
-//   // }
-// }
+import { v4 } from "uuid";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
@@ -58,28 +39,103 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    async signIn({ user }) {
+      const PUser = await db.user.findUnique({
+        where: {
+          id: user.id,
+        },
+      });
+
+      if (!PUser) {
+        return false;
+      }
+
+      return true;
+    },
+    async jwt({ token, account }) {
+      // credentials provider hack
+      if (account?.provider === "credentials") {
+        token.credentials = true;
+      }
+      return token;
+    },
+  },
+  jwt: {
+    // credentials provider hack
+    encode: async function (params) {
+      if (params.token?.credentials) {
+        const sessionToken = v4();
+
+        if (!params.token.sub) {
+          throw new Error("No user ID found in token");
+        }
+
+        const expire = new Date();
+        expire.setDate(expire.getDate() + 30);
+
+        const createdSession = await db.session.create({
+          data: {
+            sessionToken,
+            userId: params.token.sub,
+            expires: expire,
+          },
+        });
+
+        if (!createdSession) {
+          throw new Error("Failed to create session");
+        }
+
+        return sessionToken;
+      }
+      return JSON.stringify(params.token);
+    },
   },
   adapter: PrismaAdapter(db) as Adapter,
   providers: [
     GoogleProvider({
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
-      // allowDangerousEmailAccountLinking: true,
     }),
+    CredentialsProvider({
+      name: "Credentials",
 
-    // DiscordProvider({
-    //   clientId: env.DISCORD_CLIENT_ID,
-    //   clientSecret: env.DISCORD_CLIENT_SECRET,
-    // }),
-    /**
-     * ...add more providers here.
-     *
-     * Most other providers require a bit more work than the Discord provider. For example, the
-     * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
-     * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
-     *
-     * @see https://next-auth.js.org/providers/github
-     */
+      credentials: {
+        email: { label: "email", type: "email", placeholder: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials, _req) {
+        if (!credentials) {
+          return null;
+        }
+
+        // Add logic here to look up the user from the credentials supplied
+        if (!credentials.email || !credentials.password) {
+          return null;
+        }
+
+        if (credentials.password === "") {
+          return null;
+        }
+
+        const user = await db.user.findFirst({
+          where: {
+            email: credentials.email,
+            accounts: {
+              some: {
+                provider: "credentials",
+                password: credentials.password,
+              },
+            },
+          },
+        });
+
+        if (user) {
+          return user;
+        }
+
+        return null;
+      },
+    }),
   ],
 };
 

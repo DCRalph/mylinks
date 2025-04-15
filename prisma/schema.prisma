@@ -30,6 +30,8 @@ model Account {
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  password String?
+
   @@unique([provider, providerAccountId])
 }
 
@@ -56,6 +58,9 @@ model VerificationToken {
 
 model User {
   id       String    @id @default(cuid())
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt @default(now())
+
   name     String?
   email    String?   @unique
   emailVerified DateTime?
