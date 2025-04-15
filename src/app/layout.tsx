@@ -9,6 +9,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import { ThemeProvider } from "~/components/theme-provider";
+import SessionProvider from "~/components/SessionProvider";
 
 export const metadata: Metadata = {
   title: "Link shortner",
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -26,9 +27,11 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body id="rootBody">
-        <ThemeProvider attribute="class" defaultTheme="dark">
-          <TRPCReactProvider>{children}</TRPCReactProvider>
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider attribute="class" defaultTheme="dark">
+            <TRPCReactProvider>{children}</TRPCReactProvider>
+          </ThemeProvider>
+        </SessionProvider>
         <ToastContainer theme="dark" />
       </body>
     </html>

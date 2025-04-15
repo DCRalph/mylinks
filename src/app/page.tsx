@@ -168,7 +168,7 @@ export default function Home() {
 
         <div className="relative grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-8">
           <div className="flex flex-col justify-center">
-            <span className="mb-4 inline-flex items-center rounded-full bg-blue-500/10 px-3 py-1 text-sm font-medium text-blue-400">
+            <span className="mb-4 inline-flex items-center rounded-full w-fit bg-blue-500/10 px-3 py-1 text-sm font-medium text-blue-400">
               <IconSparkles className="mr-1 h-4 w-4" /> Now in Beta
             </span>
             <h1 className="sora mb-6 text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
