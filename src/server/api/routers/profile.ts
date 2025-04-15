@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { db } from "~/server/db";
-import { Prisma } from "@prisma/client";
 import badWords from "~/utils/badWords";
 
 import {

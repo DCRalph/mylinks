@@ -15,6 +15,7 @@ import type { User as PUser } from "@prisma/client";
 import { env } from "~/env";
 import { db } from "~/server/db";
 import { v4 } from "uuid";
+import { compareSync } from "bcryptjs";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
@@ -123,17 +124,38 @@ export const authOptions: NextAuthOptions = {
             accounts: {
               some: {
                 provider: "credentials",
-                password: credentials.password,
+              },
+            },
+          },
+          include: {
+            accounts: {
+              where: {
+                provider: "credentials",
               },
             },
           },
         });
 
-        if (user) {
-          return user;
+        if (!user) {
+          return null;
         }
 
-        return null;
+        const hashedPassword = user.accounts[0]?.password;
+
+        if (!hashedPassword) {
+          return null;
+        }
+
+        const isPasswordValid = compareSync(
+          credentials.password,
+          hashedPassword,
+        );
+
+        if (!isPasswordValid) {
+          return null;
+        }
+
+        return user;
       },
     }),
   ],

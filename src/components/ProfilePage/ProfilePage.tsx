@@ -27,7 +27,6 @@ import {
   XAxis,
   YAxis,
   ResponsiveContainer,
-  Tooltip,
 } from "recharts";
 
 type Profile_ProjectLinks = {
@@ -268,14 +267,6 @@ function ProfileAnalytics({ profileId }: { profileId: string }) {
     fullDate: day.timestamp ? formatDate(day.timestamp?.toString() || "") : "?",
     isToday: isToday(day.timestamp?.toString() || ""),
   }));
-
-  // Define chart data type for TypeScript
-  type ChartDataItem = {
-    date: number | string;
-    views: number;
-    fullDate: string;
-    isToday: boolean;
-  };
 
   return (
     <div className="glass-card relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-md">
