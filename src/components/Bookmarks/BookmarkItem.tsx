@@ -41,7 +41,7 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
   let url;
   try {
     url = new URL(bookmark.url).hostname;
-  } catch (e) {
+  } catch {
     url = bookmark.url;
   }
 

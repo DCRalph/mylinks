@@ -1,6 +1,4 @@
-import { type IconType } from "@tabler/icons-react";
 import Image from "next/image";
-import { useState } from "react";
 
 export interface Feature {
   id: string;

@@ -1,9 +1,5 @@
 import { type Profile, type ProfileLink } from "@prisma/client";
-import {
-  IconPencil,
-  IconTrash,
-  IconPlus,
-} from "@tabler/icons-react";
+import { IconPencil, IconTrash, IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { api } from "~/trpc/react";
@@ -33,13 +29,9 @@ interface AdminUserProfileCardProps {
   profile: Profile & {
     profileLinks: ProfileLink[];
   };
-  userId: string;
 }
 
-export function AdminUserProfileCard({
-  profile,
-  userId,
-}: AdminUserProfileCardProps) {
+export function AdminUserProfileCard({ profile }: AdminUserProfileCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditLinkModelOpen, setIsEditLinkModelOpen] = useState(false);

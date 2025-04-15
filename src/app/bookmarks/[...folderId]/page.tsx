@@ -5,11 +5,7 @@ import { checkRequireSetup } from "~/utils/requireSetup";
 import React from "react";
 import BookmarksPage from "../bookmarks";
 
-export default async function BookmarksFolderPage({
-  params,
-}: {
-  params: { folderId: string[] };
-}) {
+export default async function BookmarksFolderPage() {
   const session = await getServerSession(authOptions);
 
   if (!session) {

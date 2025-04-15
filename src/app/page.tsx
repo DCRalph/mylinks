@@ -2,9 +2,7 @@
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import {
-  IconBrandGithub,
   IconChevronRight,
-  IconExternalLink,
   IconLink,
   IconRocket,
   IconSparkles,
@@ -15,7 +13,6 @@ import { api } from "~/trpc/react";
 import ComingSoonSection, {
   type RoadmapFeature,
 } from "~/components/ComingSoonSection";
-import Image from "next/image";
 import { FeaturesSection } from "~/components/FeaturesSection";
 
 export default function Home() {

@@ -314,7 +314,6 @@ export default function Slug({
                     <AdminUserProfileCard
                       profile={profile}
                       key={profile.id}
-                      userId={userId}
                     />
                   ))
                 )}
