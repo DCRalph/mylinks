@@ -457,7 +457,7 @@ export default function BookmarksPage() {
 
           <div className="flex items-center p-4">
             <div
-              className="mr-4 flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg transition-transform duration-300 group-hover:scale-110"
+              className="mr-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white shadow-lg transition-transform duration-300 group-hover:scale-110"
               style={{
                 backgroundColor: bookmark.color,
                 boxShadow: `0 10px 15px -3px ${bookmark.color}30`,
