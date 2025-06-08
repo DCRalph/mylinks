@@ -47,12 +47,16 @@ import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
+  horizontalListSortingStrategy,
+  rectSortingStrategy,
+  rectSwappingStrategy
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import Link from "next/link";
 import type { Bookmark, BookmarkFolder } from "@prisma/client";
 import { toast } from "react-toastify";
 import ToastOptions from "~/utils/toastOptions";
+import { Context } from "@dnd-kit/sortable/dist/components";
 
 type DragItemType = {
   id: string;
@@ -912,19 +916,7 @@ export default function BookmarksPage() {
               </div>
 
               {/* Grid Layout */}
-              <SortableContext
-                items={[
-                  ...filteredFolders.map((folder) => ({
-                    id: folder.id,
-                    type: "folder" as const,
-                  })),
-                  ...filteredBookmarks.map((bookmark) => ({
-                    id: bookmark.id,
-                    type: "bookmark" as const,
-                  })),
-                ]}
-                strategy={verticalListSortingStrategy}
-              >
+
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {/* Folders */}
                   {filteredFolders.map((folder) => (
@@ -984,7 +976,7 @@ export default function BookmarksPage() {
                       </div>
                     )}
                 </div>
-              </SortableContext>
+
 
               {/* Drag Overlay */}
               <DragOverlay modifiers={[restrictToWindowEdges]}>

@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Sora:wght@100;200;300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Sora:wght@100;200;300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -21,7 +21,7 @@ body {
   /* height: 100%; */
   margin: 0;
   scroll-behavior: smooth;
-    font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -43,9 +43,8 @@ body {
   font-family: "Sora";
 }
 
-
 .form_btn {
-  @apply col-span-full active:scale-95 sora text-base rounded-lg border transition-all text-center font-semibold shadow-md;
+  @apply sora col-span-full rounded-lg border text-center text-base font-semibold shadow-md transition-all active:scale-95;
 }
 
 .form_btn_white {
@@ -53,15 +52,15 @@ body {
 }
 
 .form_btn_blue {
-  @apply form_btn text-white  border-blue-500 bg-blue-600 hover:!bg-blue-700 hover:shadow-blue-600;
+  @apply form_btn border-blue-500 bg-blue-600 text-white hover:!bg-blue-700 hover:shadow-blue-600;
 }
 
 .form_btn_red {
-  @apply form_btn text-white  border-red-500 bg-red-600 hover:!bg-red-700 hover:shadow-red-600;
+  @apply form_btn border-red-500 bg-red-600 text-white hover:!bg-red-700 hover:shadow-red-600;
 }
 
 .form_btn_green {
-  @apply form_btn text-white  border-green-500 bg-green-600 hover:!bg-green-700 hover:shadow-green-600;
+  @apply form_btn border-green-500 bg-green-600 text-white hover:!bg-green-700 hover:shadow-green-600;
 }
 
 .gobold {
@@ -162,4 +161,32 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.glass-card {
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.18);
+}
+
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    to bottom right,
+    rgba(255, 255, 255, 0.15),
+    rgba(255, 255, 255, 0.05),
+    transparent,
+    transparent
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }

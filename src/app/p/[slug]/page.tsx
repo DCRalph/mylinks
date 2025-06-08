@@ -2,7 +2,7 @@
 
 import Head from "next/head";
 import React, { use } from "react";
-import { IconLink } from "@tabler/icons-react";
+import { IconError404, IconLink } from "@tabler/icons-react";
 import { api } from "~/trpc/react";
 import ProfilePage from "~/components/ProfilePage/ProfilePage";
 
@@ -97,7 +97,7 @@ export default function SlugPage({
         <div className="relative z-10 mx-auto w-full max-w-md px-6 text-center">
           <div className="relative mb-8 flex justify-center">
             <div className="rounded-full bg-white/5 p-5 backdrop-blur-md">
-              <IconLink className="h-16 w-16 text-red-400" />
+              <IconError404 className="h-16 w-16 text-red-400" />
             </div>
           </div>
 
@@ -112,37 +112,6 @@ export default function SlugPage({
             </p>
           </div>
         </div>
-
-        {/* CSS for Glassmorphism */}
-        <style jsx global>{`
-          .glass-card {
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.18);
-          }
-
-          .glass-card::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            padding: 1px;
-            background: linear-gradient(
-              to bottom right,
-              rgba(255, 255, 255, 0.15),
-              rgba(255, 255, 255, 0.05),
-              transparent,
-              transparent
-            );
-            -webkit-mask:
-              linear-gradient(#fff 0 0) content-box,
-              linear-gradient(#fff 0 0);
-            mask:
-              linear-gradient(#fff 0 0) content-box,
-              linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            pointer-events: none;
-          }
-        `}</style>
       </main>
     );
   }
