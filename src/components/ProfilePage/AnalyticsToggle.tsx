@@ -12,6 +12,10 @@ export default function AnalyticsToggle({ profile }: { profile: Profile }) {
 
   const isOwner = session?.user?.id === profile.userId;
 
+  if (!isOwner) {
+    return null;
+  }
+
   return (
     <>
       {/* Fixed Analytics Toggle Button */}
