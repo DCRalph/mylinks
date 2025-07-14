@@ -491,7 +491,7 @@ export const profileRouter = createTRPCRouter({
       );
 
       // Track the visit (without needing headers)
-      db.click
+      void db.click
         .create({
           data: {
             profileId: profile.id,
@@ -616,8 +616,8 @@ export const profileRouter = createTRPCRouter({
             ? 100 // If previous was 0 and current has clicks, 100% growth
             : 0 // If both are 0, 0% growth
           : ((currentPeriodClicks - previousPeriodClicks) /
-              previousPeriodClicks) *
-            100;
+            previousPeriodClicks) *
+          100;
 
       return {
         clicksByDay: formattedData,
