@@ -1,4 +1,4 @@
-import { type Profile } from "@prisma/client";
+import { type Profile } from "~/generated/prisma/client";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import toastOptions from "~/utils/toastOptions";

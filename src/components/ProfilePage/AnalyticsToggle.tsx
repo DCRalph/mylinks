@@ -4,7 +4,7 @@ import { useState } from "react";
 import { IconChartBar } from "@tabler/icons-react";
 import ProfileAnalytics from "./ProfileAnalytics";
 import { useSession } from "next-auth/react";
-import { type Profile } from "@prisma/client";
+import { type Profile } from "~/generated/prisma/client";
 
 export default function AnalyticsToggle({ profile }: { profile: Profile }) {
   const [showAnalytics, setShowAnalytics] = useState(false);

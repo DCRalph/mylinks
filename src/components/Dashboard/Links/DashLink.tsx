@@ -1,4 +1,4 @@
-import { type Link } from "@prisma/client";
+import { type Link } from "~/generated/prisma/client";
 import { useState } from "react";
 import DashLinkEditModel from "./DashLinkEditModel";
 import { env } from "~/env";

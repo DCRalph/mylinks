@@ -1,4 +1,4 @@
-import { type Profile, type ProfileLink } from "@prisma/client";
+import { type Profile, type ProfileLink } from "~/generated/prisma/client";
 import { useState } from "react";
 import DashProfileEditModel from "./DashProfileEditModel";
 import Link from "next/link";

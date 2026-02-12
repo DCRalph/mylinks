@@ -1,4 +1,4 @@
-import { type Link } from "@prisma/client";
+import { type Link } from "~/generated/prisma/client";
 import { useEffect, useState, type ReactNode } from "react";
 import ReactDOM from "react-dom";
 import { toast } from "react-toastify";

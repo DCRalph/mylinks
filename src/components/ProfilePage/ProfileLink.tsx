@@ -1,4 +1,4 @@
-import { type ProfileLink } from "@prisma/client";
+import { type ProfileLink } from "~/generated/prisma/client";
 import Image from "next/image";
 import { defualtIcon } from "~/utils/profileLinkIcons";
 

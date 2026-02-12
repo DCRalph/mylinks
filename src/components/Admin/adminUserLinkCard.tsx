@@ -1,4 +1,4 @@
-import { type Link as LinkType } from "@prisma/client";
+import { type Link as LinkType } from "~/generated/prisma/client";
 import {
   IconExternalLink,
   IconChartBar,

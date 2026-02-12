@@ -7,20 +7,19 @@ await import("./src/env.js");
 /** @type {import("next").NextConfig} */
 const config = {
   images: {
-    domains: ["cdn.discordapp.com","lh3.googleusercontent.com"],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'cdn.discordapp.com"',
+        hostname: 'cdn.discordapp.com',
         port: '',
-        pathname: '**',
+        pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
         port: '',
-        pathname: '**',
-      }
+        pathname: '/**',
+      },
     ],
   },
 };

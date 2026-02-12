@@ -53,7 +53,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import Link from "next/link";
-import type { Bookmark, BookmarkFolder } from "@prisma/client";
+import type { Bookmark, BookmarkFolder } from "~/generated/prisma/client";
 import { toast } from "react-toastify";
 import ToastOptions from "~/utils/toastOptions";
 import { Context } from "@dnd-kit/sortable/dist/components";

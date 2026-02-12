@@ -1,4 +1,4 @@
-import { type ProfileLink } from "@prisma/client";
+import { type ProfileLink } from "~/generated/prisma/client";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";

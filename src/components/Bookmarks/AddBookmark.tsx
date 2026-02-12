@@ -22,7 +22,7 @@ import {
 import { SelectItems } from "./SelectItems";
 
 import { useEffect, useState } from "react";
-import { type Bookmark } from "@prisma/client";
+import { type Bookmark } from "~/generated/prisma/client";
 interface BookmarkItemProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;

@@ -14,9 +14,9 @@ export const features: Feature[] = [
     title: "Custom Short Links",
     description:
       "Create branded, memorable links that are easy to share and remember.",
-    icon: <IconLink className="h-6 w-6 text-blue-400" />,
-    iconBgColor: "bg-blue-500/10",
-    iconTextColor: "text-blue-400",
+    icon: <IconLink className="h-6 w-6 text-sky-400" />,
+    iconBgColor: "bg-sky-400/10",
+    iconTextColor: "text-sky-400",
     imageUrl: undefined,
     detailedDescription:
       "Custom short links allow you to create professional, branded URLs that reflect your brand identity. You can customize the link path, track performance metrics, and update destinations anytime without changing the short link.",
@@ -26,9 +26,9 @@ export const features: Feature[] = [
     title: "Advanced Analytics",
     description:
       "Track clicks, geographic data, devices, and referrers in real-time.",
-    icon: <IconExternalLink className="h-6 w-6 text-indigo-400" />,
-    iconBgColor: "bg-indigo-500/10",
-    iconTextColor: "text-indigo-400",
+    icon: <IconExternalLink className="h-6 w-6 text-blue-400" />,
+    iconBgColor: "bg-blue-500/10",
+    iconTextColor: "text-blue-400",
     imageUrl: undefined,
     detailedDescription:
       "Our powerful analytics dashboard gives you real-time insights into your link performance. Track clicks, geographic locations, devices, referral sources, and conversion rates to optimize your marketing campaigns.",
@@ -38,9 +38,9 @@ export const features: Feature[] = [
     title: "Bookmark Manager",
     description:
       "Organize and manage your links with tags, folders, and search functionality.",
-    icon: <IconBrandGithub className="h-6 w-6 text-green-400" />,
-    iconBgColor: "bg-green-500/10",
-    iconTextColor: "text-green-400",
+    icon: <IconBrandGithub className="h-6 w-6 text-blue-500" />,
+    iconBgColor: "bg-blue-700/10",
+    iconTextColor: "text-blue-500",
     imageUrl: "/homePage/bookmarks.png",
     detailedDescription:
       "Keep all your important links organized in one place with our bookmark manager. Add tags, create folders, and use our powerful search to quickly find what you need. Perfect for research, project management, and personal organization.",

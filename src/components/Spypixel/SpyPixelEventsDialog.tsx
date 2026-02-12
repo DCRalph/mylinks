@@ -9,7 +9,7 @@ import {
 import { Button } from "~/components/ui/button";
 import { Table, TableRow, TableCell, TableBody, TableHeader } from "~/components/ui/table"; // Import ShadCN table components
 
-import { type Click } from "@prisma/client";
+import { type Click } from "~/generated/prisma/client";
 
 type SpyPixelEventsDialogProps = {
   isOpen: boolean;

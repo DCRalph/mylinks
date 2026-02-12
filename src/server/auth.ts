@@ -10,7 +10,7 @@ import { type Adapter } from "next-auth/adapters";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-import type { User as PUser } from "@prisma/client";
+import type { User as PUser } from "~/generated/prisma/client";
 
 import { env } from "~/env";
 import { db } from "~/server/db";

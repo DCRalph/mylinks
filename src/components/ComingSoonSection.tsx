@@ -1,11 +1,12 @@
 import RoadmapItem from "./RoadmapItem";
+import type { ReactNode } from "react";
 
 export interface RoadmapFeature {
   id: string;
   title: string;
   description: string;
   status: "completed" | "in-progress" | "planned";
-  icon: JSX.Element;
+  icon: ReactNode;
 }
 
 interface ComingSoonSectionProps {

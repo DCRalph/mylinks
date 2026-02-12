@@ -1,5 +1,5 @@
 import { string, array } from "zod";
-import { type ProfileLink } from "@prisma/client";
+import { type ProfileLink } from "~/generated/prisma/client";
 
 const schema = array(string());
 

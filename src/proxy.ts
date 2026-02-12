@@ -1,21 +1,16 @@
-
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-// import { getServerAuthSession } from "./server/auth";
 
 const requireAuthPages = ["/dashboard", "/settings"]
 
-
 // This function can be marked `async` if using `await` inside
-export function middleware(request: NextRequest) {
-
+export function proxy(request: NextRequest) {
   const url = new URL(request.url)
   console.log(url.pathname)
 
   if (requireAuthPages.includes(url.pathname)) {
     console.log('require auth')
   }
-
 
   return NextResponse.next()
 }

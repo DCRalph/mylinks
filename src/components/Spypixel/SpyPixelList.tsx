@@ -3,7 +3,7 @@ import { useState } from "react";
 import { api } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import SpyPixelDialog from "./SpyPixelDialog";
-import { type SpyPixel } from "@prisma/client";
+import { type SpyPixel } from "~/generated/prisma/client";
 import Copy from "../copy";
 import { env } from "~/env";
 

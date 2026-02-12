@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "~/components/ui/button";
 import { api } from "~/trpc/react";
 import { env } from "~/env";
-import { type SpyPixel } from "@prisma/client";
+import { type SpyPixel } from "~/generated/prisma/client";
 import Copy from "../copy";
 import { useState } from "react";
 import { toast } from "react-toastify";

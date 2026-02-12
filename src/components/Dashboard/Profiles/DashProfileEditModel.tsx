@@ -1,4 +1,4 @@
-import { type Profile, type ProfileLink } from "@prisma/client";
+import { type Profile, type ProfileLink } from "~/generated/prisma/client";
 import { useEffect, useState, type ReactNode } from "react";
 import ReactDOM from "react-dom";
 import { toast } from "react-toastify";

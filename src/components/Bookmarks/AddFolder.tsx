@@ -21,7 +21,7 @@ import {
 
 import { useEffect, useState } from "react";
 import { SelectItems } from "./SelectItems";
-import { type BookmarkFolder } from "@prisma/client";
+import { type BookmarkFolder } from "~/generated/prisma/client";
 
 interface BookmarkItemProps {
   isOpen: boolean;

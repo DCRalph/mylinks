@@ -1,9 +1,74 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Sora:wght@100;200;300;400;500;600;700;800&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap");
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans:
+    var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  --font-sora: "Sora", sans-serif;
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
 
 @font-face {
   font-family: "Gobold";
@@ -40,31 +105,129 @@ body {
 }
 
 .sora {
-  font-family: "Sora";
+  font-family: var(--font-sora);
 }
 
 .form_btn {
-  @apply sora col-span-full rounded-lg border text-center text-base font-semibold shadow-md transition-all active:scale-95;
+  font-family: var(--font-sora);
+  grid-column: span 1 / span 1;
+  border-radius: 0.5rem;
+  border-width: 1px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.form_btn:active {
+  transform: scale(0.95);
 }
 
 .form_btn_white {
-  @apply form_btn border-white bg-white text-black hover:bg-gray-100 hover:shadow-gray-200;
+  font-family: var(--font-sora);
+  grid-column: span 1 / span 1;
+  border-radius: 0.5rem;
+  border-width: 1px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  border-color: white;
+  background-color: white;
+  color: black;
+}
+
+.form_btn_white:active {
+  transform: scale(0.95);
+}
+
+.form_btn_white:hover {
+  background-color: #f3f4f6;
+  box-shadow: 0 10px 15px -3px rgb(156 163 175 / 0.1), 0 4px 6px -4px rgb(156 163 175 / 0.1);
 }
 
 .form_btn_blue {
-  @apply form_btn border-blue-500 bg-blue-600 text-white hover:!bg-blue-700 hover:shadow-blue-600;
+  font-family: var(--font-sora);
+  grid-column: span 1 / span 1;
+  border-radius: 0.5rem;
+  border-width: 1px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  border-color: #3b82f6;
+  background-color: #2563eb;
+  color: white;
+}
+
+.form_btn_blue:active {
+  transform: scale(0.95);
+}
+
+.form_btn_blue:hover {
+  background-color: #1d4ed8 !important;
+  box-shadow: 0 10px 15px -3px rgb(37 99 235 / 0.1), 0 4px 6px -4px rgb(37 99 235 / 0.1);
 }
 
 .form_btn_red {
-  @apply form_btn border-red-500 bg-red-600 text-white hover:!bg-red-700 hover:shadow-red-600;
+  font-family: var(--font-sora);
+  grid-column: span 1 / span 1;
+  border-radius: 0.5rem;
+  border-width: 1px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  border-color: #ef4444;
+  background-color: #dc2626;
+  color: white;
+}
+
+.form_btn_red:active {
+  transform: scale(0.95);
+}
+
+.form_btn_red:hover {
+  background-color: #b91c1c !important;
+  box-shadow: 0 10px 15px -3px rgb(220 38 38 / 0.1), 0 4px 6px -4px rgb(220 38 38 / 0.1);
 }
 
 .form_btn_green {
-  @apply form_btn border-green-500 bg-green-600 text-white hover:!bg-green-700 hover:shadow-green-600;
+  font-family: var(--font-sora);
+  grid-column: span 1 / span 1;
+  border-radius: 0.5rem;
+  border-width: 1px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  border-color: #22c55e;
+  background-color: #16a34a;
+  color: white;
 }
 
-.gobold {
-  font-family: "Gobold";
+.form_btn_green:active {
+  transform: scale(0.95);
+}
+
+.form_btn_green:hover {
+  background-color: #15803d !important;
+  box-shadow: 0 10px 15px -3px rgb(22 163 74 / 0.1), 0 4px 6px -4px rgb(22 163 74 / 0.1);
 }
 
 .instagram {
@@ -161,6 +324,65 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes float-delayed {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes pulse-slow-delayed {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.25;
+    transform: scale(1.05);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 5s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 8s ease-in-out infinite;
+}
+
+.animate-pulse-slow-delayed {
+  animation: pulse-slow-delayed 10s ease-in-out infinite;
+  animation-delay: 2s;
 }
 
 .glass-card {

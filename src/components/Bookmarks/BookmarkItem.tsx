@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { type Bookmark } from "@prisma/client";
+import { type Bookmark } from "~/generated/prisma/client";
 import {
   AlertDialog,
   AlertDialogContent,
