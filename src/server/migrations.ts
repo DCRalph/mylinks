@@ -113,6 +113,59 @@ BEGIN
   END IF;
 END $$;`,
   },
+  {
+    // admin/spyPixel booleans become roles (src/lib/permissions.ts), plus the
+    // columns better-auth's admin plugin needs and the audit log.
+    name: "roles-and-audit",
+    sql: `
+DO $$
+BEGIN
+  PERFORM pg_advisory_xact_lock(424242);
+  IF to_regclass('"User"') IS NULL THEN
+    RETURN;
+  END IF;
+
+  ALTER TABLE "User" ADD COLUMN IF NOT EXISTS role TEXT;
+  ALTER TABLE "User" ADD COLUMN IF NOT EXISTS banned BOOLEAN NOT NULL DEFAULT false;
+  ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "banReason" TEXT;
+  ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "banExpires" TIMESTAMP(3);
+  ALTER TABLE "Session" ADD COLUMN IF NOT EXISTS "impersonatedBy" TEXT;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = current_schema() AND table_name = 'User' AND column_name = 'admin'
+  ) THEN
+    UPDATE "User" SET role = CASE
+      WHEN admin THEN 'admin'
+      WHEN "spyPixel" THEN 'user,pixels'
+      ELSE 'user'
+    END
+    WHERE role IS NULL;
+    ALTER TABLE "User" DROP COLUMN admin, DROP COLUMN "spyPixel";
+  END IF;
+  UPDATE "User" SET role = 'user' WHERE role IS NULL;
+  ALTER TABLE "User" ALTER COLUMN role SET DEFAULT 'user';
+  ALTER TABLE "User" ALTER COLUMN role SET NOT NULL;
+
+  CREATE TABLE IF NOT EXISTS "AuditLog" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "actorId" TEXT,
+    "action" TEXT NOT NULL,
+    "targetType" TEXT,
+    "targetId" TEXT,
+    "summary" TEXT NOT NULL,
+    "details" JSONB,
+    CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id")
+  );
+  CREATE INDEX IF NOT EXISTS "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
+  CREATE INDEX IF NOT EXISTS "AuditLog_actorId_idx" ON "AuditLog"("actorId");
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'AuditLog_actorId_fkey') THEN
+    ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_actorId_fkey"
+      FOREIGN KEY ("actorId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+END $$;`,
+  },
 ];
 
 export async function runMigrations() {

@@ -10,47 +10,29 @@ import LinkDialog from "~/components/Links/LinkDialog";
 import LinkTicket, { type TicketLink } from "~/components/Links/LinkTicket";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { Switch } from "~/components/ui/switch";
-import { formatNumber } from "~/lib/format";
+import { formatNumber, formatRelative } from "~/lib/format";
+import { can, isStaff } from "~/lib/permissions";
 import { useShareDomain } from "~/lib/use-share-domain";
 import { api } from "~/trpc/react";
+import { Panel } from "./Panel";
+import RoleChips from "./RoleChips";
+import UserAccess from "./UserAccess";
+import UserActions from "./UserActions";
+import UserSessions from "./UserSessions";
 
-/** /admin/user/[id]: one user's flags, username, links and profiles. */
+export type Viewer = { id: string; role?: string | null };
+
+/** /admin/users/[id]: one account's roles, ban, sessions, username and content. */
 export default function AdminUser({
   userId,
-  currentUserId,
+  viewer,
 }: {
   userId: string;
-  currentUserId: string;
+  viewer: Viewer;
 }) {
   const [shareDomain] = useShareDomain();
   const user = api.admin.getUser.useQuery({ userID: userId });
-  const utils = api.useUtils();
-  const [editedUsername, setUsername] = useState<string | null>(null);
   const [editing, setEditing] = useState<TicketLink | null>(null);
-
-  const refresh = () =>
-    Promise.all([
-      utils.admin.getUser.invalidate(),
-      utils.admin.getUsers.invalidate(),
-    ]);
-  const onError = (error: { message: string }) => toast.error(error.message);
-
-  const toggleAdmin = api.admin.toggleAdminStatus.useMutation({
-    onSuccess: refresh,
-    onError,
-  });
-  const togglePixels = api.admin.toggleSpyPixelStatus.useMutation({
-    onSuccess: refresh,
-    onError,
-  });
-  const rename = api.admin.updateUsername.useMutation({
-    onSuccess: async () => {
-      toast.success("Username saved");
-      setUsername(null);
-      await refresh();
-    },
-  });
 
   if (user.error) {
     return <Empty title="User not found" className="mt-10" />;
@@ -58,98 +40,57 @@ export default function AdminUser({
   const data = user.data;
   if (!data) return <p className="text-muted py-20 text-center">Loading…</p>;
 
-  const username = editedUsername ?? data.username ?? "";
-  const isSelf = data.id === currentUserId;
+  const isSelf = data.id === viewer.id;
+  // Moderators can act on ordinary accounts only. src/server/auth.ts enforces it.
+  const locked =
+    isSelf || (isStaff(data) && !can(viewer, { user: ["set-role"] }));
+  const canModerateLinks = can(viewer, { link: ["moderate"] });
 
   return (
     <>
       <Link
-        href="/admin"
+        href="/admin/users"
         className="display text-muted hover:text-ink inline-flex items-center gap-1.5 text-lg"
       >
-        <IconArrowLeft className="size-5" /> Admin
+        <IconArrowLeft className="size-5" /> Users
       </Link>
 
-      <header className="mt-3 mb-8">
-        <h1 className="display text-[64px] leading-[1.15] break-words sm:text-[88px]">
+      <header className="mt-2 mb-6">
+        <h2 className="display text-[48px] leading-[1.15] break-words sm:text-[64px]">
           {data.name}
-        </h1>
-        <p className="text-muted mt-2">
-          {data.email}
-          {data.username && <> · @{data.username}</>}
-        </p>
-      </header>
-
-      <div className="mb-12 grid gap-3.5 md:grid-cols-2">
-        <section className="bg-panel rounded-2xl p-5">
-          <h2 className="display mb-4 text-[28px]">Access</h2>
-          <label className="flex items-center justify-between gap-4 py-2">
-            <span>
-              <span className="block font-semibold">Admin</span>
-              <span className="text-muted text-sm">
-                {isSelf
-                  ? "You can't change your own."
-                  : "Full access to every account."}
-              </span>
-            </span>
-            <Switch
-              checked={data.admin}
-              disabled={isSelf || toggleAdmin.isPending}
-              onCheckedChange={() => toggleAdmin.mutate({ userID: data.id })}
-            />
-          </label>
-          <label className="flex items-center justify-between gap-4 py-2">
-            <span>
-              <span className="block font-semibold">Pixels</span>
-              <span className="text-muted text-sm">
-                Can create tracking pixels.
-              </span>
-            </span>
-            <Switch
-              checked={data.spyPixel}
-              disabled={togglePixels.isPending}
-              onCheckedChange={() => togglePixels.mutate({ userID: data.id })}
-            />
-          </label>
-        </section>
-
-        <section className="bg-panel rounded-2xl p-5">
-          <h2 className="display mb-4 text-[28px]">Username</h2>
-          <form
-            className="grid gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              rename.mutate({ userID: data.id, username });
-            }}
-          >
-            <div className="flex gap-2.5">
-              <Input
-                aria-label="Username"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-              <Button
-                type="submit"
-                disabled={rename.isPending || username === data.username}
-              >
-                Save
-              </Button>
-            </div>
-            {rename.error && (
-              <p className="text-danger text-sm">{rename.error.message}</p>
-            )}
-          </form>
-          <p className="text-muted mt-4 text-sm">
-            Signs in with{" "}
+        </h2>
+        <p className="text-muted mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span>{data.email}</span>
+          {data.username && <span>· @{data.username}</span>}
+          <span>· joined {formatRelative(data.createdAt)}</span>
+          <span>
+            · signs in with{" "}
             {data.accounts
               .map((a) =>
                 a.providerId === "credential" ? "a password" : "Google",
               )
               .join(" and ") || "nothing"}
-            .
+          </span>
+          <RoleChips user={data} />
+        </p>
+        {locked && (
+          <p className="text-muted mt-3 text-sm">
+            {isSelf
+              ? "This is you. Change your own account in Settings."
+              : "Only admins can change staff accounts."}
           </p>
-        </section>
+        )}
+      </header>
+
+      <UserAccess user={data} viewer={viewer} locked={locked} />
+
+      {can(viewer, { session: ["list"] }) && !locked && (
+        <UserSessions userId={data.id} viewer={viewer} />
+      )}
+
+      <div className="mb-12 grid gap-3.5 md:grid-cols-2">
+        {can(viewer, { user: ["update"] }) && <UsernamePanel user={data} />}
+        {!locked && <UserActions user={data} viewer={viewer} />}
       </div>
 
       <h2 className="display mb-4 text-[32px]">
@@ -163,7 +104,7 @@ export default function AdminUser({
             <LinkTicket
               key={link.id}
               link={link}
-              onEdit={() => setEditing(link)}
+              onEdit={canModerateLinks ? () => setEditing(link) : undefined}
             />
           ))}
         </div>
@@ -209,5 +150,57 @@ export default function AdminUser({
         />
       )}
     </>
+  );
+}
+
+function UsernamePanel({
+  user,
+}: {
+  user: { id: string; username: string | null };
+}) {
+  const utils = api.useUtils();
+  // null until edited, so the field shows the saved username.
+  const [edited, setEdited] = useState<string | null>(null);
+  const username = edited ?? user.username ?? "";
+
+  const rename = api.admin.updateUsername.useMutation({
+    onSuccess: async () => {
+      toast.success("Username saved");
+      setEdited(null);
+      await Promise.all([
+        utils.admin.getUser.invalidate(),
+        utils.admin.getUsers.invalidate(),
+      ]);
+    },
+  });
+
+  return (
+    <Panel title="Username">
+      <form
+        className="grid gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          rename.mutate({ userID: user.id, username });
+        }}
+      >
+        <div className="flex gap-2.5">
+          <Input
+            aria-label="Username"
+            required
+            value={username}
+            onChange={(e) => setEdited(e.target.value)}
+          />
+          <Button
+            type="submit"
+            disabled={rename.isPending || username === user.username}
+          >
+            Save
+          </Button>
+        </div>
+        {rename.error && (
+          <p className="text-danger text-sm">{rename.error.message}</p>
+        )}
+      </form>
+    </Panel>
   );
 }

@@ -11,6 +11,7 @@ const OAUTH_ERRORS: Record<string, string> = {
   account_not_linked:
     "That Google account isn't connected here. Sign in with your password, then connect Google in Settings.",
   access_denied: "Google sign-in was cancelled.",
+  BANNED_USER: "This account has been suspended.",
 };
 
 export default async function Page({

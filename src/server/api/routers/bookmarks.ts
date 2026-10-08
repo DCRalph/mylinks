@@ -10,7 +10,7 @@ const nameSchema = z.string().trim().min(1, "Name is required").max(60);
 import {
   createTRPCRouter,
   protectedProcedure,
-  adminProcedure,
+  permissionProcedure,
 } from "~/server/api/trpc";
 
 type FolderTree = BookmarkFolder & {
@@ -547,8 +547,10 @@ const getFolderPath = protectedProcedure
     return path;
   });
 
-// Admin procedure to create sample bookmarks and folders
-const createSampleBookmarks = adminProcedure.mutation(async ({ ctx }) => {
+// Demo content for an empty account, for people setting the site up.
+const createSampleBookmarks = permissionProcedure({
+  platform: ["manage"],
+}).mutation(async ({ ctx }) => {
   const userId = ctx.session.user.id;
 
   // Get or create root folder

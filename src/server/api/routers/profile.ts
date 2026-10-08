@@ -47,14 +47,14 @@ async function assertProfileSlugFree(slug: string, exceptId?: string) {
   }
 }
 
-type SessionUser = { id: string; admin: boolean };
+type SessionUser = { id: string; role?: string | null };
 
 async function findOwnProfile(id: string, user: SessionUser) {
   const profile = await db.profile.findUnique({
     where: { id },
     include: { profileLinks: true },
   });
-  if (!profile || !canManage(profile.userId, user)) {
+  if (!profile || !canManage("profile", profile.userId, user)) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Profile not found" });
   }
   return profile;
@@ -65,7 +65,7 @@ async function findOwnProfileLink(id: string, user: SessionUser) {
     where: { id },
     include: { profile: { include: { profileLinks: true } } },
   });
-  if (!link || !canManage(link.profile.userId, user)) {
+  if (!link || !canManage("profile", link.profile.userId, user)) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Link not found" });
   }
   return link;
@@ -99,7 +99,7 @@ export const profileRouter = createTRPCRouter({
   createProfile: protectedProcedure
     .input(profileInput)
     .mutation(async ({ input, ctx }) => {
-      assertSlugLength(input.slug, ctx.session.user.admin);
+      assertSlugLength(input.slug, ctx.session.user);
       await assertProfileSlugFree(input.slug);
 
       const profile = await db.profile.create({
@@ -113,7 +113,7 @@ export const profileRouter = createTRPCRouter({
     .input(profileInput.extend({ id: z.string() }))
     .mutation(async ({ input: { id, ...data }, ctx }) => {
       await findOwnProfile(id, ctx.session.user);
-      assertSlugLength(data.slug, ctx.session.user.admin);
+      assertSlugLength(data.slug, ctx.session.user);
       await assertProfileSlugFree(data.slug, id);
 
       await db.profile.update({ where: { id }, data });

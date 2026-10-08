@@ -24,9 +24,12 @@ async function assertSlugFree(slug: string, exceptId?: string) {
   }
 }
 
-async function findOwnLink(id: string, user: { id: string; admin: boolean }) {
+async function findOwnLink(
+  id: string,
+  user: { id: string; role?: string | null },
+) {
   const link = await db.link.findUnique({ where: { id } });
-  if (!link || !canManage(link.userId, user)) {
+  if (!link || !canManage("link", link.userId, user)) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Link not found" });
   }
   return link;
@@ -70,7 +73,7 @@ export const linkRouter = createTRPCRouter({
     .input(linkInput)
     .mutation(async ({ input, ctx }) => {
       const slug = input.slug || randomSlug();
-      assertSlugLength(slug, ctx.session.user.admin);
+      assertSlugLength(slug, ctx.session.user);
       await assertSlugFree(slug);
 
       const link = await db.link.create({
@@ -91,7 +94,7 @@ export const linkRouter = createTRPCRouter({
       await findOwnLink(input.id, ctx.session.user);
 
       const slug = input.slug || randomSlug();
-      assertSlugLength(slug, ctx.session.user.admin);
+      assertSlugLength(slug, ctx.session.user);
       await assertSlugFree(slug, input.id);
 
       const link = await db.link.update({

@@ -3,20 +3,12 @@ import { z } from "zod";
 
 import { slugSchema } from "~/lib/validation";
 import { randomSlug } from "~/server/api/slugs";
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, permissionProcedure } from "~/server/api/trpc";
 import { readStoredHeaders } from "~/server/clicks";
 import { db } from "~/server/db";
 
-/** Spy pixels are opt-in per user (or any admin). */
-const spyPixelProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (!ctx.session.user.spyPixel && !ctx.session.user.admin) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "You don't have access to spy pixels",
-    });
-  }
-  return next();
-});
+/** Spy pixels are a role-granted feature (pixel:use). */
+const spyPixelProcedure = permissionProcedure({ pixel: ["use"] });
 
 async function findOwnPixel(id: string, userId: string) {
   const pixel = await db.spyPixel.findUnique({ where: { id } });

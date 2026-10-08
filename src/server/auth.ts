@@ -2,14 +2,29 @@ import "server-only";
 
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import {
+  APIError,
+  createAuthMiddleware,
+  getSessionFromCtx,
+} from "better-auth/api";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { nextCookies } from "better-auth/next-js";
+import { admin } from "better-auth/plugins/admin";
 import { compare } from "bcryptjs";
 import { headers } from "next/headers";
 import { cache } from "react";
 
 import { env } from "~/env";
 import { domains } from "~/lib/domains";
+import {
+  ac,
+  can,
+  isStaff,
+  parseRoles,
+  roleInfo,
+  roles,
+} from "~/lib/permissions";
+import { audit, describeUser } from "~/server/audit";
 import { db } from "~/server/db";
 
 const protocols = new Set(domains.map((domain) => domain.protocol));
@@ -24,6 +39,98 @@ const google =
     : undefined;
 
 export const googleEnabled = !!google;
+
+// Admin endpoints an admin must not aim at their own account.
+const NOT_ON_SELF = new Set([
+  "/admin/set-role",
+  "/admin/ban-user",
+  "/admin/remove-user",
+  "/admin/impersonate-user",
+]);
+
+// Deleted users can't be looked up afterwards, so remember who they were.
+const deletingUsers = new Map<string, string>();
+
+const userIdFrom = (body: unknown) =>
+  typeof body === "object" && body && "userId" in body
+    ? String(body.userId)
+    : null;
+
+/** Audit entry for a successful better-auth admin call, or null to skip. */
+async function describeAdminCall(path: string, body: Record<string, unknown>) {
+  const userId = userIdFrom(body);
+  const who = async () =>
+    userId
+      ? (deletingUsers.get(userId) ?? (await describeUser(userId)))
+      : "a user";
+  const target = userId ? { type: "user", id: userId } : undefined;
+
+  switch (path) {
+    case "/admin/set-role": {
+      const role = Array.isArray(body.role) ? body.role : [body.role];
+      const labels = parseRoles(role.join(",")).map((r) => roleInfo[r].label);
+      return {
+        action: "user.set-roles",
+        target,
+        summary: `Set roles of ${await who()} to ${labels.join(", ")}`,
+      };
+    }
+    case "/admin/ban-user": {
+      const seconds =
+        typeof body.banExpiresIn === "number" ? body.banExpiresIn : null;
+      const until = seconds
+        ? ` until ${new Date(Date.now() + seconds * 1000).toDateString()}`
+        : "";
+      const reason =
+        typeof body.banReason === "string" && body.banReason
+          ? `: ${body.banReason}`
+          : "";
+      return {
+        action: "user.ban",
+        target,
+        summary: `Banned ${await who()}${until}${reason}`,
+      };
+    }
+    case "/admin/unban-user":
+      return {
+        action: "user.unban",
+        target,
+        summary: `Unbanned ${await who()}`,
+      };
+    case "/admin/revoke-user-sessions":
+      return {
+        action: "user.sign-out",
+        target,
+        summary: `Signed ${await who()} out everywhere`,
+      };
+    case "/admin/revoke-user-session":
+      return {
+        action: "user.sign-out",
+        target,
+        summary: `Ended one of ${await who()}'s sessions`,
+      };
+    case "/admin/impersonate-user":
+      return {
+        action: "user.impersonate",
+        target,
+        summary: `Viewed the app as ${await who()}`,
+      };
+    case "/admin/remove-user":
+      return {
+        action: "user.delete",
+        target,
+        summary: `Deleted ${await who()}`,
+      };
+    case "/admin/set-user-password":
+      return {
+        action: "user.set-password",
+        target,
+        summary: `Set a new password for ${await who()}`,
+      };
+    default:
+      return null;
+  }
+}
 
 export const auth = betterAuth({
   appName: "link2it",
@@ -77,8 +184,6 @@ export const auth = betterAuth({
     deleteUser: { enabled: true },
     additionalFields: {
       username: { type: "string", required: false, input: false },
-      admin: { type: "boolean", defaultValue: false, input: false },
-      spyPixel: { type: "boolean", defaultValue: false, input: false },
       requireSetup: { type: "boolean", defaultValue: true, input: false },
     },
   },
@@ -88,8 +193,62 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24,
   },
 
-  // Must stay last: lets server actions and RSC-triggered auth calls set cookies.
-  plugins: [nextCookies()],
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (!ctx.path.startsWith("/admin/")) return;
+      const userId = userIdFrom(ctx.body);
+      const session = await getSessionFromCtx(ctx);
+      if (!userId || !session) return;
+
+      if (NOT_ON_SELF.has(ctx.path) && userId === session.user.id) {
+        throw new APIError("FORBIDDEN", {
+          message: "You can't do that to your own account",
+        });
+      }
+      // Moderators can act on ordinary accounts, but not on other staff.
+      // (Hook sessions are untyped, hence the check on role.)
+      const role: unknown = session.user.role;
+      const actor = { role: typeof role === "string" ? role : null };
+      if (!can(actor, { user: ["set-role"] })) {
+        const target = await db.user.findUnique({
+          where: { id: userId },
+          select: { role: true },
+        });
+        if (isStaff(target)) {
+          throw new APIError("FORBIDDEN", {
+            message: "Only admins can do that to staff accounts",
+          });
+        }
+      }
+      if (ctx.path === "/admin/remove-user") {
+        deletingUsers.set(userId, await describeUser(userId));
+      }
+    }),
+    // Every successful admin call lands in the audit log, whichever UI made it.
+    after: createAuthMiddleware(async (ctx) => {
+      if (!ctx.path.startsWith("/admin/")) return;
+      if (ctx.context.returned instanceof APIError) return;
+      const session = await getSessionFromCtx(ctx);
+      const body = (ctx.body ?? {}) as Record<string, unknown>;
+      const entry = await describeAdminCall(ctx.path, body);
+      const userId = userIdFrom(body);
+      if (userId) deletingUsers.delete(userId);
+      if (entry) await audit({ actorId: session?.user.id ?? null, ...entry });
+    }),
+  },
+
+  plugins: [
+    // Roles and permissions live in src/lib/permissions.ts.
+    admin({
+      ac,
+      roles,
+      defaultRole: "user",
+      adminRoles: ["admin"],
+      bannedUserMessage: "This account has been suspended.",
+    }),
+    // Must stay last: lets server actions and RSC-triggered auth calls set cookies.
+    nextCookies(),
+  ],
 });
 
 export type Session = typeof auth.$Infer.Session;
