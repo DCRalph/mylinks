@@ -1,4 +1,4 @@
-import { visitorInfo } from "~/server/clicks";
+import { safeHeaders, visitorInfo } from "~/server/clicks";
 import { db } from "~/server/db";
 
 // 1x1 transparent PNG.
@@ -17,7 +17,7 @@ async function recordLoad(req: Request, slug: string) {
     data: {
       spyPixelId: pixel.id,
       ...visitorInfo(req.headers),
-      allHeaders: JSON.stringify(Object.fromEntries(req.headers)),
+      allHeaders: JSON.stringify(safeHeaders(req.headers)),
     },
   });
 }

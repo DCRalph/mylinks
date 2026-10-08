@@ -4,6 +4,7 @@ import { z } from "zod";
 import { slugSchema } from "~/lib/validation";
 import { randomSlug } from "~/server/api/slugs";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { readStoredHeaders } from "~/server/clicks";
 import { db } from "~/server/db";
 
 /** Spy pixels are opt-in per user (or any admin). */
@@ -41,14 +42,27 @@ export const spypixelRouter = createTRPCRouter({
     }),
   ),
 
+  /** Every load of a pixel, newest first, with the request headers it arrived with. */
   getClicks: spyPixelProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input, ctx }) => {
       await findOwnPixel(input.id, ctx.session.user.id);
-      return db.click.findMany({
+      const clicks = await db.click.findMany({
         where: { spyPixelId: input.id },
+        select: {
+          id: true,
+          createdAt: true,
+          ipAddress: true,
+          userAgent: true,
+          referer: true,
+          allHeaders: true,
+        },
         orderBy: { createdAt: "desc" },
       });
+      return clicks.map(({ allHeaders, ...click }) => ({
+        ...click,
+        headers: readStoredHeaders(allHeaders),
+      }));
     }),
 
   createSpyPixel: spyPixelProcedure

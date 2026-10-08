@@ -1,3 +1,5 @@
+import { parseUserAgent } from "~/lib/user-agent";
+
 const numberFormat = new Intl.NumberFormat("en");
 
 /** 1284 -> "1,284" */
@@ -38,15 +40,8 @@ export function formatRelative(date: Date, now = Date.now()) {
 }
 
 /** Rough device class from a user agent string. */
-export function deviceType(userAgent: string | null) {
-  const ua = (userAgent ?? "").toLowerCase();
-  if (ua.includes("ipad") || ua.includes("tablet")) return "Tablet";
-  if (ua.includes("mobile") || ua.includes("android") || ua.includes("iphone"))
-    return "Mobile";
-  if (ua.includes("windows") || ua.includes("macintosh") || ua.includes("linux"))
-    return "Desktop";
-  return "Unknown";
-}
+export const deviceType = (userAgent: string | null) =>
+  parseUserAgent(userAgent).device;
 
 /** Percentage change, rounded. 0 -> n counts as +100%. */
 export function growth(current: number, previous: number) {
