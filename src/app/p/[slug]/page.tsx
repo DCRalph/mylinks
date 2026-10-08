@@ -32,7 +32,8 @@ export default async function Page({ params }: Props) {
   if (!profile) notFound();
 
   const session = await getSession();
-  const canEdit = !!session && canManage(profile.userId, session.user);
+  const canEdit =
+    !!session && canManage("profile", profile.userId, session.user);
   const byId = new Map(profile.profileLinks.map((link) => [link.id, link]));
   const links = parseProfileLinkOrder({
     linkOrderS: profile.linkOrder,

@@ -1,4 +1,5 @@
 import BookmarksBrowser from "~/components/Bookmarks/BookmarksBrowser";
+import { can } from "~/lib/permissions";
 import { requireUser } from "~/server/guards";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -19,7 +20,10 @@ export default async function Page({
 
   return (
     <HydrateClient>
-      <BookmarksBrowser folderId={folderId} isAdmin={user.admin} />
+      <BookmarksBrowser
+        folderId={folderId}
+        canAddSamples={can(user, { platform: ["manage"] })}
+      />
     </HydrateClient>
   );
 }

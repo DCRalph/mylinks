@@ -1,5 +1,5 @@
 import AppShell from "~/components/Shell/AppShell";
-import { requireUser } from "~/server/guards";
+import { requireSession } from "~/server/guards";
 
 /** Signed-in area: everyone here has an account and a username. */
 export default async function AppLayout({
@@ -7,17 +7,18 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireUser();
+  const { user, session } = await requireSession();
 
   return (
     <AppShell
       user={{
+        id: user.id,
         name: user.name,
         email: user.email,
         image: user.image,
-        admin: user.admin,
-        spyPixel: user.spyPixel,
+        role: user.role,
       }}
+      impersonating={!!session.impersonatedBy}
     >
       {children}
     </AppShell>

@@ -25,7 +25,8 @@ export default function LinkTicket({
 }: {
   link: TicketLink;
   hot?: boolean;
-  onEdit: () => void;
+  /** Omit for a read-only ticket. */
+  onEdit?: () => void;
 }) {
   const [shareDomain] = useShareDomain();
   const short = `${shareDomain.host}/${link.slug}`;
@@ -68,16 +69,18 @@ export default function LinkTicket({
         </p>
         <div className="flex gap-2">
           <CopyButton value={shareUrl(shareDomain, link.slug)} />
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Edit link"
-            title="Edit link"
-            className="text-current hover:bg-transparent"
-            onClick={onEdit}
-          >
-            <IconPencil />
-          </Button>
+          {onEdit && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Edit link"
+              title="Edit link"
+              className="text-current hover:bg-transparent"
+              onClick={onEdit}
+            >
+              <IconPencil />
+            </Button>
+          )}
         </div>
       </div>
     </article>

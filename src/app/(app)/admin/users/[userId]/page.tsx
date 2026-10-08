@@ -1,7 +1,5 @@
-import { notFound } from "next/navigation";
-
 import AdminUser from "~/components/Admin/AdminUser";
-import { requireUser } from "~/server/guards";
+import { requirePermission } from "~/server/guards";
 import { api, HydrateClient } from "~/trpc/server";
 
 export const metadata = { title: "User" };
@@ -11,15 +9,16 @@ export default async function Page({
 }: {
   params: Promise<{ userId: string }>;
 }) {
-  const user = await requireUser();
-  if (!user.admin) notFound();
-
+  const viewer = await requirePermission({ user: ["get"] });
   const { userId } = await params;
   await api.admin.getUser.prefetch({ userID: userId });
 
   return (
     <HydrateClient>
-      <AdminUser userId={userId} currentUserId={user.id} />
+      <AdminUser
+        userId={userId}
+        viewer={{ id: viewer.id, role: viewer.role }}
+      />
     </HydrateClient>
   );
 }

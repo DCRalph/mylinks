@@ -49,10 +49,10 @@ const folderHref = (id: string | null) =>
 /** /bookmarks/[...folderId]: one folder's subfolders and bookmarks. */
 export default function BookmarksBrowser({
   folderId,
-  isAdmin,
+  canAddSamples,
 }: {
   folderId: string | null;
-  isAdmin: boolean;
+  canAddSamples: boolean;
 }) {
   const folder = api.bookmarks.getFolder.useQuery({ folderId });
   const path = api.bookmarks.getFolderPath.useQuery({ folderId });
@@ -177,7 +177,7 @@ export default function BookmarksBrowser({
       {isEmpty ? (
         <Empty title={folderId ? "Empty folder" : "No bookmarks yet"}>
           <p>Add a bookmark or a folder to get started.</p>
-          {isAdmin && !folderId && (
+          {canAddSamples && !folderId && (
             <Button
               variant="outline"
               size="sm"

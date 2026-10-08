@@ -9,20 +9,25 @@ const config = {
   // Old route names.
   redirects: async () => [
     { source: "/spy-pixel", destination: "/pixels", permanent: true },
+    {
+      source: "/admin/user/:id",
+      destination: "/admin/users/:id",
+      permanent: true,
+    },
   ],
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'cdn.discordapp.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "cdn.discordapp.com",
+        port: "",
+        pathname: "/**",
       },
       {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        port: "",
+        pathname: "/**",
       },
     ],
   },

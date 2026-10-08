@@ -11,12 +11,15 @@ import { authClient } from "~/lib/auth-client";
 import { api } from "~/trpc/react";
 import DeleteAccountDialog from "./DeleteAccountDialog";
 import PasswordDialog, { type PasswordMode } from "./PasswordDialog";
+import SessionsSection from "./SessionsSection";
 
-/** /settings: username, sign-in methods, data export, account deletion. */
+/** /settings: username, sign-in methods, sessions, data export, account deletion. */
 export default function SettingsPanel({
   googleEnabled,
+  currentSessionId,
 }: {
   googleEnabled: boolean;
+  currentSessionId: string;
 }) {
   const me = api.user.getUser.useQuery();
   const utils = api.useUtils();
@@ -191,6 +194,10 @@ export default function SettingsPanel({
             )}
           </MethodRow>
         </ul>
+      </Section>
+
+      <Section title="Sessions">
+        <SessionsSection currentSessionId={currentSessionId} />
       </Section>
 
       <Section title="Your data">
