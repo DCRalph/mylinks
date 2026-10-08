@@ -1,26 +1,46 @@
-import * as React from "react"
+import type * as React from "react";
 
-import { cn } from "~/lib/utils"
+import { cn } from "~/lib/utils";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {}
+export const fieldClasses =
+  "w-full min-w-0 rounded-xl border-[1.5px] border-line bg-bg px-4 text-[15px] text-ink outline-none transition-colors placeholder:text-faint hover:border-faint focus-visible:border-lime focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger";
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, ...props }, ref) => {
-    return (
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
+    <input
+      type={type}
+      data-slot="input"
+      className={cn(fieldClasses, "h-12", className)}
+      {...props}
+    />
+  );
+}
+
+/**
+ * Input with a fixed prefix inside the field, e.g. the domain in front of a
+ * slug: `l2.it/` + `custom-slug`.
+ */
+function PrefixInput({
+  prefix,
+  className,
+  ...props
+}: React.ComponentProps<"input"> & { prefix: string }) {
+  return (
+    <label
+      className={cn(
+        fieldClasses,
+        "flex h-12 cursor-text items-center gap-0 focus-within:border-lime",
+        className,
+      )}
+    >
+      <span className="shrink-0 text-muted select-none">{prefix}</span>
       <input
-        type={type}
-        className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          className
-        )}
-        ref={ref}
+        data-slot="input"
+        className="h-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-faint focus-visible:outline-none"
         {...props}
       />
-    )
-  }
-)
-Input.displayName = "Input"
+    </label>
+  );
+}
 
-export { Input }
+export { Input, PrefixInput };

@@ -1,156 +1,82 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { db } from "~/server/db";
-import { randomUUID } from "crypto";
 
-import badWords from "~/utils/badWords";
-
+import { slugSchema } from "~/lib/validation";
+import { randomSlug } from "~/server/api/slugs";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { db } from "~/server/db";
 
-
-const getAll = protectedProcedure.query(async ({ ctx }) => {
-  if (!ctx.session?.user.spyPixel) {
-    throw new Error("User does not have access to spy pixel");
+/** Spy pixels are opt-in per user (or any admin). */
+const spyPixelProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (!ctx.session.user.spyPixel && !ctx.session.user.admin) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You don't have access to spy pixels",
+    });
   }
-
-  const spypixels = await db.spyPixel.findMany({
-    where: {
-      userId: ctx.session?.user.id,
-    },
-  });
-
-  return spypixels;
+  return next();
 });
 
-const get = protectedProcedure.input(z.object({
-  id: z.string(),
-})).query(async ({ input, ctx }) => {
-  if (!ctx.session?.user.spyPixel) {
-    throw new Error("User does not have access to spy pixel");
+async function findOwnPixel(id: string, userId: string) {
+  const pixel = await db.spyPixel.findUnique({ where: { id } });
+  if (pixel?.userId !== userId) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Spy pixel not found" });
   }
-
-  const spypixel = await db.spyPixel.findUnique({
-    where: {
-      id: input.id,
-      userId: ctx.session?.user.id,
-    }
-  });
-
-  return spypixel;
-});
-
-const getClicks = protectedProcedure.input(z.object({
-  id: z.string(),
-})).query(async ({ input, ctx }) => {
-  if (!ctx.session?.user.spyPixel) {
-    throw new Error("User does not have access to spy pixel");
-  }
-
-  const spyPixel = await db.spyPixel.findUnique({
-    where: {
-      id: input.id,
-      userId: ctx.session?.user.id,
-    },
-  });
-
-  if (!spyPixel) {
-    throw new Error("Spy pixel not found");
-  }
-
-  const clicks = await db.click.findMany({
-    where: {
-      spyPixelId: input.id,
-    },
-  });
-
-  return clicks;
-});
-
-
-const createSpyPixel = protectedProcedure.input(z.object({
-  name: z.string(),
-  slug: z.string().optional(),
-})).mutation(async ({ input, ctx }) => {
-  if (!ctx.session?.user.spyPixel) {
-    throw new Error("User does not have access to spy pixel");
-  }
-
-  if (!input.name || input.name.length === 0) {
-    throw new Error("Name is required");
-  }
-
-
-  let slug = input.slug;
-
-  if (!slug || slug.length === 0) {
-    slug = randomUUID().slice(0, 8);
-  }
-
-  // todo: check if slug is already taken
-
-  const existingSlug = await db.spyPixel.findUnique({
-    where: {
-      slug,
-    },
-  });
-
-  if (existingSlug) {
-    throw new Error("Slug already taken");
-  }
-
-
-
-  // todo: check if slug is a bad word
-
-  for (const badSlug of badWords.badSlugs) {
-    if (slug.includes(badSlug)) {
-      throw new Error("Slug contains bad word");
-    }
-  }
-
-
-
-  const spyPixel = await db.spyPixel.create({
-    data: {
-      name: input.name,
-      slug,
-      userId: ctx.session?.user.id,
-    },
-  });
-
-  return spyPixel;
-});
-
-const deleteSpyPixel = protectedProcedure.input(z.object({
-  id: z.string(),
-})).mutation(async ({ input, ctx }) => {
-  if (!ctx.session?.user.spyPixel) {
-    throw new Error("User does not have access to spy pixel");
-  }
-
-  const spyPixel = await db.spyPixel.findUnique({
-    where: {
-      id: input.id,
-      userId: ctx.session?.user.id,
-    },
-  });
-
-  if (!spyPixel) {
-    throw new Error("Spy pixel not found");
-  }
-
-  await db.spyPixel.delete({
-    where: {
-      id: input.id,
-    },
-  });
-
-  return true;
-});
+  return pixel;
+}
 
 export const spypixelRouter = createTRPCRouter({
-  getAll,
-  get,
-  getClicks,
-  createSpyPixel,
-  deleteSpyPixel,
+  getAll: spyPixelProcedure.query(({ ctx }) =>
+    db.spyPixel.findMany({
+      where: { userId: ctx.session.user.id },
+      include: {
+        _count: { select: { clicks: true } },
+        clicks: {
+          select: { createdAt: true },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ),
+
+  getClicks: spyPixelProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input, ctx }) => {
+      await findOwnPixel(input.id, ctx.session.user.id);
+      return db.click.findMany({
+        where: { spyPixelId: input.id },
+        orderBy: { createdAt: "desc" },
+      });
+    }),
+
+  createSpyPixel: spyPixelProcedure
+    .input(
+      z.object({
+        name: z.string().trim().min(1, "Name is required").max(50),
+        // Empty means "generate one".
+        slug: slugSchema,
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const slug = input.slug || randomSlug();
+
+      const taken = await db.spyPixel.findUnique({ where: { slug } });
+      if (taken) {
+        throw new TRPCError({ code: "CONFLICT", message: "Slug already taken" });
+      }
+
+      return db.spyPixel.create({
+        data: { name: input.name, slug, userId: ctx.session.user.id },
+      });
+    }),
+
+  deleteSpyPixel: spyPixelProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      await findOwnPixel(input.id, ctx.session.user.id);
+      await db.spyPixel.delete({ where: { id: input.id } });
+      return true;
+    }),
 });
