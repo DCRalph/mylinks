@@ -34,18 +34,16 @@ Behind a reverse proxy, forward the public host (`proxy_set_header Host $host;`
 or `X-Forwarded-Host`). When every listed domain is https, callback URLs are
 always https even if the proxy talks plain http to the app.
 
-## Upgrading from the NextAuth version
+## Deploying
 
-Auth moved from NextAuth v4 to better-auth. Users, Google accounts and passwords
-carry over; existing sessions do not, so everyone signs in once. Before
-`prisma db push`, run:
+Pushing to `main` deploys. When the server starts it applies any pending
+schema changes from `src/server/migrations.ts` before serving requests (see
+`src/instrumentation.ts`). New schema changes go there as statements that are
+safe to run on every boot.
 
-```sh
-bunx prisma db execute --file prisma/sql/migrate-to-better-auth.sql
-```
-
-`buildandstart.sh` does this on every deploy (it is a no-op once applied). The
-first time, run `git pull` before `./buildandstart.sh`: bash keeps executing the
-copy of the script it started with, and the old one doesn't migrate. Env
-changes: `NEXTAUTH_SECRET`/`NEXTAUTH_URL` become `BETTER_AUTH_SECRET`, and
-`NEXT_PUBLIC_DOMAIN`/`NEXT_PUBLIC_SHORT_DOMAIN` become `NEXT_PUBLIC_DOMAINS`.
+The first deploy of this version converts the NextAuth tables to better-auth
+in place. Users, Google accounts and passwords carry over; existing sessions do
+not, so everyone signs in once. Older env names still work:
+`NEXTAUTH_SECRET` stands in for `BETTER_AUTH_SECRET`, and
+`NEXT_PUBLIC_DOMAIN` plus `NEXT_PUBLIC_SHORT_DOMAIN` stand in for
+`NEXT_PUBLIC_DOMAINS`.

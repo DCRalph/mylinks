@@ -1,5 +1,5 @@
-// Upgrading an existing database from the NextAuth schema? Run
-// prisma/sql/migrate-to-better-auth.sql before `prisma db push` (see README).
+// Existing databases are brought up to date at server start by
+// src/server/migrations.ts. A new database starts with `prisma db push`.
 
 generator client {
   provider = "prisma-client"
