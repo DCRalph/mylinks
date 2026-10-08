@@ -55,6 +55,12 @@ export default function ProfilesList() {
                     {profile.altName}
                   </p>
                 )}
+                {profile.disabledAt && (
+                  <p className="text-danger mt-1 text-sm">
+                    Turned off by a moderator
+                    {profile.disabledReason && `: ${profile.disabledReason}`}
+                  </p>
+                )}
                 <div className="text-lime mt-2 flex items-center gap-1">
                   <span className="truncate">
                     {shareDomain.host}/p/{profile.slug}
@@ -66,7 +72,9 @@ export default function ProfilesList() {
                     <span className="display text-ink mr-1.5 text-[34px]">
                       {formatNumber(profile._count.clicks)}
                     </span>
-                    views · {plural(profile.profileLinks.length, "button")}
+                    views
+                    {!!profile.bots && ` (+ ${plural(profile.bots, "bot")})`} ·{" "}
+                    {plural(profile.profileLinks.length, "button")}
                   </p>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" asChild>

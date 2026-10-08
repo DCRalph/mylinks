@@ -9,7 +9,7 @@ import CopyButton from "~/components/CopyButton";
 import Empty from "~/components/Empty";
 import { Button } from "~/components/ui/button";
 import { shareUrl } from "~/lib/domains";
-import { formatNumber, formatRelative } from "~/lib/format";
+import { formatNumber, formatRelative, plural } from "~/lib/format";
 import { useShareDomain } from "~/lib/use-share-domain";
 import { api, type RouterOutputs } from "~/trpc/react";
 import CreatePixelDialog from "./CreatePixelDialog";
@@ -97,6 +97,7 @@ export default function PixelsBoard() {
                       {lastLoad
                         ? `Last ${formatRelative(lastLoad)}`
                         : "Never loaded"}
+                      {!!pixel.bots && ` · + ${plural(pixel.bots, "bot")}`}
                     </p>
                   </div>
                   <div className="flex gap-2">

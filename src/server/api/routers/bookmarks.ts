@@ -57,10 +57,7 @@ const getAllBookmarks = protectedProcedure.query(({ ctx }) =>
 const getFolder = protectedProcedure
   .input(z.object({ folderId: z.string().nullable() }))
   .query(async ({ input, ctx }) => {
-    const userId = ctx.session?.user.id;
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+    const userId = ctx.session.user.id;
 
     let folder;
 
@@ -147,7 +144,7 @@ const getFolder = protectedProcedure
     }
 
     if (!folder) {
-      throw new Error("Folder not found");
+      throw new TRPCError({ code: "NOT_FOUND", message: "Folder not found" });
     }
 
     return folder;
@@ -156,11 +153,7 @@ const getFolder = protectedProcedure
 const deleteBookmark = protectedProcedure
   .input(z.object({ bookmarkId: z.string() }))
   .mutation(async ({ input, ctx }) => {
-    const userId = ctx.session?.user.id;
-
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+    const userId = ctx.session.user.id;
 
     const bookmark = await db.bookmark.findFirst({
       where: {
@@ -170,7 +163,7 @@ const deleteBookmark = protectedProcedure
     });
 
     if (!bookmark) {
-      throw new Error("Bookmark not found");
+      throw new TRPCError({ code: "NOT_FOUND", message: "Bookmark not found" });
     }
 
     await db.bookmark.delete({
@@ -193,11 +186,7 @@ const createBookmark = protectedProcedure
     }),
   )
   .mutation(async ({ input, ctx }) => {
-    const userId = ctx.session?.user.id;
-
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+    const userId = ctx.session.user.id;
 
     const folder = await db.bookmarkFolder.findUnique({
       where: {
@@ -207,7 +196,7 @@ const createBookmark = protectedProcedure
     });
 
     if (!folder) {
-      throw new Error("Folder not found");
+      throw new TRPCError({ code: "NOT_FOUND", message: "Folder not found" });
     }
 
     // if (badWords.some((word) => input.name.includes(word))) {
@@ -234,11 +223,7 @@ const createBookmark = protectedProcedure
 const deleteFolder = protectedProcedure
   .input(z.object({ folderId: z.string() }))
   .mutation(async ({ input, ctx }) => {
-    const userId = ctx.session?.user.id;
-
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+    const userId = ctx.session.user.id;
 
     const folder = await db.bookmarkFolder.findUnique({
       where: {
@@ -248,7 +233,7 @@ const deleteFolder = protectedProcedure
     });
 
     if (!folder) {
-      throw new Error("Folder not found");
+      throw new TRPCError({ code: "NOT_FOUND", message: "Folder not found" });
     }
 
     await db.bookmarkFolder.delete({
@@ -266,11 +251,7 @@ const createFolder = protectedProcedure
     z.object({ name: nameSchema, color: z.string(), folderId: z.string() }),
   )
   .mutation(async ({ input, ctx }) => {
-    const userId = ctx.session?.user.id;
-
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+    const userId = ctx.session.user.id;
 
     const parentFolder = await db.bookmarkFolder.findUnique({
       where: {
@@ -280,7 +261,10 @@ const createFolder = protectedProcedure
     });
 
     if (!parentFolder) {
-      throw new Error("Parent folder not found");
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Parent folder not found",
+      });
     }
 
     const folder = await db.bookmarkFolder.create({
@@ -327,14 +311,10 @@ const moveItem = protectedProcedure
     }),
   )
   .mutation(async ({ input, ctx }) => {
-    const userId = ctx.session?.user.id;
-
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+    const userId = ctx.session.user.id;
 
     if (!input.bookmarkIds && !input.folderIds) {
-      throw new Error("No items to move");
+      throw new TRPCError({ code: "BAD_REQUEST", message: "No items to move" });
     }
 
     const targetFolder = await db.bookmarkFolder.findUnique({
@@ -345,7 +325,10 @@ const moveItem = protectedProcedure
     });
 
     if (!targetFolder) {
-      throw new Error("Target folder not found");
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Target folder not found",
+      });
     }
 
     if (input.bookmarkIds) {
@@ -396,11 +379,7 @@ const editBookmark = protectedProcedure
     }),
   )
   .mutation(async ({ input, ctx }) => {
-    const userId = ctx.session?.user.id;
-
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+    const userId = ctx.session.user.id;
 
     const bookmark = await db.bookmark.findUnique({
       where: {
@@ -410,7 +389,7 @@ const editBookmark = protectedProcedure
     });
 
     if (!bookmark) {
-      throw new Error("Bookmark not found");
+      throw new TRPCError({ code: "NOT_FOUND", message: "Bookmark not found" });
     }
 
     // if (badWords.some((word) => input.name.includes(word))) {
@@ -446,11 +425,7 @@ const editFolder = protectedProcedure
     }),
   )
   .mutation(async ({ input, ctx }) => {
-    const userId = ctx.session?.user.id;
-
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+    const userId = ctx.session.user.id;
 
     const folder = await db.bookmarkFolder.findUnique({
       where: {
@@ -460,7 +435,7 @@ const editFolder = protectedProcedure
     });
 
     if (!folder) {
-      throw new Error("Folder not found");
+      throw new TRPCError({ code: "NOT_FOUND", message: "Folder not found" });
     }
 
     if (input.newFolderId !== folder.parentFolderId) {
@@ -468,7 +443,10 @@ const editFolder = protectedProcedure
         where: { id: input.newFolderId, userId },
       });
       if (!target) {
-        throw new Error("Target folder not found");
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Target folder not found",
+        });
       }
       await assertNotIntoOwnSubtree(
         [input.folderId],
@@ -494,10 +472,7 @@ const editFolder = protectedProcedure
 const getFolderPath = protectedProcedure
   .input(z.object({ folderId: z.string().nullable() }))
   .query(async ({ input, ctx }) => {
-    const userId = ctx.session?.user.id;
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+    const userId = ctx.session.user.id;
 
     const path: { id: string; name: string }[] = [];
     let currentFolderId = input.folderId;

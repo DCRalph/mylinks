@@ -2,6 +2,9 @@ import "server-only";
 
 import { z } from "zod";
 
+import { requestHost } from "~/lib/domains";
+import { visitColumns } from "~/lib/user-agent";
+import { db } from "~/server/db";
 import { getSettings } from "~/server/settings";
 
 // Headers that carry the visitor's IP address.
@@ -15,17 +18,23 @@ export const IP_HEADERS = [
 
 /**
  * Visitor details stored with each Click (short link hit, profile view, pixel
- * load). Follows Admin → Settings: with IPs set to "none" none are kept, and
- * unless they're "full" the copied headers leave them out (the IP column is
- * the one the retention job trims).
+ * load), parsed once so analytics can group by them. Follows Admin → Settings:
+ * with IPs set to "none" none are kept, and unless they're "full" the copied
+ * headers leave them out (the IP column is the one the retention job trims).
  */
 export async function visitorInfo(
   headers: Headers,
   { withHeaders = false } = {},
 ) {
   const { ipAddresses } = await getSettings();
+  const userAgent = headers.get("user-agent");
+  const referer = headers.get("referer");
+  const country = headers.get("cf-ipcountry");
+
   return {
-    userAgent: headers.get("user-agent"),
+    userAgent,
+    referer,
+    ...visitColumns(userAgent, referer),
     // Cloudflare sets cf-connecting-ip; otherwise the first forwarded hop is the client.
     ipAddress:
       ipAddresses === "none"
@@ -33,13 +42,48 @@ export async function visitorInfo(
         : (headers.get("cf-connecting-ip") ??
           headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
           headers.get("x-real-ip")),
-    referer: headers.get("referer"),
+    // XX means unknown and T1 is Tor; neither is a country.
+    country:
+      country && /^[A-Z]{2}$/.test(country) && country !== "XX"
+        ? country
+        : null,
+    host: requestHost(headers) || null,
     ...(withHeaders && {
       allHeaders: JSON.stringify(
         withoutIps(safeHeaders(headers), ipAddresses !== "full"),
       ),
     }),
   };
+}
+
+/** Browsers fetching a link ahead of a click. Not a visit, so not recorded. */
+export const isPrefetch = (headers: Headers) =>
+  /prefetch|prerender/.test(
+    `${headers.get("sec-purpose")} ${headers.get("purpose")} ${headers.get("x-moz")}`,
+  );
+
+/**
+ * Fills the parsed columns on clicks recorded before they existed, one user
+ * agent at a time. Runs in the background after boot; a no-op once done.
+ */
+export async function backfillClicks() {
+  for (;;) {
+    const batch = await db.click.findMany({
+      where: { device: null },
+      select: { userAgent: true },
+      distinct: ["userAgent"],
+      take: 200,
+    });
+    if (batch.length === 0) return;
+    for (const { userAgent } of batch) {
+      // refererHost was filled in by the migration.
+      const { isBot, client, os, device } = visitColumns(userAgent, null);
+      await db.click.updateMany({
+        where: { device: null, userAgent },
+        data: { isBot, client, os, device },
+      });
+    }
+  }
 }
 
 // Never keep credentials that happen to ride along on a request, e.g. the
