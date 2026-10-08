@@ -6,6 +6,7 @@ import { assertWithinLimit } from "~/server/api/limits";
 import { randomSlug } from "~/server/api/slugs";
 import { createTRPCRouter, permissionProcedure } from "~/server/api/trpc";
 import { readStoredHeaders } from "~/server/clicks";
+import { humanClicks, withBots } from "~/server/analytics";
 import { db } from "~/server/db";
 
 /** Spy pixels are a role-granted feature (pixel:use). */
@@ -20,20 +21,23 @@ async function findOwnPixel(id: string, userId: string) {
 }
 
 export const spypixelRouter = createTRPCRouter({
-  getAll: spyPixelProcedure.query(({ ctx }) =>
-    db.spyPixel.findMany({
+  /** The user's pixels. `_count.clicks` counts real loads; `bots` the rest. */
+  getAll: spyPixelProcedure.query(async ({ ctx }) => {
+    const pixels = await db.spyPixel.findMany({
       where: { userId: ctx.session.user.id },
       include: {
-        _count: { select: { clicks: true } },
+        _count: { select: humanClicks },
         clicks: {
+          where: { isBot: false },
           select: { createdAt: true },
           orderBy: { createdAt: "desc" },
           take: 1,
         },
       },
       orderBy: { createdAt: "desc" },
-    }),
-  ),
+    });
+    return withBots("spyPixelId", pixels);
+  }),
 
   /** Every load of a pixel, newest first, with the request headers it arrived with. */
   getClicks: spyPixelProcedure

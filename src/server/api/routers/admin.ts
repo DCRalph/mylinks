@@ -2,9 +2,11 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import type { Prisma } from "~/generated/prisma/client";
+import { growth } from "~/lib/format";
 import { STAFF_ROLES } from "~/lib/permissions";
 import { usernameSchema } from "~/lib/validation";
 import { createTRPCRouter, permissionProcedure } from "~/server/api/trpc";
+import { clickSeries, humanClicks } from "~/server/analytics";
 import { audit, describeUser } from "~/server/audit";
 import { db } from "~/server/db";
 
@@ -18,41 +20,72 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const userFilter = z.enum(["all", "staff", "banned"]);
 
 export const adminRouter = createTRPCRouter({
-  /** Headline numbers for the overview tab. */
+  /** Headline numbers, 30 days of clicks and this week's top links. */
   overview: permissionProcedure({ stats: ["read"] }).query(async () => {
-    const weekAgo = new Date(Date.now() - 7 * DAY_MS);
-    const [users, newUsers, links, newLinks, profiles, pixels, newest, top] =
+    const now = Date.now();
+    const weekAgo = new Date(now - 7 * DAY_MS);
+    const twoWeeksAgo = new Date(now - 14 * DAY_MS);
+
+    const [[users], [links], [clicks], newest, topRows, chart] =
       await Promise.all([
-        db.user.count(),
-        db.user.count({ where: { createdAt: { gte: weekAgo } } }),
-        db.link.count(),
-        db.link.count({ where: { createdAt: { gte: weekAgo } } }),
-        db.profile.count(),
-        db.spyPixel.count(),
+        db.$queryRaw<[{ total: bigint; new: bigint }]>`
+          SELECT count(*) AS total,
+            count(*) FILTER (WHERE "createdAt" >= ${weekAgo}) AS new
+          FROM "User"`,
+        db.$queryRaw<[{ total: bigint; new: bigint }]>`
+          SELECT count(*) AS total,
+            count(*) FILTER (WHERE "createdAt" >= ${weekAgo}) AS new
+          FROM "Link"`,
+        // Short link clicks this week and last, bots this week, pixel loads this week.
+        db.$queryRaw<
+          [{ week: bigint; last: bigint; bots: bigint; pixels: bigint }]
+        >`
+          SELECT
+            count(*) FILTER (WHERE "linkId" IS NOT NULL AND NOT "isBot" AND "createdAt" >= ${weekAgo}) AS week,
+            count(*) FILTER (WHERE "linkId" IS NOT NULL AND NOT "isBot" AND "createdAt" < ${weekAgo}) AS last,
+            count(*) FILTER (WHERE "linkId" IS NOT NULL AND "isBot" AND "createdAt" >= ${weekAgo}) AS bots,
+            count(*) FILTER (WHERE "spyPixelId" IS NOT NULL AND NOT "isBot" AND "createdAt" >= ${weekAgo}) AS pixels
+          FROM "Click" WHERE "createdAt" >= ${twoWeeksAgo}`,
         db.user.findMany({
           orderBy: { createdAt: "desc" },
           take: 5,
           select: { id: true, name: true, email: true, createdAt: true },
         }),
-        db.link.findMany({
-          orderBy: { clicks: { _count: "desc" } },
-          take: 5,
-          include: {
-            user: { select: { username: true, name: true } },
-            _count: { select: { clicks: true } },
+        db.click.groupBy({
+          by: ["linkId"],
+          where: {
+            linkId: { not: null },
+            isBot: false,
+            createdAt: { gte: weekAgo },
           },
+          _count: { _all: true },
+          orderBy: { _count: { linkId: "desc" } },
+          take: 5,
         }),
+        clickSeries({ allLinks: true }, 30),
       ]);
 
+    const topLinks = await db.link.findMany({
+      where: { id: { in: topRows.flatMap((row) => row.linkId ?? []) } },
+      include: { user: { select: { username: true, name: true } } },
+    });
+    const top = topRows.flatMap((row) => {
+      const link = topLinks.find((l) => l.id === row.linkId);
+      return link ? [{ ...link, weekClicks: row._count._all }] : [];
+    });
+
     return {
-      users,
-      newUsers,
-      links,
-      newLinks,
-      profiles,
-      pixels,
+      users: Number(users.total),
+      newUsers: Number(users.new),
+      links: Number(links.total),
+      newLinks: Number(links.new),
+      clicks: Number(clicks.week),
+      clicksGrowth: growth(Number(clicks.week), Number(clicks.last)),
+      bots: Number(clicks.bots),
+      pixelLoads: Number(clicks.pixels),
       newest,
       top,
+      days: chart.days,
     };
   }),
 
@@ -100,12 +133,14 @@ export const adminRouter = createTRPCRouter({
         include: {
           accounts: { select: { providerId: true } },
           Links: {
-            include: { _count: { select: { clicks: true } } },
+            include: { _count: { select: humanClicks } },
             orderBy: { createdAt: "desc" },
           },
           Profiles: {
             include: {
-              _count: { select: { clicks: true, profileLinks: true } },
+              _count: {
+                select: { ...humanClicks, profileLinks: true },
+              },
             },
           },
           _count: { select: { SpyPixels: true, bookmarks: true } },

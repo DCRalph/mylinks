@@ -105,6 +105,10 @@ model Link {
   slug String @unique
   url  String
 
+  // Turned off by a moderator (Admin → Links): visitors see a "disabled" page.
+  disabledAt     DateTime?
+  disabledReason String?
+
   clicks Click[]
 
   @@index([userId])
@@ -126,6 +130,10 @@ model Profile {
 
   // JSON array of ProfileLink ids, in display order.
   linkOrder String
+
+  // Turned off by a moderator (Admin → Profiles): visitors see a "disabled" page.
+  disabledAt     DateTime?
+  disabledReason String?
 
   clicks Click[]
 
@@ -180,9 +188,25 @@ model Click {
   referer    String?
   allHeaders String?
 
-  @@index([linkId])
+  // Parsed once when recorded (src/server/clicks.ts). Bots are link previews,
+  // crawlers and scripts; they're counted apart from people everywhere.
+  isBot       Boolean @default(false)
+  // Browser or bot name without its version: "Chrome", "Slack link preview".
+  client      String?
+  // OS without its version: "iOS", "macOS".
+  os          String?
+  // Desktop, Mobile, Tablet or Unknown. Null only until the boot backfill
+  // reaches rows recorded before these columns existed.
+  device      String?
+  // Two-letter code from Cloudflare's cf-ipcountry header.
+  country     String?
+  refererHost String?
+  // The domain the visit arrived on.
+  host        String?
+
+  @@index([linkId, createdAt])
   @@index([profileId, createdAt])
-  @@index([spyPixelId])
+  @@index([spyPixelId, createdAt])
 }
 
 model BookmarkFolder {

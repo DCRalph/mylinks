@@ -179,6 +179,13 @@ function Editor({ profile }: { profile: Profile }) {
             </a>
             <CopyButton value={publicUrl} className="text-muted" />
           </div>
+          {profile.disabledAt && (
+            <p className="mt-2 text-sm text-danger">
+              Turned off by a moderator
+              {profile.disabledReason && `: ${profile.disabledReason}`}.
+              Visitors see a “turned off” page.
+            </p>
+          )}
         </div>
         <div className="ml-auto flex gap-2">
           <Button variant="outline" asChild>

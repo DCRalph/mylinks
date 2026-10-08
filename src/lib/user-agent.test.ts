@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { parseUserAgent } from "~/lib/user-agent";
+import { parseUserAgent, visitColumns } from "~/lib/user-agent";
 
 test("desktop and mobile browsers", () => {
   expect(
@@ -70,4 +70,31 @@ test("missing user agent", () => {
     device: "Unknown",
     kind: "unknown",
   });
+});
+
+test("stored click columns group by family and split out bots", () => {
+  expect(
+    visitColumns(
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+      "https://www.Instagram.com/p/abc",
+    ),
+  ).toEqual({
+    isBot: false,
+    client: "Safari",
+    os: "iOS",
+    device: "Mobile",
+    refererHost: "instagram.com",
+  });
+  expect(visitColumns("Slackbot-LinkExpanding 1.0", null).isBot).toBe(true);
+  expect(visitColumns(null, "not a url")).toMatchObject({
+    isBot: true,
+    refererHost: null,
+  });
+  expect(visitColumns("Mozilla/5.0 (Windows NT 10.0; Win64; x64) GoogleImageProxy", null).isBot).toBe(false);
+});
+
+test("HTTP libraries count as scripts", () => {
+  for (const ua of ["node", "axios/1.7.2", "Go-http-client/2.0", "okhttp/4.12.0", "Mozilla/5.0 HeadlessChrome/129.0"]) {
+    expect(parseUserAgent(ua).kind).toBe("bot");
+  }
 });

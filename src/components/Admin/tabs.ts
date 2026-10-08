@@ -7,6 +7,12 @@ import { can, type Permissions } from "~/lib/permissions";
 const TABS = [
   { href: "/admin", label: "Overview", permissions: { stats: ["read"] } },
   { href: "/admin/users", label: "Users", permissions: { user: ["list"] } },
+  { href: "/admin/links", label: "Links", permissions: { link: ["moderate"] } },
+  {
+    href: "/admin/profiles",
+    label: "Profiles",
+    permissions: { profile: ["moderate"] },
+  },
   {
     href: "/admin/domains",
     label: "Domains",
