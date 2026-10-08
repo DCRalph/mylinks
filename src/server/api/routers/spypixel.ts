@@ -4,6 +4,7 @@ import { z } from "zod";
 import { slugSchema } from "~/lib/validation";
 import { assertWithinLimit } from "~/server/api/limits";
 import { randomSlug } from "~/server/api/slugs";
+import { decodeVisit } from "~/lib/decode-visit";
 import { createTRPCRouter, permissionProcedure } from "~/server/api/trpc";
 import { readStoredHeaders } from "~/server/clicks";
 import { humanClicks, withBots } from "~/server/analytics";
@@ -56,10 +57,14 @@ export const spypixelRouter = createTRPCRouter({
         },
         orderBy: { createdAt: "desc" },
       });
-      return clicks.map(({ allHeaders, ...click }) => ({
-        ...click,
-        headers: readStoredHeaders(allHeaders),
-      }));
+      return clicks.map(({ allHeaders, ...click }) => {
+        const headers = readStoredHeaders(allHeaders);
+        return {
+          ...click,
+          headers,
+          decoded: decodeVisit(click.userAgent, headers),
+        };
+      });
     }),
 
   createSpyPixel: spyPixelProcedure
@@ -75,7 +80,10 @@ export const spypixelRouter = createTRPCRouter({
 
       const taken = await db.spyPixel.findUnique({ where: { slug } });
       if (taken) {
-        throw new TRPCError({ code: "CONFLICT", message: "Slug already taken" });
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Slug already taken",
+        });
       }
       await assertWithinLimit("pixel", ctx.session.user);
 

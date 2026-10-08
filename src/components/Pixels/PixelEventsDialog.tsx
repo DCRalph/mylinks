@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { formatNumber, formatRelative, hostOf } from "~/lib/format";
-import { parseUserAgent, type ParsedUserAgent } from "~/lib/user-agent";
+import type { DecodedVisit, Fact } from "~/lib/decode-visit";
 import { cn } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 
@@ -22,7 +22,7 @@ const fullDate = new Intl.DateTimeFormat(undefined, {
 });
 const shortDate = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
 
-const KIND_NOTES: Partial<Record<ParsedUserAgent["kind"], string>> = {
+const KIND_NOTES: Partial<Record<DecodedVisit["kind"], string>> = {
   "email-proxy":
     "Loaded through the mail provider's image proxy, so the IP and device are the provider's, not the reader's. It still means the email was opened.",
   bot: "A link preview or automated request, probably not a person.",
@@ -124,10 +124,8 @@ function EventRow({
   open: boolean;
   onToggle: () => void;
 }) {
-  const ua = parseUserAgent(event.userAgent);
+  const { decoded } = event;
   const country = event.headers?.["cf-ipcountry"];
-  const clientLabel =
-    [ua.client, ua.os].filter(Boolean).join(" · ") || "Unknown client";
 
   return (
     <li>
@@ -152,9 +150,9 @@ function EventRow({
           )}
         />
         <span className="col-span-2 flex min-w-0 items-center gap-2 sm:col-span-1">
-          <span className="truncate">{clientLabel}</span>
-          {ua.kind === "email-proxy" && <Tag>Mail proxy</Tag>}
-          {ua.kind === "bot" && <Tag>Bot</Tag>}
+          <span className="truncate">{decoded.summary}</span>
+          {decoded.kind === "email-proxy" && <Tag>Mail proxy</Tag>}
+          {decoded.kind === "bot" && <Tag>Bot</Tag>}
         </span>
         <span className="text-muted col-span-2 truncate font-mono text-[13px] sm:col-span-1">
           {event.ipAddress ?? "No IP"}
@@ -165,7 +163,7 @@ function EventRow({
         </span>
       </button>
 
-      {open && <EventDetails event={event} ua={ua} country={country} />}
+      {open && <EventDetails event={event} />}
     </li>
   );
 }
@@ -178,27 +176,77 @@ function Tag({ children }: { children: React.ReactNode }) {
   );
 }
 
-function EventDetails({
-  event,
-  ua,
-  country,
-}: {
-  event: PixelEvent;
-  ua: ParsedUserAgent;
-  country: string | undefined;
-}) {
-  const headers = Object.entries(event.headers ?? {}).sort(([a], [b]) =>
-    a.localeCompare(b),
-  );
-  const note = KIND_NOTES[ua.kind];
+/**
+ * The decoded answer up top (device, place, other facts), then the raw values
+ * it came from, with each decoded header lit up and explained in place.
+ */
+function EventDetails({ event }: { event: PixelEvent }) {
+  const { decoded } = event;
+  const note = KIND_NOTES[decoded.kind];
+  const extras = decoded.facts.filter((fact) => !fact.headline);
+  const decodedFrom = (header: string) =>
+    decoded.facts.filter((fact) => fact.from.includes(header));
+  // The user agent has its own row above the table.
+  const headers = Object.entries(event.headers ?? {})
+    .filter(([name]) => name !== "user-agent")
+    .sort(([a], [b]) => a.localeCompare(b));
 
   return (
     <div className="bg-panel/60 px-4 pt-1 pb-4">
       {note && (
-        <p className="bg-raised text-muted mb-3 rounded-lg px-3 py-2 text-sm">
+        <p className="bg-raised text-muted mt-2 rounded-lg px-3 py-2 text-sm">
           {note}
         </p>
       )}
+
+      <div className="mb-4 grid gap-x-6 gap-y-3 border-b pt-3 pb-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="min-w-0">
+          <p className="display text-[34px] leading-[1.15]">{decoded.title}</p>
+          {decoded.subtitle && (
+            <p className="text-muted mt-1">{decoded.subtitle}</p>
+          )}
+        </div>
+        {decoded.place && (
+          <div className="sm:text-right">
+            <p className="display text-2xl leading-[1.15]">
+              {decoded.place.title}
+            </p>
+            {decoded.place.subtitle && (
+              <p className="text-muted mt-1">{decoded.place.subtitle}</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {extras.length > 0 && (
+        <dl className="mb-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+          {extras.map((fact) => (
+            <div
+              key={fact.label}
+              className="bg-bg flex flex-col rounded-xl px-3 py-2.5"
+            >
+              <dt className="text-muted order-last mt-0.5 text-xs">
+                {fact.label}
+              </dt>
+              <dd className="text-sm break-words">
+                {fact.href ? (
+                  <a
+                    href={fact.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-lime hover:underline"
+                  >
+                    {fact.value}
+                  </a>
+                ) : (
+                  fact.value
+                )}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+
       <dl className="grid gap-x-6 gap-y-2.5 text-sm sm:grid-cols-[130px_minmax(0,1fr)]">
         <Detail label="Time">
           {fullDate.format(event.createdAt)}
@@ -209,7 +257,6 @@ function EventDetails({
         <Detail label="IP address" mono>
           {event.ipAddress ?? "Not recorded"}
         </Detail>
-        {country && <Detail label="Country">{country}</Detail>}
         <Detail label="Referrer" mono={!!event.referer}>
           {event.referer ?? (
             <span className="text-muted">
@@ -217,34 +264,57 @@ function EventDetails({
             </span>
           )}
         </Detail>
-        <Detail label="Client">
-          {ua.client ?? "Unknown"}
-          {ua.os && ` on ${ua.os}`}
-          {ua.device !== "Unknown" && (
-            <span className="text-muted"> · {ua.device}</span>
-          )}
-        </Detail>
         <Detail label="User agent" mono>
           {event.userAgent ?? "None sent"}
+          <Meaning facts={decodedFrom("user-agent")} />
         </Detail>
         {headers.length > 0 && (
           <Detail label="Headers">
             <table className="w-full font-mono text-xs">
               <tbody className="divide-line divide-y">
-                {headers.map(([name, value]) => (
-                  <tr key={name} className="align-top">
-                    <td className="text-muted py-1 pr-4 whitespace-nowrap">
-                      {name}
-                    </td>
-                    <td className="py-1 break-all">{value}</td>
-                  </tr>
-                ))}
+                {headers.map(([name, value]) => {
+                  const facts = decodedFrom(name);
+                  return (
+                    <tr key={name} className="align-top">
+                      <td
+                        className={cn(
+                          "py-1 pr-4 whitespace-nowrap",
+                          facts.length > 0 ? "text-lime" : "text-muted",
+                        )}
+                      >
+                        {name}
+                      </td>
+                      <td className="py-1 break-all">
+                        {value}
+                        <Meaning facts={facts} />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </Detail>
         )}
       </dl>
     </div>
+  );
+}
+
+/** What a raw value decoded to, and any caveats, under the value itself. */
+function Meaning({ facts }: { facts: Fact[] }) {
+  if (facts.length === 0) return null;
+  const notes = new Set(facts.flatMap((fact) => fact.note ?? []));
+  return (
+    <span className="mt-1 block font-sans text-xs break-normal">
+      <span className="text-muted block">
+        {facts.map((fact) => `${fact.label}: ${fact.value}`).join(" · ")}
+      </span>
+      {[...notes].map((note) => (
+        <span key={note} className="text-faint block">
+          {note}
+        </span>
+      ))}
+    </span>
   );
 }
 

@@ -1,5 +1,6 @@
 import { after } from "next/server";
 
+import { ACCEPT_CH } from "~/lib/decode-visit";
 import { visitorInfo } from "~/server/clicks";
 import { db } from "~/server/db";
 
@@ -35,6 +36,8 @@ export async function GET(
     headers: {
       "Content-Type": "image/png",
       "Cache-Control": "no-cache, no-store, must-revalidate",
+      // Device model and exact versions on later loads, when opened directly.
+      "Accept-CH": ACCEPT_CH,
     },
   });
 }
