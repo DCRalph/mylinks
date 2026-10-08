@@ -34,6 +34,7 @@
     "clsx": "^2.1.1",
     "geist": "^1.7.2",
     "next": "^16.4.0",
+    "node-device-detector": "^2.2.7",
     "radix-ui": "^1.7.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
