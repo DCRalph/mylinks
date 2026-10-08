@@ -7,7 +7,7 @@ import { useState } from "react";
 import Empty from "~/components/Empty";
 import Growth from "~/components/Growth";
 import { Input } from "~/components/ui/input";
-import { formatNumber, growth } from "~/lib/format";
+import { formatNumber, growth, plural } from "~/lib/format";
 import { useShareDomain } from "~/lib/use-share-domain";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
@@ -60,9 +60,17 @@ export default function LinksDashboard() {
           <p className="display text-[88px] leading-none sm:text-[112px]">
             {formatNumber(thisWeek)}
           </p>
-          <p className="mt-3 flex items-center gap-3 text-muted">
+          <p className="mt-3 flex flex-wrap items-center gap-x-3 text-muted">
             {thisWeek === 1 ? "click" : "clicks"} this week
             <Growth value={growth(thisWeek, stats.data?.lastWeek ?? 0)} />
+            {!!stats.data?.botsThisWeek && (
+              <span
+                className="text-sm text-faint"
+                title="Link previews, crawlers and scripts. Not counted as clicks."
+              >
+                + {plural(stats.data.botsThisWeek, "bot")}
+              </span>
+            )}
           </p>
         </div>
         <ShortenForm />

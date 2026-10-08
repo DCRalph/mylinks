@@ -16,8 +16,11 @@ bun dev
 
 ## Domains
 
-`NEXT_PUBLIC_DOMAINS` lists every origin the deployment answers on, for example
-`https://link2it.xyz,https://l2.it`. On each of them:
+Domains are managed in **Admin → Domains**. On first boot the Domain table is
+seeded from `NEXT_PUBLIC_DOMAINS` (for example
+`https://link2it.xyz,https://l2.it`, the first becoming primary); after that the
+database is the source of truth, and the env list is only a fallback if no
+domain is active. On every active domain:
 
 - the whole app works, sign-in included. Sessions are per domain, so signing in
   on one domain does not sign you in on another;
@@ -26,13 +29,19 @@ bun dev
 - the domain chip in the header chooses which domain copied links use. It
   defaults to the domain you're browsing on.
 
+To add a domain, point its DNS at the site, route it to the app in your
+hosting, add it in Admin → Domains and press Verify. Verifying fetches
+`/api/domains/verify` on the new domain and checks the answer is signed by this
+deployment, so it only succeeds once the domain really reaches the app. Hosts
+that aren't active get a "not connected" 404 (`src/proxy.ts`); localhost and
+private IPs always pass, for health checks.
+
 For Google sign-in and "Connect Google", register
 `https://<domain>/api/auth/callback/google` as an authorized redirect URI for
-each domain in Google Cloud. Requests on hosts that aren't listed fall back to
-the first domain for auth.
+each domain in Google Cloud. Admin → Domains shows it with a copy button.
 
 Behind a reverse proxy, forward the public host (`proxy_set_header Host $host;`
-or `X-Forwarded-Host`). When every listed domain is https, callback URLs are
+or `X-Forwarded-Host`). When every active domain is https, callback URLs are
 always https even if the proxy talks plain http to the app.
 
 ## Deploying

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 
 import ProfileView from "~/components/Profiles/ProfileView";
+import TurnedOff from "~/components/TurnedOff";
 import { canManage } from "~/server/api/access";
 import { getSession } from "~/server/auth";
 import { api } from "~/trpc/server";
@@ -30,9 +31,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Page({ params }: Props) {
   const profile = await getProfile((await params).slug);
   if (!profile) notFound();
+  if (profile.disabledAt) return <TurnedOff what="profile" />;
 
   const session = await getSession();
-  const canEdit = !!session && canManage(profile.userId, session.user);
+  const canEdit =
+    !!session && canManage("profile", profile.userId, session.user);
   const byId = new Map(profile.profileLinks.map((link) => [link.id, link]));
   const links = parseProfileLinkOrder({
     linkOrderS: profile.linkOrder,

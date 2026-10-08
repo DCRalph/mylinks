@@ -37,17 +37,6 @@ export function formatRelative(date: Date, now = Date.now()) {
   return "just now";
 }
 
-/** Rough device class from a user agent string. */
-export function deviceType(userAgent: string | null) {
-  const ua = (userAgent ?? "").toLowerCase();
-  if (ua.includes("ipad") || ua.includes("tablet")) return "Tablet";
-  if (ua.includes("mobile") || ua.includes("android") || ua.includes("iphone"))
-    return "Mobile";
-  if (ua.includes("windows") || ua.includes("macintosh") || ua.includes("linux"))
-    return "Desktop";
-  return "Unknown";
-}
-
 /** Percentage change, rounded. 0 -> n counts as +100%. */
 export function growth(current: number, previous: number) {
   if (previous === 0) return current > 0 ? 100 : 0;

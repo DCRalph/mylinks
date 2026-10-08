@@ -1,3 +1,5 @@
+import { after } from "next/server";
+
 import { visitorInfo } from "~/server/clicks";
 import { db } from "~/server/db";
 
@@ -16,8 +18,7 @@ async function recordLoad(req: Request, slug: string) {
   await db.click.create({
     data: {
       spyPixelId: pixel.id,
-      ...visitorInfo(req.headers),
-      allHeaders: JSON.stringify(Object.fromEntries(req.headers)),
+      ...(await visitorInfo(req.headers, { withHeaders: true })),
     },
   });
 }
@@ -28,7 +29,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  recordLoad(req, id).catch(console.error);
+  after(() => recordLoad(req, id));
 
   return new Response(PIXEL, {
     headers: {

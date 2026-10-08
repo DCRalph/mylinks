@@ -2,20 +2,15 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { slugSchema } from "~/lib/validation";
+import { assertWithinLimit } from "~/server/api/limits";
 import { randomSlug } from "~/server/api/slugs";
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, permissionProcedure } from "~/server/api/trpc";
+import { readStoredHeaders } from "~/server/clicks";
+import { humanClicks, withBots } from "~/server/analytics";
 import { db } from "~/server/db";
 
-/** Spy pixels are opt-in per user (or any admin). */
-const spyPixelProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (!ctx.session.user.spyPixel && !ctx.session.user.admin) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "You don't have access to spy pixels",
-    });
-  }
-  return next();
-});
+/** Spy pixels are a role-granted feature (pixel:use). */
+const spyPixelProcedure = permissionProcedure({ pixel: ["use"] });
 
 async function findOwnPixel(id: string, userId: string) {
   const pixel = await db.spyPixel.findUnique({ where: { id } });
@@ -26,29 +21,45 @@ async function findOwnPixel(id: string, userId: string) {
 }
 
 export const spypixelRouter = createTRPCRouter({
-  getAll: spyPixelProcedure.query(({ ctx }) =>
-    db.spyPixel.findMany({
+  /** The user's pixels. `_count.clicks` counts real loads; `bots` the rest. */
+  getAll: spyPixelProcedure.query(async ({ ctx }) => {
+    const pixels = await db.spyPixel.findMany({
       where: { userId: ctx.session.user.id },
       include: {
-        _count: { select: { clicks: true } },
+        _count: { select: humanClicks },
         clicks: {
+          where: { isBot: false },
           select: { createdAt: true },
           orderBy: { createdAt: "desc" },
           take: 1,
         },
       },
       orderBy: { createdAt: "desc" },
-    }),
-  ),
+    });
+    return withBots("spyPixelId", pixels);
+  }),
 
+  /** Every load of a pixel, newest first, with the request headers it arrived with. */
   getClicks: spyPixelProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input, ctx }) => {
       await findOwnPixel(input.id, ctx.session.user.id);
-      return db.click.findMany({
+      const clicks = await db.click.findMany({
         where: { spyPixelId: input.id },
+        select: {
+          id: true,
+          createdAt: true,
+          ipAddress: true,
+          userAgent: true,
+          referer: true,
+          allHeaders: true,
+        },
         orderBy: { createdAt: "desc" },
       });
+      return clicks.map(({ allHeaders, ...click }) => ({
+        ...click,
+        headers: readStoredHeaders(allHeaders),
+      }));
     }),
 
   createSpyPixel: spyPixelProcedure
@@ -66,6 +77,7 @@ export const spypixelRouter = createTRPCRouter({
       if (taken) {
         throw new TRPCError({ code: "CONFLICT", message: "Slug already taken" });
       }
+      await assertWithinLimit("pixel", ctx.session.user);
 
       return db.spyPixel.create({
         data: { name: input.name, slug, userId: ctx.session.user.id },

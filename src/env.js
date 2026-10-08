@@ -31,9 +31,9 @@ export const env = createEnv({
   },
 
   client: {
-    // Comma-separated origins this deployment answers on, e.g.
-    // "https://link2it.xyz,https://l2.it". Every domain serves the full app,
-    // sign-in included, and resolves every short link. The first is the default.
+    // Comma-separated origins, e.g. "https://link2it.xyz,https://l2.it", the
+    // first being primary. Seeds the Domain table on first boot (Admin →
+    // Domains), and is the fallback if no domain is active.
     NEXT_PUBLIC_DOMAINS: z
       .string()
       .transform((value) =>

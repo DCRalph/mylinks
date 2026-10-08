@@ -2,7 +2,8 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z, ZodError } from "zod";
 
-import { auth } from "~/server/auth";
+import { can, type Permissions } from "~/lib/permissions";
+import { getAuth } from "~/server/auth";
 import { db } from "~/server/db";
 
 /**
@@ -10,7 +11,11 @@ import { db } from "~/server/db";
  * the HTTP handler (src/app/api/trpc) and by the RSC caller (src/trpc/server).
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const session = await auth.api.getSession({ headers: opts.headers });
+  const session = await (
+    await getAuth()
+  ).api.getSession({
+    headers: opts.headers,
+  });
 
   return {
     db,
@@ -60,10 +65,17 @@ export const protectedProcedure = t.procedure
     return next({ ctx: { session: ctx.session } });
   });
 
-/** Admins only. */
-export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (!ctx.session.user.admin) {
-    throw new TRPCError({ code: "FORBIDDEN" });
-  }
-  return next();
-});
+/**
+ * Signed-in users whose roles grant `permissions` (see src/lib/permissions.ts).
+ * With `any`, one of the listed permissions is enough.
+ */
+export const permissionProcedure = (
+  permissions: Permissions,
+  options?: { any?: boolean },
+) =>
+  protectedProcedure.use(({ ctx, next }) => {
+    if (!can(ctx.session.user, permissions, options)) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    return next();
+  });

@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
+import { after } from "next/server";
 import { z } from "zod";
 
-import { deviceType } from "~/lib/format";
 import {
   colorSchema,
   iconSchema,
@@ -9,18 +9,18 @@ import {
   slugSchema,
 } from "~/lib/validation";
 import { canManage } from "~/server/api/access";
-import { assertSlugLength } from "~/server/api/slugs";
+import { assertWithinLimit } from "~/server/api/limits";
+import { assertSlugAllowed } from "~/server/api/slugs";
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
-import { visitorInfo } from "~/server/clicks";
+import { isPrefetch, visitorInfo } from "~/server/clicks";
+import { clickAnalytics, humanClicks, withBots } from "~/server/analytics";
 import { db } from "~/server/db";
 import { findProfileIdBySlug, findProfileSlugClash } from "~/server/slugs";
 import parseProfileLinkOrder from "~/utils/parseProfileLinkOrder";
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const profileInput = z.object({
   name: z.string().trim().min(1, "Name is required").max(50),
@@ -38,23 +38,20 @@ const profileLinkInput = z.object({
   iconUrl: iconSchema,
 });
 
-/** UTC calendar day, e.g. "2026-10-08". */
-const utcDay = (date: Date) => date.toISOString().slice(0, 10);
-
 async function assertProfileSlugFree(slug: string, exceptId?: string) {
   if (await findProfileSlugClash(slug, exceptId)) {
     throw new TRPCError({ code: "CONFLICT", message: "Slug is already taken" });
   }
 }
 
-type SessionUser = { id: string; admin: boolean };
+type SessionUser = { id: string; role?: string | null };
 
 async function findOwnProfile(id: string, user: SessionUser) {
   const profile = await db.profile.findUnique({
     where: { id },
     include: { profileLinks: true },
   });
-  if (!profile || !canManage(profile.userId, user)) {
+  if (!profile || !canManage("profile", profile.userId, user)) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Profile not found" });
   }
   return profile;
@@ -65,7 +62,7 @@ async function findOwnProfileLink(id: string, user: SessionUser) {
     where: { id },
     include: { profile: { include: { profileLinks: true } } },
   });
-  if (!link || !canManage(link.profile.userId, user)) {
+  if (!link || !canManage("profile", link.profile.userId, user)) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Link not found" });
   }
   return link;
@@ -75,10 +72,10 @@ export const profileRouter = createTRPCRouter({
   getProfiles: protectedProcedure.query(async ({ ctx }) => {
     const profiles = await db.profile.findMany({
       where: { userId: ctx.session.user.id },
-      include: { profileLinks: true, _count: { select: { clicks: true } } },
+      include: { profileLinks: true, _count: { select: humanClicks } },
     });
 
-    return { profiles };
+    return { profiles: await withBots("profileId", profiles) };
   }),
 
   /** One profile with its links, for the editor. Owners and admins only. */
@@ -91,7 +88,7 @@ export const profileRouter = createTRPCRouter({
         include: {
           profileLinks: true,
           user: { select: { id: true, username: true, name: true } },
-          _count: { select: { clicks: true } },
+          _count: { select: humanClicks },
         },
       });
     }),
@@ -99,8 +96,9 @@ export const profileRouter = createTRPCRouter({
   createProfile: protectedProcedure
     .input(profileInput)
     .mutation(async ({ input, ctx }) => {
-      assertSlugLength(input.slug, ctx.session.user.admin);
+      await assertSlugAllowed(input.slug, ctx.session.user);
       await assertProfileSlugFree(input.slug);
+      await assertWithinLimit("profile", ctx.session.user);
 
       const profile = await db.profile.create({
         data: { ...input, userId: ctx.session.user.id, linkOrder: "[]" },
@@ -113,7 +111,7 @@ export const profileRouter = createTRPCRouter({
     .input(profileInput.extend({ id: z.string() }))
     .mutation(async ({ input: { id, ...data }, ctx }) => {
       await findOwnProfile(id, ctx.session.user);
-      assertSlugLength(data.slug, ctx.session.user.admin);
+      await assertSlugAllowed(data.slug, ctx.session.user);
       await assertProfileSlugFree(data.slug, id);
 
       await db.profile.update({ where: { id }, data });
@@ -161,10 +159,7 @@ export const profileRouter = createTRPCRouter({
   changeOrder: protectedProcedure
     .input(z.object({ profileId: z.string(), order: z.array(z.string()) }))
     .mutation(async ({ input, ctx }) => {
-      const profile = await findOwnProfile(
-        input.profileId,
-        ctx.session.user,
-      );
+      const profile = await findOwnProfile(input.profileId, ctx.session.user);
 
       // Only keep ids that belong to this profile.
       const ids = new Set(profile.profileLinks.map((link) => link.id));
@@ -241,118 +236,30 @@ export const profileRouter = createTRPCRouter({
         return null;
       }
 
-      void db.click
-        .create({ data: { profileId: profile.id, ...visitorInfo(ctx.headers) } })
-        .catch(console.error);
+      if (!profile.disabledAt && !isPrefetch(ctx.headers)) {
+        after(async () => {
+          await db.click.create({
+            data: {
+              profileId: profile.id,
+              ...(await visitorInfo(ctx.headers)),
+            },
+          });
+        });
+      }
 
       return profile;
     }),
 
-  /** Daily views for the last `days` days (UTC), plus growth vs the period before. */
-  getProfileAnalytics: protectedProcedure
+  /** Views per day, people vs bots, and where people came from. */
+  getAnalytics: protectedProcedure
     .input(
       z.object({
         profileId: z.string(),
-        days: z.number().int().min(1).max(90).default(7),
+        days: z.number().int().min(1).max(90),
       }),
     )
     .query(async ({ input, ctx }) => {
       await findOwnProfile(input.profileId, ctx.session.user);
-
-      const today = new Date(`${utcDay(new Date())}T00:00:00.000Z`);
-      const start = new Date(today.getTime() - (input.days - 1) * DAY_MS);
-      const previousStart = new Date(start.getTime() - input.days * DAY_MS);
-
-      const [clicks, totalClicks, previousPeriodClicks] = await Promise.all([
-        db.click.findMany({
-          where: { profileId: input.profileId, createdAt: { gte: start } },
-          select: { createdAt: true },
-        }),
-        db.click.count({ where: { profileId: input.profileId } }),
-        db.click.count({
-          where: {
-            profileId: input.profileId,
-            createdAt: { gte: previousStart, lt: start },
-          },
-        }),
-      ]);
-
-      const counts = new Map<string, number>();
-      for (const click of clicks) {
-        const day = utcDay(click.createdAt);
-        counts.set(day, (counts.get(day) ?? 0) + 1);
-      }
-
-      const clicksByDay = Array.from({ length: input.days }, (_, i) => {
-        const date = utcDay(new Date(start.getTime() + i * DAY_MS));
-        return { date, count: counts.get(date) ?? 0 };
-      });
-
-      const currentPeriodClicks = clicks.length;
-      const growthPercentage =
-        previousPeriodClicks === 0
-          ? currentPeriodClicks > 0
-            ? 100
-            : 0
-          : Math.round(
-              ((currentPeriodClicks - previousPeriodClicks) /
-                previousPeriodClicks) *
-                10000,
-            ) / 100;
-
-      return {
-        clicksByDay,
-        totalClicks,
-        currentPeriodClicks,
-        previousPeriodClicks,
-        growthPercentage,
-        timeframe: input.days,
-      };
-    }),
-
-  /** Top referrers and device mix over the last `days` days. */
-  getTrafficSources: protectedProcedure
-    .input(
-      z.object({
-        profileId: z.string(),
-        days: z.number().int().min(1).max(90).default(30),
-      }),
-    )
-    .query(async ({ input, ctx }) => {
-      await findOwnProfile(input.profileId, ctx.session.user);
-
-      const clicks = await db.click.findMany({
-        where: {
-          profileId: input.profileId,
-          createdAt: { gte: new Date(Date.now() - input.days * DAY_MS) },
-        },
-        select: { referer: true, userAgent: true },
-      });
-
-      const tally = (keys: string[]) => {
-        const counts = new Map<string, number>();
-        for (const key of keys) counts.set(key, (counts.get(key) ?? 0) + 1);
-        return [...counts].sort((a, b) => b[1] - a[1]);
-      };
-
-      const sources = tally(
-        clicks.map((click) => {
-          if (!click.referer || click.referer === "unknown") return "Direct";
-          try {
-            return new URL(click.referer).host;
-          } catch {
-            return click.referer;
-          }
-        }),
-      );
-
-      return {
-        trafficSources: sources
-          .slice(0, 5)
-          .map(([source, count]) => ({ source, count })),
-        deviceTypes: tally(clicks.map((click) => deviceType(click.userAgent))).map(
-          ([device, count]) => ({ device, count }),
-        ),
-      };
+      return clickAnalytics({ profileId: input.profileId }, input.days);
     }),
 });

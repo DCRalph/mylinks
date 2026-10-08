@@ -113,6 +113,151 @@ BEGIN
   END IF;
 END $$;`,
   },
+  {
+    // admin/spyPixel booleans become roles (src/lib/permissions.ts), plus the
+    // columns better-auth's admin plugin needs and the audit log.
+    name: "roles-and-audit",
+    sql: `
+DO $$
+BEGIN
+  PERFORM pg_advisory_xact_lock(424242);
+  IF to_regclass('"User"') IS NULL THEN
+    RETURN;
+  END IF;
+
+  ALTER TABLE "User" ADD COLUMN IF NOT EXISTS role TEXT;
+  ALTER TABLE "User" ADD COLUMN IF NOT EXISTS banned BOOLEAN NOT NULL DEFAULT false;
+  ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "banReason" TEXT;
+  ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "banExpires" TIMESTAMP(3);
+  ALTER TABLE "Session" ADD COLUMN IF NOT EXISTS "impersonatedBy" TEXT;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = current_schema() AND table_name = 'User' AND column_name = 'admin'
+  ) THEN
+    UPDATE "User" SET role = CASE
+      WHEN admin THEN 'admin'
+      WHEN "spyPixel" THEN 'user,pixels'
+      ELSE 'user'
+    END
+    WHERE role IS NULL;
+    ALTER TABLE "User" DROP COLUMN admin, DROP COLUMN "spyPixel";
+  END IF;
+  UPDATE "User" SET role = 'user' WHERE role IS NULL;
+  ALTER TABLE "User" ALTER COLUMN role SET DEFAULT 'user';
+  ALTER TABLE "User" ALTER COLUMN role SET NOT NULL;
+
+  CREATE TABLE IF NOT EXISTS "AuditLog" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "actorId" TEXT,
+    "action" TEXT NOT NULL,
+    "targetType" TEXT,
+    "targetId" TEXT,
+    "summary" TEXT NOT NULL,
+    "details" JSONB,
+    CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id")
+  );
+  CREATE INDEX IF NOT EXISTS "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
+  CREATE INDEX IF NOT EXISTS "AuditLog_actorId_idx" ON "AuditLog"("actorId");
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'AuditLog_actorId_fkey') THEN
+    ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_actorId_fkey"
+      FOREIGN KEY ("actorId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+END $$;`,
+  },
+  {
+    // Admin-managed domains and settings, better-auth rate limits in the
+    // database, and Profile.createdAt for per-user creation limits.
+    name: "domains-and-settings",
+    sql: `
+DO $$
+BEGIN
+  PERFORM pg_advisory_xact_lock(424242);
+  IF to_regclass('"User"') IS NULL THEN
+    RETURN;
+  END IF;
+
+  ALTER TABLE "Profile" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'DomainStatus') THEN
+    CREATE TYPE "DomainStatus" AS ENUM ('pending', 'active', 'disabled');
+  END IF;
+  CREATE TABLE IF NOT EXISTS "Domain" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "host" TEXT NOT NULL,
+    "protocol" TEXT NOT NULL DEFAULT 'https',
+    "status" "DomainStatus" NOT NULL DEFAULT 'pending',
+    "primary" BOOLEAN NOT NULL DEFAULT false,
+    "verifiedAt" TIMESTAMP(3),
+    "checkedAt" TIMESTAMP(3),
+    "checkError" TEXT,
+    CONSTRAINT "Domain_pkey" PRIMARY KEY ("id")
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS "Domain_host_key" ON "Domain"("host");
+
+  CREATE TABLE IF NOT EXISTS "PlatformSettings" (
+    "id" INTEGER NOT NULL DEFAULT 1,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "data" JSONB NOT NULL,
+    CONSTRAINT "PlatformSettings_pkey" PRIMARY KEY ("id")
+  );
+
+  CREATE TABLE IF NOT EXISTS "RateLimit" (
+    "id" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "count" INTEGER NOT NULL,
+    "lastRequest" BIGINT NOT NULL,
+    CONSTRAINT "RateLimit_pkey" PRIMARY KEY ("id")
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS "RateLimit_key_key" ON "RateLimit"("key");
+END $$;`,
+  },
+  {
+    // Parsed click details (humans vs bots, client, country, ...) and
+    // moderation. Columns that need the user agent parser are filled in by
+    // backfillClicks (src/server/clicks.ts) after boot.
+    name: "click-details-and-moderation",
+    sql: `
+DO $$
+BEGIN
+  PERFORM pg_advisory_xact_lock(424242);
+  IF to_regclass('"Click"') IS NULL THEN
+    RETURN;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = current_schema() AND table_name = 'Click' AND column_name = 'refererHost'
+  ) THEN
+    ALTER TABLE "Click"
+      ADD COLUMN "isBot" BOOLEAN NOT NULL DEFAULT false,
+      ADD COLUMN "client" TEXT,
+      ADD COLUMN "os" TEXT,
+      ADD COLUMN "device" TEXT,
+      ADD COLUMN "country" TEXT,
+      ADD COLUMN "refererHost" TEXT,
+      ADD COLUMN "host" TEXT;
+    UPDATE "Click" SET
+      "refererHost" = lower(regexp_replace(
+        substring(referer from '^[a-zA-Z][a-zA-Z0-9+.-]*://([^/?#:]+)'), '^www\\.', '')),
+      "country" = substring("allHeaders" from '"cf-ipcountry":"([A-Z]{2})"')
+    WHERE referer IS NOT NULL OR "allHeaders" IS NOT NULL;
+  END IF;
+
+  DROP INDEX IF EXISTS "Click_linkId_idx";
+  DROP INDEX IF EXISTS "Click_spyPixelId_idx";
+  CREATE INDEX IF NOT EXISTS "Click_linkId_createdAt_idx" ON "Click"("linkId", "createdAt");
+  CREATE INDEX IF NOT EXISTS "Click_spyPixelId_createdAt_idx" ON "Click"("spyPixelId", "createdAt");
+
+  ALTER TABLE "Link" ADD COLUMN IF NOT EXISTS "disabledAt" TIMESTAMP(3);
+  ALTER TABLE "Link" ADD COLUMN IF NOT EXISTS "disabledReason" TEXT;
+  ALTER TABLE "Profile" ADD COLUMN IF NOT EXISTS "disabledAt" TIMESTAMP(3);
+  ALTER TABLE "Profile" ADD COLUMN IF NOT EXISTS "disabledReason" TEXT;
+END $$;`,
+  },
 ];
 
 export async function runMigrations() {

@@ -1,6 +1,8 @@
 /**
  * Runs once when the Next.js server starts, before it serves requests. Deploys
- * are a push to main, so this is where schema changes get applied.
+ * are a push to main, so this is where schema changes get applied. Also seeds
+ * the Domain table on first boot, starts the daily housekeeping and parses
+ * clicks recorded before the parsed columns existed.
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
@@ -9,4 +11,13 @@ export async function register() {
 
   const { runMigrations } = await import("~/server/migrations");
   await runMigrations();
+
+  const { seedDomains } = await import("~/server/domains");
+  await seedDomains();
+
+  const { scheduleHousekeeping } = await import("~/server/housekeeping");
+  scheduleHousekeeping();
+
+  const { backfillClicks } = await import("~/server/clicks");
+  void backfillClicks().catch(console.error);
 }
