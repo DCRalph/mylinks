@@ -1,54 +1,31 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+
+import { usernameSchema } from "~/lib/validation";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
 
-import badWords from "~/utils/badWords";
-
-
-import {
-  createTRPCRouter,
-  protectedProcedure,
-} from "~/server/api/trpc";
-
 export const setupRouter = createTRPCRouter({
+  /** First-run step after Google sign-up: pick a username and leave setup. */
   createUsername: protectedProcedure
-    .input(z.object({ username: z.string() }))
+    .input(z.object({ username: usernameSchema }))
     .mutation(async ({ input, ctx }) => {
-      const { username } = input;
-
-      if (username.length < 3) {
-        throw new Error('Username must be at least 3 characters long');
-      }
-
-      if (username.length > 20) {
-        throw new Error('Username must be at most 20 characters long');
-      }
-
-      if (badWords.badUsernames.includes(username)) {
-        throw new Error('Username is not allowed');
-      }
-
-      const usernameExists = await db.user.findFirst({
-        where: {
-          username,
-        },
+      const taken = await db.user.findFirst({
+        where: { username: input.username, NOT: { id: ctx.session.user.id } },
       });
 
-      if (usernameExists) {
-        throw new Error('Username already exists');
+      if (taken) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Username already exists",
+        });
       }
 
       const user = await db.user.update({
-        where: {
-          id: ctx.session?.user.id,
-        },
-        data: {
-          username,
-          requireSetup: false,
-        },
+        where: { id: ctx.session.user.id },
+        data: { username: input.username, requireSetup: false },
       });
 
-      return {
-        user,
-      };
+      return { user };
     }),
 });

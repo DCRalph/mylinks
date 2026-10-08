@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { SelectItems } from "./SelectItems";
 import { type BookmarkFolder } from "~/generated/prisma/client";
 
@@ -44,27 +44,19 @@ const AddFolder = ({
   const addFolderMutation = api.bookmarks.createFolder.useMutation();
   const editFolderMutation = api.bookmarks.editFolder.useMutation();
 
-  const [newFolderName, setNewFolderName] = useState("");
-  const [newFolderColor, setNewFolderColor] = useState("#000000");
+  const [newFolderName, setNewFolderName] = useState(editingFolder?.name ?? "");
+  const [newFolderColor, setNewFolderColor] = useState(
+    editingFolder?.color ?? "#000000",
+  );
   const [newFolderFolderId, setNewFolderFolderId] = useState<
     string | undefined
-  >(currentFolderId);
+  >(
+    editingFolder
+      ? (editingFolder.parentFolderId ?? undefined)
+      : currentFolderId,
+  );
 
   const isEditing = !!editingFolder;
-
-  // Load editing data when available
-  useEffect(() => {
-    if (editingFolder) {
-      setNewFolderName(editingFolder.name);
-      setNewFolderColor(editingFolder.color);
-      setNewFolderFolderId(editingFolder.parentFolderId ?? undefined);
-    } else {
-      // Reset fields when not editing
-      setNewFolderName("");
-      setNewFolderColor("#000000");
-      setNewFolderFolderId(currentFolderId);
-    }
-  }, [editingFolder, currentFolderId]);
 
   const handleSubmit = () => {
     if (!newFolderName || !newFolderFolderId) {
@@ -176,10 +168,7 @@ const AddFolder = ({
               <SelectContent>
                 {allBookmarks.data && (
                   <>
-                    <SelectItems
-                      folder={allBookmarks.data}
-                      depth={0}
-                    />
+                    <SelectItems folder={allBookmarks.data} depth={0} />
                   </>
                 )}
               </SelectContent>

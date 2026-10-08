@@ -1,21 +1,9 @@
-// app/dashboard/page.tsx
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth"; // Adjust the import to your authOptions
-import { getProviders } from "next-auth/react";
 
+import { getSession, googleEnabled } from "~/server/auth";
 import SignIn from "./Signin";
-import React from "react";
 
-export default async function SigninPage() {
-  const session = await getServerSession(authOptions);
-
-  if (session) {
-    // User is not authenticated, redirect to home page
-    redirect("/");
-  }
-
-  const providers = await getProviders();
-
-  return <SignIn providers={providers} />;
+export default async function Page() {
+  if (await getSession()) redirect("/dashboard");
+  return <SignIn googleEnabled={googleEnabled} />;
 }

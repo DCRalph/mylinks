@@ -1,169 +1,98 @@
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import {
-  getServerSession,
-  type DefaultSession,
-  type NextAuthOptions,
-} from "next-auth";
+import "server-only";
 
-import { type Adapter } from "next-auth/adapters";
-// import DiscordProvider from "next-auth/providers/discord";
-import GoogleProvider from "next-auth/providers/google";
-import CredentialsProvider from "next-auth/providers/credentials";
-
-import type { User as PUser } from "~/generated/prisma/client";
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
+import { hashPassword, verifyPassword } from "better-auth/crypto";
+import { nextCookies } from "better-auth/next-js";
+import { compare } from "bcryptjs";
+import { headers } from "next/headers";
+import { cache } from "react";
 
 import { env } from "~/env";
+import { domains } from "~/lib/domains";
 import { db } from "~/server/db";
-import { v4 } from "uuid";
-import { compareSync } from "bcryptjs";
 
-declare module "next-auth" {
-  interface Session extends DefaultSession {
-    user: PUser;
-  }
-}
+const protocols = new Set(domains.map((domain) => domain.protocol));
 
-/**
- * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
- *
- * @see https://next-auth.js.org/configuration/options
- */
-export const authOptions: NextAuthOptions = {
-  pages: {
-    signIn: "/signin",
+const google =
+  env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+    ? {
+        clientId: env.GOOGLE_CLIENT_ID,
+        clientSecret: env.GOOGLE_CLIENT_SECRET,
+        prompt: "select_account" as const,
+      }
+    : undefined;
+
+export const googleEnabled = !!google;
+
+export const auth = betterAuth({
+  appName: "link2it",
+  secret: env.BETTER_AUTH_SECRET,
+  database: prismaAdapter(db, { provider: "postgresql" }),
+
+  // Every configured domain gets its own sign-in, cookies and OAuth callback
+  // (https://<domain>/api/auth/callback/google must be registered with Google).
+  // Requests on unknown hosts resolve to the first domain.
+  baseURL: {
+    allowedHosts: domains.map((domain) => domain.origin),
+    // Pin the protocol when every domain agrees, so a TLS-terminating proxy that
+    // talks plain http to the app can't produce http:// callback URLs.
+    protocol: protocols.size === 1 ? [...protocols][0] : "auto",
+    fallback: domains[0].origin,
+  },
+  advanced: {
+    // Behind a reverse proxy the public host arrives in x-forwarded-host. It is
+    // still checked against allowedHosts.
+    trustedProxyHeaders: true,
   },
 
-  callbacks: {
-    session: ({ session, user }) => {
-      if (session.user) {
-        session.user = user as PUser;
-      }
-      return session;
-    },
-    async signIn({ user }) {
-      const PUser = await db.user.findUnique({
-        where: {
-          id: user.id,
-        },
-      });
-
-      if (!PUser) {
-        return false;
-      }
-
-      return true;
-    },
-    async jwt({ token, account }) {
-      // credentials provider hack
-      if (account?.provider === "credentials") {
-        token.credentials = true;
-      }
-      return token;
+  emailAndPassword: {
+    enabled: true,
+    // New accounts come from Google, which verifies the email. An open password
+    // sign-up without email verification would let someone pre-register a
+    // victim's address and stay linked to it after they sign in with Google.
+    disableSignUp: true,
+    minPasswordLength: 8,
+    password: {
+      hash: hashPassword,
+      // Passwords set before the move to better-auth are bcrypt hashes.
+      verify: ({ hash, password }) =>
+        hash.startsWith("$2")
+          ? compare(password, hash)
+          : verifyPassword({ hash, password }),
     },
   },
-  jwt: {
-    // credentials provider hack
-    encode: async function (params) {
-      if (params.token?.credentials) {
-        const sessionToken = v4();
 
-        if (!params.token.sub) {
-          throw new Error("No user ID found in token");
-        }
+  socialProviders: google ? { google } : undefined,
 
-        const expire = new Date();
-        expire.setDate(expire.getDate() + 30);
-
-        const createdSession = await db.session.create({
-          data: {
-            sessionToken,
-            userId: params.token.sub,
-            expires: expire,
-          },
-        });
-
-        if (!createdSession) {
-          throw new Error("Failed to create session");
-        }
-
-        return sessionToken;
-      }
-      return JSON.stringify(params.token);
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["google"],
     },
   },
-  adapter: PrismaAdapter(db) as Adapter,
-  providers: [
-    GoogleProvider({
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-    }),
-    CredentialsProvider({
-      name: "Credentials",
 
-      credentials: {
-        email: { label: "email", type: "email", placeholder: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials, _req) {
-        if (!credentials) {
-          return null;
-        }
+  user: {
+    additionalFields: {
+      username: { type: "string", required: false, input: false },
+      admin: { type: "boolean", defaultValue: false, input: false },
+      spyPixel: { type: "boolean", defaultValue: false, input: false },
+      requireSetup: { type: "boolean", defaultValue: true, input: false },
+    },
+  },
 
-        // Add logic here to look up the user from the credentials supplied
-        if (!credentials.email || !credentials.password) {
-          return null;
-        }
+  session: {
+    expiresIn: 60 * 60 * 24 * 30,
+    updateAge: 60 * 60 * 24,
+  },
 
-        if (credentials.password === "") {
-          return null;
-        }
+  // Must stay last: lets server actions and RSC-triggered auth calls set cookies.
+  plugins: [nextCookies()],
+});
 
-        const user = await db.user.findFirst({
-          where: {
-            email: credentials.email,
-            accounts: {
-              some: {
-                provider: "credentials",
-              },
-            },
-          },
-          include: {
-            accounts: {
-              where: {
-                provider: "credentials",
-              },
-            },
-          },
-        });
+export type Session = typeof auth.$Infer.Session;
 
-        if (!user) {
-          return null;
-        }
-
-        const hashedPassword = user.accounts[0]?.password;
-
-        if (!hashedPassword) {
-          return null;
-        }
-
-        const isPasswordValid = compareSync(
-          credentials.password,
-          hashedPassword,
-        );
-
-        if (!isPasswordValid) {
-          return null;
-        }
-
-        return user;
-      },
-    }),
-  ],
-};
-
-/**
- * Wrapper for `getServerSession` so that you don't need to import the `authOptions` in every file.
- *
- * @see https://next-auth.js.org/configuration/nextjs
- */
-export const getServerAuthSession = () => getServerSession(authOptions);
+/** Current session for server components and route handlers, deduped per request. */
+export const getSession = cache(async () =>
+  auth.api.getSession({ headers: await headers() }),
+);

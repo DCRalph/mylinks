@@ -96,9 +96,9 @@ export default function AdminUserCard({ User }: AdminUserCardProps) {
         </p>
         <p className="text-sm text-zinc-300">
           <span className="font-medium">Provider:</span>{" "}
-          {typeof User.accounts[0]?.provider === "undefined"
+          {typeof User.accounts[0]?.providerId === "undefined"
             ? "email"
-            : User.accounts[0].provider}
+            : User.accounts[0].providerId}
         </p>
       </div>
 

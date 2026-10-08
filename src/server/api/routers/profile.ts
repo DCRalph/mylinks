@@ -1,242 +1,127 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { db } from "~/server/db";
-import badWords from "~/utils/badWords";
 
+import { profileLinkUrlSchema, slugSchema } from "~/lib/validation";
+import { assertSlugLength } from "~/server/api/slugs";
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
+import { visitorInfo } from "~/server/clicks";
+import { db } from "~/server/db";
 import parseProfileLinkOrder from "~/utils/parseProfileLinkOrder";
 
-// Helper function to format date as YYYY-MM-DD
-function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0] ?? "";
-}
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-// Get date with timezone adjustment to UTC
-function getUTCAdjustedDate(date: Date): Date {
-  const newDate = new Date(date);
-  // Remove timezone offset to work with UTC dates
-  newDate.setMinutes(newDate.getMinutes() - newDate.getTimezoneOffset());
-  return newDate;
-}
+const profileInput = z.object({
+  name: z.string().trim().min(1, "Name is required").max(50),
+  altName: z.string().trim().max(50).nullable(),
+  slug: slugSchema.pipe(z.string().min(1, "Slug is required")),
+  bio: z.string().trim().max(300).nullable(),
+});
 
-// Get start of day in UTC
-function getStartOfDay(date: Date): Date {
-  const newDate = getUTCAdjustedDate(date);
-  newDate.setUTCHours(0, 0, 0, 0);
-  return newDate;
-}
+export const profileLinkInput = z.object({
+  title: z.string().trim().min(1, "Title is required").max(60),
+  url: profileLinkUrlSchema,
+  description: z.string().trim().max(120),
+  bgColor: z.string(),
+  fgColor: z.string(),
+  iconUrl: z.string(),
+});
 
-// Get end of day in UTC
-function getEndOfDay(date: Date): Date {
-  const newDate = getUTCAdjustedDate(date);
-  newDate.setUTCHours(23, 59, 59, 999);
-  return newDate;
-}
+/** UTC calendar day, e.g. "2026-10-08". */
+const utcDay = (date: Date) => date.toISOString().slice(0, 10);
 
-// Helper to get full date range (filled with zeros for days with no data)
-function getDateRange(
-  startDate: Date,
-  endDate: Date,
-): { date: string; timestamp: Date }[] {
-  const dates = [];
-  const currentDate = getStartOfDay(startDate);
-  const adjustedEndDate = getEndOfDay(endDate);
-
-  while (currentDate <= adjustedEndDate) {
-    dates.push({
-      date: formatDate(currentDate),
-      timestamp: new Date(currentDate),
-    });
-    currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+async function assertProfileSlugFree(slug: string, exceptId?: string) {
+  const existing = await db.profile.findUnique({ where: { slug } });
+  if (existing && existing.id !== exceptId) {
+    throw new TRPCError({ code: "CONFLICT", message: "Slug is already taken" });
   }
+}
 
-  return dates;
+async function findOwnProfile(id: string, userId: string) {
+  const profile = await db.profile.findUnique({
+    where: { id },
+    include: { profileLinks: true },
+  });
+  if (profile?.userId !== userId) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Profile not found" });
+  }
+  return profile;
+}
+
+async function findOwnProfileLink(id: string, userId: string) {
+  const link = await db.profileLink.findUnique({
+    where: { id },
+    include: { profile: { include: { profileLinks: true } } },
+  });
+  if (link?.profile.userId !== userId) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Link not found" });
+  }
+  return link;
+}
+
+/** Rough device class from a user agent string. */
+function deviceType(userAgent: string | null) {
+  const ua = (userAgent ?? "").toLowerCase();
+  if (ua.includes("ipad") || ua.includes("tablet")) return "Tablet";
+  if (ua.includes("mobile") || ua.includes("android") || ua.includes("iphone"))
+    return "Mobile";
+  if (ua.includes("windows") || ua.includes("macintosh") || ua.includes("linux"))
+    return "Desktop";
+  return "Unknown";
 }
 
 export const profileRouter = createTRPCRouter({
   getProfiles: protectedProcedure.query(async ({ ctx }) => {
     const profiles = await db.profile.findMany({
-      where: {
-        userId: ctx.session?.user.id,
-      },
-      include: {
-        profileLinks: true,
-      },
+      where: { userId: ctx.session.user.id },
+      include: { profileLinks: true, _count: { select: { clicks: true } } },
     });
 
-    return {
-      profiles,
-    };
+    return { profiles };
   }),
 
   createProfile: protectedProcedure
-    .input(
-      z.object({
-        name: z.string(),
-        altName: z.string().nullable(),
-        slug: z.string(),
-        bio: z.string().nullable(),
-      }),
-    )
+    .input(profileInput)
     .mutation(async ({ input, ctx }) => {
-      const { name, altName, slug, bio } = input;
-
-      if (badWords.badSlugs.includes(slug)) {
-        throw new Error("Slug is not allowed");
-      }
-
-      const existingProfile = await db.profile.findFirst({
-        where: {
-          slug,
-        },
-      });
-
-      if (existingProfile) {
-        throw new Error("Slug is already taken");
-      }
+      assertSlugLength(input.slug, ctx.session.user.admin);
+      await assertProfileSlugFree(input.slug);
 
       const profile = await db.profile.create({
-        data: {
-          userId: ctx.session.user.id,
-          name,
-          altName,
-          slug,
-          bio,
-          linkOrder: "[]",
-        },
+        data: { ...input, userId: ctx.session.user.id, linkOrder: "[]" },
       });
 
-      return {
-        profile,
-      };
+      return { profile };
     }),
 
   editProfile: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        altName: z.string().nullable(),
-        slug: z.string(),
-        bio: z.string().nullable(),
-      }),
-    )
-    .mutation(async ({ input, ctx }) => {
-      const { id, name, altName, slug, bio } = input;
+    .input(profileInput.extend({ id: z.string() }))
+    .mutation(async ({ input: { id, ...data }, ctx }) => {
+      await findOwnProfile(id, ctx.session.user.id);
+      assertSlugLength(data.slug, ctx.session.user.admin);
+      await assertProfileSlugFree(data.slug, id);
 
-      if (badWords.badSlugs.includes(slug)) {
-        throw new Error("Slug is not allowed");
-      }
-
-      const existingProfile = await db.profile.findFirst({
-        where: {
-          slug,
-        },
-      });
-
-      if (existingProfile && existingProfile.id !== id) {
-        throw new Error("Slug is already taken");
-      }
-
-      const profile = await db.profile.findUnique({
-        where: {
-          userId: ctx.session?.user.id,
-          id,
-        },
-      });
-
-      if (!profile) {
-        throw new Error("Profile not found");
-      }
-
-      await db.profile.update({
-        where: {
-          id,
-        },
-        data: {
-          name,
-          altName,
-          slug,
-          bio,
-        },
-      });
-
-      return {
-        success: true,
-      };
+      await db.profile.update({ where: { id }, data });
+      return { success: true };
     }),
 
   deleteProfile: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const { id } = input;
-
-      const profile = await db.profile.findUnique({
-        where: {
-          userId: ctx.session?.user.id,
-          id,
-        },
-      });
-
-      if (!profile) {
-        throw new Error("Profile not found");
-      }
-
-      await db.profile.delete({
-        where: {
-          id,
-        },
-      });
-
-      return {
-        success: true,
-      };
+      await findOwnProfile(input.id, ctx.session.user.id);
+      await db.profile.delete({ where: { id: input.id } });
+      return { success: true };
     }),
 
   createProfileLink: protectedProcedure
-    .input(
-      z.object({
-        profileId: z.string(),
-        title: z.string(),
-        url: z.string(),
-        description: z.string(),
-        bgColor: z.string(),
-        fgColor: z.string(),
-        iconUrl: z.string(),
-      }),
-    )
-    .mutation(async ({ input, ctx }) => {
-      const { profileId, title, url, description, bgColor, fgColor, iconUrl } =
-        input;
-
-      const profile = await db.profile.findFirst({
-        where: {
-          userId: ctx.session.user.id,
-          id: profileId,
-        },
-        include: {
-          profileLinks: true,
-        },
-      });
-
-      if (!profile) {
-        throw new Error("Profile not found");
-      }
+    .input(profileLinkInput.extend({ profileId: z.string() }))
+    .mutation(async ({ input: { profileId, ...data }, ctx }) => {
+      const profile = await findOwnProfile(profileId, ctx.session.user.id);
 
       const profileLink = await db.profileLink.create({
-        data: {
-          profileId: profileId,
-
-          title,
-          url,
-          description,
-          bgColor,
-          fgColor,
-          iconUrl,
-        },
+        data: { ...data, profileId },
       });
 
       const linkOrder = parseProfileLinkOrder({
@@ -244,565 +129,214 @@ export const profileRouter = createTRPCRouter({
         profileLinks: profile.profileLinks,
       });
 
-      linkOrder.push(profileLink.id);
-
       await db.profile.update({
-        where: {
-          id: profileId,
-        },
-        data: {
-          linkOrder: JSON.stringify(linkOrder),
-        },
+        where: { id: profileId },
+        data: { linkOrder: JSON.stringify([...linkOrder, profileLink.id]) },
       });
 
-      return {
-        profileLink,
-      };
+      return { profileLink };
     }),
 
   editProfileLink: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        title: z.string(),
-        url: z.string(),
-        description: z.string(),
-        bgColor: z.string(),
-        fgColor: z.string(),
-        iconUrl: z.string(),
-      }),
-    )
-    .mutation(async ({ input, ctx }) => {
-      const { id, title, url, description, bgColor, fgColor, iconUrl } = input;
-
-      const profileLink = await db.profileLink.findUnique({
-        where: {
-          id,
-        },
-        include: {
-          profile: true,
-        },
-      });
-
-      if (!profileLink) {
-        throw new Error("Link not found");
-      }
-
-      if (
-        profileLink.profile.userId !== ctx.session?.user.id &&
-        ctx.session?.user.admin
-      ) {
-        throw new Error("Not authorized");
-      }
-
-      await db.profileLink.update({
-        where: {
-          id,
-        },
-        data: {
-          title,
-          url,
-          description,
-          bgColor,
-          fgColor,
-          iconUrl,
-        },
-      });
-
-      return {
-        success: true,
-      };
+    .input(profileLinkInput.extend({ id: z.string() }))
+    .mutation(async ({ input: { id, ...data }, ctx }) => {
+      await findOwnProfileLink(id, ctx.session.user.id);
+      await db.profileLink.update({ where: { id }, data });
+      return { success: true };
     }),
 
   changeOrder: protectedProcedure
     .input(z.object({ profileId: z.string(), order: z.array(z.string()) }))
     .mutation(async ({ input, ctx }) => {
-      const { profileId, order } = input;
+      const profile = await findOwnProfile(
+        input.profileId,
+        ctx.session.user.id,
+      );
 
-      const profile = await db.profile.findFirst({
-        where: {
-          userId: ctx.session.user.id,
-          id: profileId,
-        },
-      });
-
-      if (!profile) {
-        throw new Error("Profile not found");
-      }
+      // Only keep ids that belong to this profile.
+      const ids = new Set(profile.profileLinks.map((link) => link.id));
+      const order = input.order.filter((id) => ids.has(id));
 
       await db.profile.update({
-        where: {
-          id: profileId,
-        },
-        data: {
-          linkOrder: JSON.stringify(order),
-        },
+        where: { id: input.profileId },
+        data: { linkOrder: JSON.stringify(order) },
       });
 
-      return {
-        success: true,
-      };
+      return { success: true };
     }),
 
   toggleProfileLinkVisibility: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const { id } = input;
-
-      const profileLink = await db.profileLink.findUnique({
-        where: {
-          id,
-        },
-        include: {
-          profile: true,
-        },
-      });
-
-      if (!profileLink) {
-        throw new Error("Link not found");
-      }
-
-      // check if users ids match or if user is admin
-      // but if user is a admin, they can toggle any link
-
-      if (
-        profileLink.profile.userId !== ctx.session?.user.id &&
-        !ctx.session?.user.admin
-      ) {
-        throw new Error("Not authorized");
-      }
+      const link = await findOwnProfileLink(input.id, ctx.session.user.id);
 
       await db.profileLink.update({
-        where: {
-          id,
-        },
-        data: {
-          visible: !profileLink.visible,
-        },
+        where: { id: input.id },
+        data: { visible: !link.visible },
       });
 
-      return {
-        success: true,
-        visible: !profileLink.visible,
-      };
+      return { success: true, visible: !link.visible };
     }),
 
   deleteProfileLink: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const { id } = input;
+      const link = await findOwnProfileLink(input.id, ctx.session.user.id);
 
-      const profileLink = await db.profileLink.findUnique({
-        where: {
-          id,
-        },
-        include: {
-          profile: {
-            include: {
-              profileLinks: true,
-            },
-          },
-        },
-      });
-
-      if (!profileLink) {
-        throw new Error("Link not found");
-      }
-
-      if (profileLink.profile.userId !== ctx.session?.user.id) {
-        throw new Error("Not authorized");
-      }
-
-      await db.profileLink.delete({
-        where: {
-          id,
-        },
-      });
+      await db.profileLink.delete({ where: { id: input.id } });
 
       const linkOrder = parseProfileLinkOrder({
-        linkOrderS: profileLink.profile.linkOrder,
-        profileLinks: profileLink.profile.profileLinks,
-      });
-
-      const index = linkOrder.indexOf(id);
-      if (index > -1) {
-        linkOrder.splice(index, 1);
-      }
+        linkOrderS: link.profile.linkOrder,
+        profileLinks: link.profile.profileLinks,
+      }).filter((id) => id !== input.id);
 
       await db.profile.update({
-        where: {
-          id: profileLink.profileId,
-        },
-        data: {
-          linkOrder: JSON.stringify(linkOrder),
-        },
+        where: { id: link.profileId },
+        data: { linkOrder: JSON.stringify(linkOrder) },
       });
 
-      return {
-        success: true,
-      };
+      return { success: true };
     }),
 
   getClicks: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input, ctx }) => {
-      const { id } = input;
+      await findOwnProfile(input.id, ctx.session.user.id);
 
-      const profile = await db.profile.findUnique({
-        where: {
-          userId: ctx.session.user.id,
-          id,
-        },
-        include: {
-          clicks: true,
-        },
+      const clicks = await db.click.findMany({
+        where: { profileId: input.id },
+        select: { id: true, createdAt: true, userAgent: true, referer: true },
+        orderBy: { createdAt: "desc" },
       });
 
-      if (!profile) {
-        throw new Error("Profile not found");
-      }
-
-      return {
-        clicks: profile.clicks,
-      };
+      return { clicks };
     }),
 
+  /** Public profile page data. Also records the visit. */
   getPublicProfile: publicProcedure
     .input(z.object({ slug: z.string() }))
     .query(async ({ input, ctx }) => {
-      const { slug } = input;
-
       const profile = await db.profile.findUnique({
-        where: {
-          slug,
-        },
-        include: {
-          profileLinks: true,
-        },
+        where: { slug: input.slug },
+        include: { profileLinks: { where: { visible: true } } },
       });
 
       if (!profile) {
         return null;
       }
 
-      // Filter visible links
-      profile.profileLinks = profile.profileLinks.filter(
-        (link) => link.visible,
-      );
-
-      // Track the visit (without needing headers)
       void db.click
-        .create({
-          data: {
-            profileId: profile.id,
-            userAgent: ctx.headers.get("user-agent") ?? "unknown",
-            ipAddress: ctx.headers.get("x-forwarded-for") ?? "unknown",
-            referer: ctx.headers.get("referer") ?? "unknown",
-          },
-        })
-        .catch((err) => {
-          console.error(err);
-        });
+        .create({ data: { profileId: profile.id, ...visitorInfo(ctx.headers) } })
+        .catch(console.error);
 
       return profile;
     }),
 
+  /** Daily views for the last `days` days (UTC), plus growth vs the period before. */
   getProfileAnalytics: protectedProcedure
     .input(
       z.object({
         profileId: z.string(),
-        days: z.number().min(1).max(30).default(7),
+        days: z.number().int().min(1).max(90).default(7),
       }),
     )
     .query(async ({ input, ctx }) => {
-      const { profileId, days } = input;
+      await findOwnProfile(input.profileId, ctx.session.user.id);
 
-      const profile = await db.profile.findUnique({
-        where: { id: profileId, userId: ctx.session.user.id },
-        select: { id: true, userId: true },
-      });
+      const today = new Date(`${utcDay(new Date())}T00:00:00.000Z`);
+      const start = new Date(today.getTime() - (input.days - 1) * DAY_MS);
+      const previousStart = new Date(start.getTime() - input.days * DAY_MS);
 
-      if (!profile) return null;
-
-      // Get date range for analytics with timezone adjustments
-      const now = new Date();
-
-      // End date is current day at 23:59:59.999 UTC
-      const endDate = getEndOfDay(now);
-
-      // Start date is (days-1) days ago at 00:00:00.000 UTC
-      const startDate = new Date(now);
-      startDate.setDate(startDate.getDate() - (days - 1));
-      const adjustedStartDate = getStartOfDay(startDate);
-
-      // Create full date range with all days (in UTC)
-      const dateRange = getDateRange(adjustedStartDate, endDate);
-
-      // Get click data
-      const clickData = await db.click.findMany({
-        where: {
-          profileId: profileId,
-          createdAt: {
-            gte: adjustedStartDate,
-            lte: endDate,
+      const [clicks, totalClicks, previousPeriodClicks] = await Promise.all([
+        db.click.findMany({
+          where: { profileId: input.profileId, createdAt: { gte: start } },
+          select: { createdAt: true },
+        }),
+        db.click.count({ where: { profileId: input.profileId } }),
+        db.click.count({
+          where: {
+            profileId: input.profileId,
+            createdAt: { gte: previousStart, lt: start },
           },
-        },
-        select: {
-          createdAt: true,
-        },
+        }),
+      ]);
+
+      const counts = new Map<string, number>();
+      for (const click of clicks) {
+        const day = utcDay(click.createdAt);
+        counts.set(day, (counts.get(day) ?? 0) + 1);
+      }
+
+      const clicksByDay = Array.from({ length: input.days }, (_, i) => {
+        const date = utcDay(new Date(start.getTime() + i * DAY_MS));
+        return { date, count: counts.get(date) ?? 0 };
       });
 
-      // Group clicks by day - adjusted for UTC
-      const clicksByDay: Record<string, number> = {};
-
-      // Initialize all days with zero clicks
-      dateRange.forEach((day) => {
-        clicksByDay[day.date] = 0;
-      });
-
-      // Count clicks for each day (format as UTC date to match our date range)
-      clickData.forEach((click) => {
-        // We need to adjust the date to UTC to match our date range keys
-        const utcAdjustedDate = getUTCAdjustedDate(click.createdAt);
-        const dateStr = formatDate(utcAdjustedDate);
-
-        if (clicksByDay[dateStr] !== undefined) {
-          clicksByDay[dateStr] += 1;
-        }
-      });
-
-      // Create the final formatted data with all days included
-      const formattedData = dateRange.map((day) => ({
-        date: day.date,
-        timestamp: day.timestamp,
-        count: clicksByDay[day.date] ?? 0,
-      }));
-
-      // Get total clicks
-      const totalClicks = await db.click.count({
-        where: {
-          profileId: profileId,
-        },
-      });
-
-      // Get recent growth rate (comparing to previous period)
-      const previousStartDate = new Date(adjustedStartDate);
-      previousStartDate.setUTCDate(previousStartDate.getUTCDate() - days);
-
-      const currentPeriodClicks = await db.click.count({
-        where: {
-          profileId: profileId,
-          createdAt: {
-            gte: adjustedStartDate,
-            lte: endDate,
-          },
-        },
-      });
-
-      const previousPeriodClicks = await db.click.count({
-        where: {
-          profileId: profileId,
-          createdAt: {
-            gte: previousStartDate,
-            lt: adjustedStartDate,
-          },
-        },
-      });
-
-      // Calculate growth percentage
+      const currentPeriodClicks = clicks.length;
       const growthPercentage =
         previousPeriodClicks === 0
           ? currentPeriodClicks > 0
-            ? 100 // If previous was 0 and current has clicks, 100% growth
-            : 0 // If both are 0, 0% growth
-          : ((currentPeriodClicks - previousPeriodClicks) /
-            previousPeriodClicks) *
-          100;
+            ? 100
+            : 0
+          : Math.round(
+              ((currentPeriodClicks - previousPeriodClicks) /
+                previousPeriodClicks) *
+                10000,
+            ) / 100;
 
       return {
-        clicksByDay: formattedData,
+        clicksByDay,
         totalClicks,
         currentPeriodClicks,
         previousPeriodClicks,
-        growthPercentage: Math.round(growthPercentage * 100) / 100, // Round to 2 decimal places
-        timeframe: days,
-        // Include the actual start and end dates for reference
-        dateRange: {
-          start: adjustedStartDate.toISOString(),
-          end: endDate.toISOString(),
-        },
+        growthPercentage,
+        timeframe: input.days,
       };
     }),
 
+  /** Top referrers and device mix over the last `days` days. */
   getTrafficSources: protectedProcedure
     .input(
       z.object({
         profileId: z.string(),
-        days: z.number().min(1).max(90).default(30),
+        days: z.number().int().min(1).max(90).default(30),
       }),
     )
     .query(async ({ input, ctx }) => {
-      const { profileId, days } = input;
+      await findOwnProfile(input.profileId, ctx.session.user.id);
 
-      // Check if the user owns this profile
-      const profile = await db.profile.findUnique({
+      const clicks = await db.click.findMany({
         where: {
-          id: profileId,
-          userId: ctx.session.user.id,
+          profileId: input.profileId,
+          createdAt: { gte: new Date(Date.now() - input.days * DAY_MS) },
         },
+        select: { referer: true, userAgent: true },
       });
 
-      if (!profile) {
-        throw new Error("Profile not found or you don't have access to it");
-      }
+      const tally = (keys: string[]) => {
+        const counts = new Map<string, number>();
+        for (const key of keys) counts.set(key, (counts.get(key) ?? 0) + 1);
+        return [...counts].sort((a, b) => b[1] - a[1]);
+      };
 
-      // Calculate date range
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
-
-      // Get referrer data
-      const referrers = await db.$queryRaw<
-        { referer: string; count: bigint }[]
-      >`
-        SELECT 
-          referer, 
-          COUNT(*) as count 
-        FROM Click 
-        WHERE 
-          profileId = ${profileId} 
-          AND createdAt >= ${startDate} 
-          AND createdAt <= ${endDate}
-        GROUP BY referer
-        ORDER BY count DESC
-        LIMIT 5
-      `;
-
-      // Get user agent data (for device types)
-      const userAgents = await db.$queryRaw<
-        { userAgent: string; count: bigint }[]
-      >`
-        SELECT 
-          userAgent, 
-          COUNT(*) as count 
-        FROM Click 
-        WHERE 
-          profileId = ${profileId} 
-          AND createdAt >= ${startDate} 
-          AND createdAt <= ${endDate}
-        GROUP BY userAgent
-        ORDER BY count DESC
-        LIMIT 10
-      `;
-
-      // Simplify user agents into device categories
-      const deviceData = userAgents.reduce(
-        (acc: { device: string; count: number }[], { userAgent, count }) => {
-          let deviceType = "Unknown";
-
-          if (userAgent.includes("client-side-visit")) {
-            deviceType = "Web App";
-          } else if (
-            userAgent.toLowerCase().includes("mobile") ||
-            userAgent.toLowerCase().includes("android") ||
-            userAgent.toLowerCase().includes("iphone")
-          ) {
-            deviceType = "Mobile";
-          } else if (
-            userAgent.toLowerCase().includes("tablet") ||
-            userAgent.toLowerCase().includes("ipad")
-          ) {
-            deviceType = "Tablet";
-          } else if (
-            userAgent.toLowerCase().includes("windows") ||
-            userAgent.toLowerCase().includes("macintosh") ||
-            userAgent.toLowerCase().includes("linux")
-          ) {
-            deviceType = "Desktop";
+      const sources = tally(
+        clicks.map((click) => {
+          if (!click.referer || click.referer === "unknown") return "Direct";
+          try {
+            return new URL(click.referer).host;
+          } catch {
+            return click.referer;
           }
-
-          // Add to the existing count or create new entry
-          const existingEntry = acc.find((item) => item.device === deviceType);
-          if (existingEntry) {
-            existingEntry.count += Number(count);
-          } else {
-            acc.push({ device: deviceType, count: Number(count) });
-          }
-
-          return acc;
-        },
-        [],
+        }),
       );
 
       return {
-        trafficSources: referrers.map((item) => ({
-          source: item.referer === "client-api" ? "Direct" : item.referer,
-          count: Number(item.count),
-        })),
-        deviceTypes: deviceData.sort((a, b) => b.count - a.count),
-        dateRange: {
-          start: startDate,
-          end: endDate,
-        },
-      };
-    }),
-
-  getHourlyStats: protectedProcedure
-    .input(
-      z.object({
-        profileId: z.string(),
-        days: z.number().min(1).max(7).default(1),
-      }),
-    )
-    .query(async ({ input, ctx }) => {
-      const { profileId, days } = input;
-
-      // Check if the user owns this profile
-      const profile = await db.profile.findUnique({
-        where: {
-          id: profileId,
-          userId: ctx.session.user.id,
-        },
-      });
-
-      if (!profile) {
-        throw new Error("Profile not found or you don't have access to it");
-      }
-
-      // Calculate date range
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
-
-      // Get hourly distribution
-      const hourlyData = await db.$queryRaw<{ hour: number; count: bigint }[]>`
-        SELECT 
-          HOUR(createdAt) as hour, 
-          COUNT(*) as count 
-        FROM Click 
-        WHERE 
-          profileId = ${profileId} 
-          AND createdAt >= ${startDate} 
-          AND createdAt <= ${endDate}
-        GROUP BY HOUR(createdAt)
-        ORDER BY hour ASC
-      `;
-
-      // Fill in all 24 hours (with 0 for hours with no data)
-      const hourlyStats = Array.from({ length: 24 }, (_, hour) => {
-        const foundData = hourlyData.find((item) => Number(item.hour) === hour);
-        return {
-          hour,
-          count: foundData ? Number(foundData.count) : 0,
-        };
-      });
-
-      return {
-        hourlyStats,
-        dateRange: {
-          start: startDate,
-          end: endDate,
-        },
+        trafficSources: sources
+          .slice(0, 5)
+          .map(([source, count]) => ({ source, count })),
+        deviceTypes: tally(clicks.map((click) => deviceType(click.userAgent))).map(
+          ([device, count]) => ({ device, count }),
+        ),
       };
     }),
 });

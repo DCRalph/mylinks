@@ -1,10 +1,10 @@
-"use client"
+"use client";
 import Nav from "~/components/Nav";
 import Head from "next/head";
 
-import { api } from '~/trpc/react';
+import { api } from "~/trpc/react";
 import { toast } from "react-toastify";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useState } from "react";
 import Footer from "~/components/footer";
 import { IconSquareRoundedPlus } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
@@ -15,14 +15,10 @@ import { Input } from "~/components/ui/input";
 export default function Setup() {
   const myUser = api.user.getUser.useQuery();
 
-  const [newUsername, setNewUsername] = useState(
-    myUser.data?.user?.username ?? "",
-  );
+  // null until the user types, so the field shows their current username.
+  const [editedUsername, setNewUsername] = useState<string | null>(null);
+  const newUsername = editedUsername ?? myUser.data?.user?.username ?? "";
   const createUsername = api.setup.createUsername.useMutation();
-
-  useEffect(() => {
-    setNewUsername(myUser.data?.user?.username ?? "");
-  }, [myUser.data?.user?.username]);
 
   const changeUsernameHandler = async (e: FormEvent) => {
     e.preventDefault();
@@ -66,7 +62,7 @@ export default function Setup() {
             <h1 className="text-5xl font-bold text-white">Setup</h1>
           </div>
 
-          <div className="col-span-4 col-start-5  mt-8 flex justify-center">
+          <div className="col-span-4 col-start-5 mt-8 flex justify-center">
             <form
               onSubmit={changeUsernameHandler}
               className="grid w-full grid-cols-2 gap-4"
@@ -93,7 +89,7 @@ export default function Setup() {
               </div>
 
               <Button
-                className="form_btn_blue  flex items-center justify-center gap-2"
+                className="form_btn_blue flex items-center justify-center gap-2"
                 type="submit"
               >
                 Create

@@ -10,10 +10,7 @@ import { toast } from "react-toastify";
 import toastOptions from "~/utils/toastOptions";
 import Link from "next/link";
 
-import { signIn } from "next-auth/react";
-
-import { type ClientSafeProvider, type LiteralUnion } from "next-auth/react";
-import { type BuiltInProviderType } from "next-auth/providers/index";
+import { authClient } from "~/lib/auth-client";
 
 const googleIcon = (
   <svg
@@ -42,73 +39,35 @@ const googleIcon = (
   </svg>
 );
 
-const getIconByProvider = (provider: string) => {
-  switch (provider) {
-    case "google":
-      return googleIcon;
-    default:
-      return null;
-  }
-};
-
-export default function SignIn({
-  providers,
-}: {
-  providers: Record<
-    LiteralUnion<BuiltInProviderType>,
-    ClientSafeProvider
-  > | null;
-}) {
-  const filteredProviders = Object.values(providers ?? [])
-    .filter((p) => {
-      if (p.id === "credentials") return false;
-      return true;
-    })
-    .map((p) => {
-      return { ...p, icon: getIconByProvider(p.id) };
-    });
-
+export default function SignIn({ googleEnabled }: { googleEnabled: boolean }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const credSignIn = async () => {
-    // toast.error(
-    //   "Email and password disabled. Please use google sign in",
-    //   toastOptions,
-    // );
-    // return;
-
     if (!email || !password) {
       toast.error("Please enter your email and password", toastOptions);
       return;
     }
 
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    const { error } = await authClient.signIn.email({ email, password });
 
-    console.log(res);
-
-    if (res?.error) {
-      toast.error("Error Signing in", toastOptions);
-
-      setEmail("");
+    if (error) {
+      toast.error(error.message ?? "Error signing in", toastOptions);
       setPassword("");
-
       return;
     }
 
-    if (res?.ok) {
-      toast.success("Signed in!", toastOptions);
+    // Full reload so server components pick up the new session cookie.
+    window.location.href = "/dashboard";
+  };
 
-      setEmail("");
-      setPassword("");
-
-      // redirect to home
-      window.location.href = "/";
-    }
+  const googleSignIn = async () => {
+    const { error } = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/dashboard",
+      errorCallbackURL: "/signin",
+    });
+    if (error) toast.error(error.message ?? "Error signing in", toastOptions);
   };
 
   return (
@@ -191,7 +150,7 @@ export default function SignIn({
                 </Button>
               </div>
 
-              {filteredProviders.length > 0 && (
+              {googleEnabled && (
                 <>
                   <div className="my-6 flex items-center gap-3">
                     <Separator className="flex-1 bg-zinc-800" />
@@ -202,19 +161,14 @@ export default function SignIn({
                   </div>
 
                   <div className="grid gap-3">
-                    {filteredProviders.map((provider) => (
-                      <Button
-                        key={provider.name}
-                        variant="outline"
-                        className="flex h-11 items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800/50 px-5 py-3 text-base font-medium text-white backdrop-blur-sm transition-all hover:translate-y-[-1px] hover:border-blue-500/50 hover:bg-zinc-700/50 active:translate-y-[1px]"
-                        onClick={() => signIn(provider.id)}
-                      >
-                        {provider.icon && (
-                          <div className="mr-2 h-5 w-5">{provider.icon}</div>
-                        )}
-                        Sign in with {provider.name}
-                      </Button>
-                    ))}
+                    <Button
+                      variant="outline"
+                      className="flex h-11 items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800/50 px-5 py-3 text-base font-medium text-white backdrop-blur-sm transition-all hover:translate-y-[-1px] hover:border-blue-500/50 hover:bg-zinc-700/50 active:translate-y-[1px]"
+                      onClick={googleSignIn}
+                    >
+                      <div className="mr-2 h-5 w-5">{googleIcon}</div>
+                      Sign in with Google
+                    </Button>
                   </div>
                 </>
               )}

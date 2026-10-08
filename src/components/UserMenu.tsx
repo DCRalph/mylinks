@@ -1,4 +1,5 @@
-import { signIn, signOut } from "next-auth/react";
+"use client";
+
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,6 +15,12 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { Button } from "./ui/button";
+import { authClient } from "~/lib/auth-client";
+
+const signOut = async () => {
+  await authClient.signOut();
+  window.location.href = "/";
+};
 
 type UserMenuProps = {
   user?: inferRouterOutputs<AppRouter>["user"]["getUser"];
@@ -149,12 +156,12 @@ export default function UserMenu({ user }: UserMenuProps) {
       )}
 
       {user?.user == null && (
-        <Button
-          className="h-12 sora rounded-full bg-white/10 px-6 font-semibold text-white no-underline transition hover:bg-white/20"
-          onClick={() => void signIn()}
+        <Link
+          href="/signin"
+          className="sora flex h-12 items-center rounded-full bg-white/10 px-6 font-semibold text-white no-underline transition hover:bg-white/20"
         >
           Sign in
-        </Button>
+        </Link>
       )}
     </>
   );

@@ -1,13 +1,15 @@
 import { type Link } from "~/generated/prisma/client";
 import { useState } from "react";
 import DashLinkEditModel from "./DashLinkEditModel";
-import { env } from "~/env";
+import { shareUrl } from "~/lib/domains";
+import { useShareDomain } from "~/lib/use-share-domain";
 import NextLink from "next/link";
 import { IconPencil } from "@tabler/icons-react";
 import { Button } from "~/components/ui/button";
 
 export default function DashLink({ link }: { link: Link }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [shareDomain] = useShareDomain();
 
   return (
     <div className="flex w-full flex-col rounded-lg bg-white px-4 py-2">
@@ -16,11 +18,11 @@ export default function DashLink({ link }: { link: Link }) {
           <span className="text-sm text-black font-semibold md:text-lg">{link.name}</span>
           {/* <span className="md:text-lg text-sm font-semibold">{link.slug}</span> */}
           <NextLink
-            href={`${env.NEXT_PUBLIC_DOMAIN}/${link.slug}`}
+            href={shareUrl(shareDomain, link.slug)}
             target="_blank"
             className="break-all text-sm font-semibold text-blue-600 underline md:text-lg"
           >
-            {`${env.NEXT_PUBLIC_DOMAIN}/${link.slug}`}
+            {`${shareDomain.host}/${link.slug}`}
           </NextLink>
         </div>
 

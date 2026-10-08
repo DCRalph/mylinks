@@ -34,25 +34,6 @@ export default function ProfileAnalytics({ profileId }: { profileId: string }) {
     },
   );
 
-  // Debug data to verify today's data is included
-  useEffect(() => {
-    if (data) {
-      const today = new Date().toISOString().split("T")[0];
-      const lastDayInData =
-        data.clicksByDay.length > 0
-          ? data.clicksByDay[data.clicksByDay.length - 1]
-          : null;
-      console.log("[ProfileAnalytics] Received data:", {
-        timeframe,
-        dateRange: data.dateRange,
-        totalDays: data.clicksByDay?.length,
-        lastDay: lastDayInData,
-        today,
-        hasToday: lastDayInData?.date === today,
-      });
-    }
-  }, [data, timeframe]);
-
   // Force a refresh at midnight to update "today" data
   useEffect(() => {
     // Calculate time until next midnight
@@ -98,32 +79,15 @@ export default function ProfileAnalytics({ profileId }: { profileId: string }) {
     );
   }
 
-  // Format timestamp to a readable date
-  const formatDate = (dateString: string): string => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
+  // Days arrive as UTC "YYYY-MM-DD" strings.
+  const formatDate = (day: string) =>
+    new Intl.DateTimeFormat("en-US", {
       month: "short",
       day: "numeric",
-    }).format(date);
-  };
+      timeZone: "UTC",
+    }).format(new Date(`${day}T00:00:00Z`));
 
-  // Check if a date is today in UTC terms
-  const isToday = (dateString: string): boolean => {
-    if (!dateString) return false;
-
-    // Get today's date in UTC format (YYYY-MM-DD)
-    const today = new Date();
-    const todayUTC = new Date(today);
-    todayUTC.setMinutes(todayUTC.getMinutes() - todayUTC.getTimezoneOffset());
-    const todayString = todayUTC.toISOString().split("T")[0];
-
-    // Get the date from timestamp in UTC format
-    const date = new Date(dateString);
-    const dateUTC = date.toISOString().split("T")[0];
-
-    return dateUTC === todayString;
-  };
+  const today = new Date().toISOString().slice(0, 10);
 
   // Ensure we have non-empty data
   if (!data.clicksByDay || data.clicksByDay.length === 0) {
@@ -138,10 +102,10 @@ export default function ProfileAnalytics({ profileId }: { profileId: string }) {
 
   // Format data for shadcn chart
   const chartData = data.clicksByDay.map((day) => ({
-    date: day.timestamp ? new Date(day.timestamp).getDate() : "?",
-    views: day.count || 0,
-    fullDate: day.timestamp ? formatDate(day.timestamp?.toString() || "") : "?",
-    isToday: isToday(day.timestamp?.toString() || ""),
+    date: Number(day.date.slice(8, 10)),
+    views: day.count,
+    fullDate: formatDate(day.date),
+    isToday: day.date === today,
   }));
 
   return (
@@ -208,12 +172,8 @@ export default function ProfileAnalytics({ profileId }: { profileId: string }) {
           <div className="flex items-center gap-2 text-xs text-zinc-400">
             <IconCalendar size={14} />
             <span>
-              {formatDate(data.clicksByDay[0]?.timestamp?.toString() ?? "")} -{" "}
-              {formatDate(
-                data.clicksByDay[
-                  data.clicksByDay.length - 1
-                ]?.timestamp?.toString() ?? "",
-              )}
+              {formatDate(data.clicksByDay[0]?.date ?? today)} -{" "}
+              {formatDate(data.clicksByDay.at(-1)?.date ?? today)}
             </span>
           </div>
         )}

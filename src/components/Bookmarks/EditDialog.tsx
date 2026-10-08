@@ -12,7 +12,7 @@ import { Label } from "~/components/ui/label";
 import { api } from "~/trpc/react";
 import { toast } from "react-toastify";
 import ToastOptions from "~/utils/toastOptions";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -54,13 +54,14 @@ const EditDialog = ({
   const [url, setUrl] = useState(initialUrl ?? "");
   const [folderId, setFolderId] = useState<string>(initialFolderId);
 
-  useEffect(() => {
+  // Closing without saving discards edits.
+  const close = () => {
+    setIsOpen(false);
     setName(initialName);
     setColor(initialColor);
-    if (!isFolder && initialUrl) {
-      setUrl(initialUrl);
-    }
-  }, [isOpen, initialName, initialColor, initialUrl, isFolder]);
+    setUrl(initialUrl ?? "");
+    setFolderId(initialFolderId);
+  };
 
   const handleSave = () => {
     if (!name || !color || (!isFolder && !url)) {
@@ -113,14 +114,7 @@ const EditDialog = ({
   return (
     <Dialog
       open={isOpen}
-      onOpenChange={(open) => {
-        setIsOpen(open);
-        if (!open) {
-          setName(initialName);
-          setColor(initialColor);
-          setUrl(initialUrl ?? "");
-        }
-      }}
+      onOpenChange={(open) => (open ? setIsOpen(true) : close())}
     >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -184,10 +178,7 @@ const EditDialog = ({
               <SelectContent>
                 {allBookmarks.data && (
                   <>
-                    <SelectItems
-                      folder={allBookmarks.data}
-                      depth={0}
-                    />
+                    <SelectItems folder={allBookmarks.data} depth={0} />
                   </>
                 )}
               </SelectContent>
@@ -195,11 +186,7 @@ const EditDialog = ({
           </div>
         </div>
         <DialogFooter>
-          <Button
-            variant="default"
-            onClick={() => setIsOpen(false)}
-            className="form_btn_white"
-          >
+          <Button variant="default" onClick={close} className="form_btn_white">
             Cancel
           </Button>
           <Button

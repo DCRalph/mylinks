@@ -1,5 +1,5 @@
 "use client";
-import { type FormEvent, useState, useEffect } from "react";
+import { type FormEvent, useState } from "react";
 import { toast } from "react-toastify";
 import { api } from "~/trpc/react";
 import Link from "next/link";
@@ -15,6 +15,7 @@ import {
 } from "@tabler/icons-react";
 
 import Nav from "~/components/Nav";
+import { authClient } from "~/lib/auth-client";
 import Footer from "~/components/footer";
 import toastOptions from "~/utils/toastOptions";
 import { Input } from "~/components/ui/input";
@@ -29,47 +30,39 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 
-// Define Account type based on Prisma schema
-interface Account {
-  id: string;
-  provider: string;
-  providerAccountId: string;
-  userId: string;
-  type: string;
-  password?: string | null;
-}
-
-// Define User type based on Prisma schema
-interface User {
-  id: string;
-  name: string | null;
-  email: string | null;
-  emailVerified: Date | null;
-  image: string | null;
-  flags: string | null;
-  username: string | null;
-  admin: boolean;
-  spyPixel: boolean;
-  requireSetup: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// Augment the User type to include accounts
-interface UserWithAccounts extends User {
-  accounts?: Account[];
-}
-
-export default function Settings() {
+export default function Settings({
+  googleEnabled,
+}: {
+  googleEnabled: boolean;
+}) {
   const myUser = api.user.getUser.useQuery();
 
-  // Cast the user to include accounts property
-  const user = myUser.data?.user as UserWithAccounts | undefined;
-
-  // Check if user has credentials provider
-  const hasCredentialsProvider = user?.accounts?.some(
-    (account) => account.provider === "credentials",
+  const user = myUser.data?.user;
+  const accounts = user?.accounts ?? [];
+  const hasCredentialsProvider = accounts.some(
+    (account) => account.providerId === "credential",
   );
+  const hasGoogle = accounts.some((account) => account.providerId === "google");
+
+  const connectGoogle = async () => {
+    const { error } = await authClient.linkSocial({
+      provider: "google",
+      callbackURL: "/settings",
+      errorCallbackURL: "/settings",
+    });
+    if (error)
+      toast.error(error.message ?? "Could not connect Google", toastOptions);
+  };
+
+  const disconnect = async (accountId: string) => {
+    const { error } = await authClient.unlinkAccount({ accountId });
+    if (error) {
+      toast.error(error.message ?? "Could not disconnect Google", toastOptions);
+      return;
+    }
+    toast.success("Google disconnected", toastOptions);
+    void myUser.refetch();
+  };
 
   // Export data query
   const exportUserData = api.user.exportUserData.useQuery(undefined, {
@@ -77,9 +70,9 @@ export default function Settings() {
   });
 
   // Username state
-  const [newUsername, setNewUsername] = useState(
-    myUser.data?.user?.username ?? "",
-  );
+  // null until the user types, so the field shows their current username.
+  const [editedUsername, setNewUsername] = useState<string | null>(null);
+  const newUsername = editedUsername ?? myUser.data?.user?.username ?? "";
   const changeUsernameMutation = api.user.setUsername.useMutation();
 
   // Password states
@@ -100,11 +93,6 @@ export default function Settings() {
   const createPasswordMutation = api.user.createPassword.useMutation();
   const changePasswordMutation = api.user.changePassword.useMutation();
   const removePasswordMutation = api.user.removePassword.useMutation();
-
-  // Set initial username when data loads
-  useEffect(() => {
-    setNewUsername(myUser.data?.user?.username ?? "");
-  }, [myUser.data?.user?.username]);
 
   // Change username handler
   const changeUsernameHandler = async (e: FormEvent) => {
@@ -201,9 +189,9 @@ export default function Settings() {
 
       {/* Decorative elements */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -left-20 top-10 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl"></div>
+        <div className="absolute top-10 -left-20 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl"></div>
         <div className="absolute -right-20 bottom-20 h-80 w-80 rounded-full bg-purple-500/10 blur-3xl"></div>
-        <div className="absolute left-1/3 top-1/3 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl"></div>
+        <div className="absolute top-1/3 left-1/3 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl"></div>
       </div>
 
       {/* Settings Content */}
@@ -252,7 +240,7 @@ export default function Settings() {
                   placeholder="Username"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
-                  className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                   required
                   minLength={3}
                   maxLength={20}
@@ -314,7 +302,7 @@ export default function Settings() {
                     placeholder="Enter your current password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                     required
                   />
                 </div>
@@ -329,7 +317,7 @@ export default function Settings() {
                     placeholder="Enter your new password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                     required
                     minLength={8}
                   />
@@ -345,7 +333,7 @@ export default function Settings() {
                     placeholder="Confirm your new password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                     required
                     minLength={8}
                   />
@@ -367,8 +355,7 @@ export default function Settings() {
                   <p className="text-zinc-400">
                     You&apos;re currently signed in with{" "}
                     <span className="font-medium text-white">
-                      {user?.accounts?.[0]?.provider ??
-                        "a third-party provider"}
+                      {accounts[0]?.providerId ?? "a third-party provider"}
                     </span>
                     . Add a password to also enable email/password login.
                   </p>
@@ -384,7 +371,7 @@ export default function Settings() {
                     placeholder="Create a password"
                     value={createPassword}
                     onChange={(e) => setCreatePassword(e.target.value)}
-                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                     required
                     minLength={8}
                   />
@@ -406,7 +393,7 @@ export default function Settings() {
                     placeholder="Confirm your password"
                     value={confirmCreatePassword}
                     onChange={(e) => setConfirmCreatePassword(e.target.value)}
-                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                     required
                     minLength={8}
                   />
@@ -511,13 +498,13 @@ export default function Settings() {
             </div>
 
             <div className="space-y-4">
-              {user?.accounts?.map((account) => (
+              {accounts.map((account) => (
                 <div
                   key={account.id}
                   className="flex items-center justify-between rounded-lg border border-zinc-700 bg-zinc-800/50 p-4"
                 >
                   <div className="flex items-center">
-                    {account.provider === "google" ? (
+                    {account.providerId === "google" ? (
                       <svg className="mr-3 h-5 w-5" viewBox="0 0 48 48">
                         <path
                           fill="#EA4335"
@@ -537,18 +524,40 @@ export default function Settings() {
                         ></path>
                         <path fill="none" d="M0 0h48v48H0z"></path>
                       </svg>
-                    ) : account.provider === "credentials" ? (
+                    ) : account.providerId === "credential" ? (
                       <IconKey className="mr-3 h-5 w-5 text-blue-400" />
                     ) : (
                       <IconUser className="mr-3 h-5 w-5 text-blue-400" />
                     )}
-                    <span className="capitalize text-white">
-                      {account.provider}
+                    <span className="text-white capitalize">
+                      {account.providerId === "credential"
+                        ? "Password"
+                        : account.providerId}
                     </span>
                   </div>
-                  <span className="text-sm text-zinc-400">Connected</span>
+                  {account.providerId === "google" && accounts.length > 1 ? (
+                    <button
+                      type="button"
+                      className="text-sm text-red-400 hover:text-red-300"
+                      onClick={() => disconnect(account.id)}
+                    >
+                      Disconnect
+                    </button>
+                  ) : (
+                    <span className="text-sm text-zinc-400">Connected</span>
+                  )}
                 </div>
               ))}
+
+              {googleEnabled && !hasGoogle && (
+                <Button
+                  variant="outline"
+                  className="w-full border-zinc-700 bg-zinc-800/50 text-white hover:bg-zinc-700/50"
+                  onClick={connectGoogle}
+                >
+                  Connect Google
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -580,7 +589,7 @@ export default function Settings() {
                 placeholder="Current password"
                 value={removePasswordConfirm}
                 onChange={(e) => setRemovePasswordConfirm(e.target.value)}
-                className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
               />
             </div>
           </div>

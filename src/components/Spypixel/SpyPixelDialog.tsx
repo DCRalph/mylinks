@@ -3,7 +3,8 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
 import { api } from "~/trpc/react";
-import { env } from "~/env";
+import { shareUrl } from "~/lib/domains";
+import { useShareDomain } from "~/lib/use-share-domain";
 import { type SpyPixel } from "~/generated/prisma/client";
 import Copy from "../copy";
 import { useState } from "react";
@@ -24,6 +25,8 @@ export default function SpyPixelDialog({ spyPixel, isOpen, onClose }: SpyPixelDi
   const clicks = api.spypixel.getClicks.useQuery({ id: spyPixel.id });
   const [isEventDialogOpen, setEventDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [shareDomain] = useShareDomain();
+  const pixelUrl = shareUrl(shareDomain, `img/${spyPixel.slug}`);
 
   const handleDeleteSpyPixel = async () => {
     if (!spyPixel) return;
@@ -52,8 +55,8 @@ export default function SpyPixelDialog({ spyPixel, isOpen, onClose }: SpyPixelDi
         <div className="mt-4">
           <p><strong>Slug:</strong> {spyPixel.slug}</p>
           <div className="flex gap-2">
-            <p><strong>URL:</strong> {`${env.NEXT_PUBLIC_DOMAIN}/img/${spyPixel.slug}`}</p>
-            <Copy text={`${env.NEXT_PUBLIC_DOMAIN}/img/${spyPixel.slug}`} />
+            <p><strong>URL:</strong> {pixelUrl}</p>
+            <Copy text={pixelUrl} />
           </div>
           <p><strong>Created At:</strong> {new Date(spyPixel.createdAt ?? '').toLocaleDateString()}</p>
           <p><strong>Events:</strong> {clicks.data?.length}</p>

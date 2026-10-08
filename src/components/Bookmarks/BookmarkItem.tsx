@@ -128,7 +128,7 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
         onDragEnd={onDragEnd}
       >
         <div
-          className={`pointer-events-none aspect-square h-full rounded-lg bg-opacity-20 p-3`}
+          className={`bg-opacity-20 pointer-events-none aspect-square h-full rounded-lg p-3`}
           style={{ backgroundColor: bgColor }}
         >
           <IconExternalLink className="h-full w-full" />
@@ -137,7 +137,7 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
           <h4 className="text-lg font-medium">{bookmark.name}</h4>
           <p className="text-dark-200/70 text-sm dark:text-white/70">{url}</p>
         </div>
-        <div className="absolute right-2 top-2">
+        <div className="absolute top-2 right-2">
           <DropdownMenu onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <button
@@ -194,6 +194,13 @@ const BookmarkItem = ({ bookmark, bgColor }: BookmarkItemProps) => {
       </AlertDialog>
 
       <EditDialog
+        // Fresh form state whenever the bookmark changes underneath it.
+        key={[
+          bookmark.name,
+          bookmark.color,
+          bookmark.url,
+          bookmark.folderId,
+        ].join("|")}
         isOpen={isEditDialogOpen}
         setIsOpen={setIsEditDialogOpen}
         isFolder={false}

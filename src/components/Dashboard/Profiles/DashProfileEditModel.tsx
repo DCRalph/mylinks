@@ -8,7 +8,8 @@ import DashProfileLink from "./DashProfileLinkListItem";
 import ModelCloseBtn from "~/components/ModelCloseBtn";
 import DashProfileCreateLinkModel from "./DashProfileCreateLinkModel";
 import Link from "next/link";
-import { env } from "~/env";
+import { shareUrl } from "~/lib/domains";
+import { useShareDomain } from "~/lib/use-share-domain";
 
 import { Reorder } from "framer-motion";
 import DashProfileEditProfileDetailsModel from "./DashProfileEditProfileDetailsModel";
@@ -46,6 +47,7 @@ export default function DashProfileEditModel({
   setIsOpen,
 }: DashLinkEditModelProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [shareDomain] = useShareDomain();
   const [isEditDetailsOpen, setIsEditDetailsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
@@ -60,6 +62,13 @@ export default function DashProfileEditModel({
   });
 
   const [items, setItems] = useState(linkOrder);
+
+  // Re-sync the draggable order whenever a fresh copy of the profile arrives.
+  const [syncedProfile, setSyncedProfile] = useState(profile);
+  if (syncedProfile !== profile) {
+    setSyncedProfile(profile);
+    setItems(linkOrder);
+  }
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [reorderTimeout, setReorderTimeout] = useState<NodeJS.Timeout | null>(
@@ -137,18 +146,6 @@ export default function DashProfileEditModel({
     }
   }, [isClosing, setIsOpen]);
 
-  useEffect(() => {
-    if (profile.linkOrder) {
-      let newOrder = JSON.parse(profile.linkOrder) as string[];
-
-      newOrder = newOrder.filter((item) =>
-        profile.profileLinks.find((link) => link.id === item),
-      );
-
-      setItems(newOrder);
-    }
-  }, [profile]);
-
   const content: ReactNode = (
     <motion.div
       initial={{ opacity: 0 }}
@@ -176,11 +173,11 @@ export default function DashProfileEditModel({
           </span>
           <span className="text-xl">Clicks: {clicks.data?.clicks.length}</span>
           <Link
-            href={`${env.NEXT_PUBLIC_DOMAIN}/p/${profile.slug}`}
+            href={shareUrl(shareDomain, `p/${profile.slug}`)}
             target="_blank"
             className="break-all text-sm font-semibold text-blue-500 underline md:text-lg"
           >
-            {`${env.NEXT_PUBLIC_DOMAIN}/p/${profile.slug}`}
+            {`${shareDomain.host}/p/${profile.slug}`}
           </Link>
         </div>
 

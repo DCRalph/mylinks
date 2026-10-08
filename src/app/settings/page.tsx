@@ -1,24 +1,8 @@
-import { redirect } from 'next/navigation';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '~/server/auth'; // Adjust the import to your authOptions
-import { checkRequireSetup } from '~/utils/requireSetup';
-import Settings from './Settings';
-import React from 'react';
+import { googleEnabled } from "~/server/auth";
+import { requireUser } from "~/server/guards";
+import Settings from "./Settings";
 
-export default async function SettingsPage() {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    // User is not authenticated, redirect to home page
-    redirect('/');
-  }
-
-  const needsSetup = await checkRequireSetup();
-
-  if (needsSetup) {
-    // User needs to complete setup, redirect to setup page
-    redirect('/setup');
-  }
-
-  return <Settings />;
+export default async function Page() {
+  await requireUser();
+  return <Settings googleEnabled={googleEnabled} />;
 }

@@ -204,10 +204,10 @@ export default function Slug({
                     </p>
                     <p className="text-sm text-zinc-400">
                       <span className="font-medium text-white">Provider:</span>{" "}
-                      {typeof user.data.user.accounts[0]?.provider ===
+                      {typeof user.data.user.accounts[0]?.providerId ===
                       "undefined"
                         ? "email"
-                        : user.data.user.accounts[0].provider}
+                        : user.data.user.accounts[0].providerId}
                     </p>
                     <p className="text-sm text-zinc-400">
                       <span className="font-medium text-white">Username:</span>{" "}

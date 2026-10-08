@@ -6,7 +6,8 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import Link from "next/link";
-import { env } from "~/env";
+import { shareUrl } from "~/lib/domains";
+import { useShareDomain } from "~/lib/use-share-domain";
 import { useState } from "react";
 import { api } from "~/trpc/react";
 import { toast } from "react-toastify";
@@ -17,6 +18,7 @@ import { Label } from "../ui/label";
 
 export default function AdminUserLinkCard({ link }: { link: LinkType }) {
   const [isEditing, setIsEditing] = useState(false);
+  const [shareDomain] = useShareDomain();
   const [name, setName] = useState(link.name);
   const [url, setUrl] = useState(link.url);
   const [slug, setSlug] = useState(link.slug || "");
@@ -120,10 +122,10 @@ export default function AdminUserLinkCard({ link }: { link: LinkType }) {
           <div className="mb-4">
             <Link
               className="mb-1 flex items-center gap-1 break-all text-sm font-medium text-blue-400 underline"
-              href={`${env.NEXT_PUBLIC_DOMAIN}/${link.slug}`}
+              href={shareUrl(shareDomain, link.slug)}
               target="_blank"
             >
-              {env.NEXT_PUBLIC_SHORT_DOMAIN}/{link.slug}
+              {shareDomain.host}/{link.slug}
               <IconExternalLink className="h-3 w-3" />
             </Link>
             <p className="break-all text-xs text-zinc-400">{link.url}</p>

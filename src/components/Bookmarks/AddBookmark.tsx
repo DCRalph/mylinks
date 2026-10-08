@@ -21,7 +21,7 @@ import {
 
 import { SelectItems } from "./SelectItems";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { type Bookmark } from "~/generated/prisma/client";
 interface BookmarkItemProps {
   isOpen: boolean;
@@ -44,31 +44,20 @@ const AddBookmark = ({
   const addBookmarkMutation = api.bookmarks.createBookmark.useMutation();
   const editBookmarkMutation = api.bookmarks.editBookmark.useMutation();
 
-  const [newBookmarkName, setNewBookmarkName] = useState("");
-  const [newBookmarkUrl, setNewBookmarkUrl] = useState("");
-  const [newBookmarkColor, setNewBookmarkColor] = useState("#000000");
-
+  const [newBookmarkName, setNewBookmarkName] = useState(
+    editingBookmark?.name ?? "",
+  );
+  const [newBookmarkUrl, setNewBookmarkUrl] = useState(
+    editingBookmark?.url ?? "",
+  );
+  const [newBookmarkColor, setNewBookmarkColor] = useState(
+    editingBookmark?.color ?? "#000000",
+  );
   const [newBookmarkFolderId, setNewBookmarkFolderId] = useState<
     string | undefined
-  >(currentFolderId);
+  >(editingBookmark?.folderId ?? currentFolderId);
 
   const isEditing = !!editingBookmark;
-
-  // Load editing data when available
-  useEffect(() => {
-    if (editingBookmark) {
-      setNewBookmarkName(editingBookmark.name ?? "");
-      setNewBookmarkUrl(editingBookmark.url);
-      setNewBookmarkColor(editingBookmark.color);
-      setNewBookmarkFolderId(editingBookmark.folderId);
-    } else {
-      // Reset fields when not editing
-      setNewBookmarkName("");
-      setNewBookmarkUrl("");
-      setNewBookmarkColor("#000000");
-      setNewBookmarkFolderId(currentFolderId);
-    }
-  }, [editingBookmark, currentFolderId]);
 
   const handleAddBookmark = () => {
     if (!newBookmarkName || !newBookmarkUrl || !newBookmarkFolderId) {
@@ -194,10 +183,7 @@ const AddBookmark = ({
               <SelectContent>
                 {allBookmarks.data && (
                   <>
-                    <SelectItems
-                      folder={allBookmarks.data}
-                      depth={0}
-                    />
+                    <SelectItems folder={allBookmarks.data} depth={0} />
                   </>
                 )}
               </SelectContent>

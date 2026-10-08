@@ -14,9 +14,12 @@ import { IconLoader2, IconSquareRoundedPlus } from "@tabler/icons-react";
 import toastOptions from "~/utils/toastOptions";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
+import { domains, findDomain } from "~/lib/domains";
+import { useShareDomain } from "~/lib/use-share-domain";
 
 export default function Dashboard() {
   const [createProfileModelOpen, setCreateProfileModelOpen] = useState(false);
+  const [shareDomain, setShareDomain] = useShareDomain();
 
   const [newLinkName, setNewLinkName] = useState("");
   const [newLinkUrl, setNewLinkUrl] = useState("");
@@ -66,16 +69,29 @@ export default function Dashboard() {
         <Nav user={myUser.data} />
 
         <div className="mx-8 mt-8 grid grid-cols-12 gap-8">
-          {/* <div className="col-span-full flex items-center justify-center gap-4">
-            <span className=" text-2xl text-white">Your personal link is:</span>
-
-            <div className="rounded-lg border-2 border-zinc-600 bg-black bg-opacity-10 px-4 py-2 shadow-md ">
-              <span className=" flex items-center text-2xl text-white">
-                {env.NEXT_PUBLIC_SHORT_DOMAIN}/{myUser.data?.user?.username}
-                <Copy text={`${env.NEXT_PUBLIC_DOMAIN}/${myUser.data?.user?.username}`} />
-              </span>
+          {domains.length > 1 && (
+            <div className="col-span-full flex items-center justify-center gap-3 text-white">
+              <label htmlFor="shareDomain" className="text-sm text-zinc-400">
+                Share links on
+              </label>
+              <select
+                id="shareDomain"
+                value={shareDomain.host}
+                onChange={(e) => {
+                  const domain = findDomain(e.target.value);
+                  if (domain) setShareDomain(domain);
+                }}
+                className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm"
+              >
+                {domains.map((domain) => (
+                  <option key={domain.host} value={domain.host}>
+                    {domain.host}
+                  </option>
+                ))}
+              </select>
             </div>
-          </div> */}
+          )}
+
 
           <div className="col-span-full flex flex-col items-center lg:col-span-5 lg:col-start-2">
             <span className="text-3xl text-white">Your Profiles:</span>

@@ -1,25 +1,11 @@
-// app/dashboard/page.tsx
-import { redirect } from 'next/navigation';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '~/server/auth'; // Adjust the import to your authOptions
-import { checkRequireSetup } from '~/utils/requireSetup';
-import Setup from './Setup';
-import React from 'react';
+import { redirect } from "next/navigation";
 
-export default async function SetupPage() {
-  const session = await getServerSession(authOptions);
+import { getSession } from "~/server/auth";
+import Setup from "./Setup";
 
-  if (!session) {
-    // User is not authenticated, redirect to home page
-    redirect('/');
-  }
-
-  const needsSetup = await checkRequireSetup();
-
-  if (!needsSetup) {
-    // User needs to complete setup, redirect to setup page
-    redirect('/');
-  }
-
+export default async function Page() {
+  const session = await getSession();
+  if (!session) redirect("/signin");
+  if (!session.user.requireSetup) redirect("/dashboard");
   return <Setup />;
 }

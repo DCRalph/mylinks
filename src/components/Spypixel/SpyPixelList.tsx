@@ -5,12 +5,14 @@ import { Button } from "~/components/ui/button";
 import SpyPixelDialog from "./SpyPixelDialog";
 import { type SpyPixel } from "~/generated/prisma/client";
 import Copy from "../copy";
-import { env } from "~/env";
+import { shareUrl } from "~/lib/domains";
+import { useShareDomain } from "~/lib/use-share-domain";
 
 export default function SpyPixelList() {
   const mySpyPixels = api.spypixel.getAll.useQuery();
   const [selectedSpyPixel, setSelectedSpyPixel] = useState<SpyPixel | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
+  const [shareDomain] = useShareDomain();
 
   const openDialog = (spyPixel: SpyPixel) => {
     setSelectedSpyPixel(spyPixel);
@@ -31,9 +33,9 @@ export default function SpyPixelList() {
               <span className="text-white font-medium">{spyPixel.name}</span>
               <div className="flex gap-4 items-center">
                 <span className="break-all text-sm font-semibold md:text-lg select-all">
-                  {`${env.NEXT_PUBLIC_DOMAIN}/img/${spyPixel.slug}`}
+                  {shareUrl(shareDomain, `img/${spyPixel.slug}`)}
                 </span>
-                <Copy text={`${env.NEXT_PUBLIC_DOMAIN} /img/${spyPixel.slug}`} />
+                <Copy text={shareUrl(shareDomain, `img/${spyPixel.slug}`)} />
               </div>
               <Button variant="secondary" onClick={() => openDialog(spyPixel)}>Manage</Button>
             </div>

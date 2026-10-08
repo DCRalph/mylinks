@@ -43,20 +43,12 @@ import {
   rectIntersection,
 } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
-import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-  horizontalListSortingStrategy,
-  rectSortingStrategy,
-  rectSwappingStrategy
-} from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import Link from "next/link";
 import type { Bookmark, BookmarkFolder } from "~/generated/prisma/client";
 import { toast } from "react-toastify";
 import ToastOptions from "~/utils/toastOptions";
-import { Context } from "@dnd-kit/sortable/dist/components";
 
 type DragItemType = {
   id: string;
@@ -70,10 +62,8 @@ export default function BookmarksPage() {
 
   const utils = api.useUtils();
   const myUser = api.user.getUser.useQuery();
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-  // const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([
-  //   { id: null, name: "Bookmarks" },
-  // ]);
+  // /bookmarks is the root folder, /bookmarks/<id> a subfolder.
+  const currentFolderId = pathname.split("/").filter(Boolean)[1] ?? null;
 
   const currentFolder = api.bookmarks.getFolder.useQuery({
     folderId: currentFolderId,
@@ -86,10 +76,16 @@ export default function BookmarksPage() {
     null,
   );
   const [activeItem, setActiveItem] = useState<DragItemType | null>(null);
-  const [parentFolder, setParentFolder] = useState<BookmarkFolder | null>(null);
   // Track if dragging is active to highlight all potential drop targets
   const [isDraggingActive, setIsDraggingActive] = useState(false);
   const [isCreatingSamples, setIsCreatingSamples] = useState(false);
+
+  const parentFolderId = currentFolder.data?.parentFolderId ?? null;
+  const parentFolderQuery = api.bookmarks.getFolder.useQuery(
+    { folderId: parentFolderId },
+    { enabled: !!parentFolderId },
+  );
+  const parentFolder = parentFolderId ? (parentFolderQuery.data ?? null) : null;
 
   const breadcrumbs = api.bookmarks.getFolderPath.useQuery({
     folderId: currentFolderId,
@@ -111,70 +107,18 @@ export default function BookmarksPage() {
           prefetchFolders.push(currentFolder.data.parentFolderId);
         }
 
-        await Promise.allSettled([
-          prefetchFolders?.map((folder) => [
-            utils.bookmarks.getFolder.prefetch({
-              folderId: folder,
-            }),
-            utils.bookmarks.getFolderPath.prefetch({
-              folderId: folder,
-            }),
+        await Promise.allSettled(
+          prefetchFolders.flatMap((folderId) => [
+            utils.bookmarks.getFolder.prefetch({ folderId }),
+            utils.bookmarks.getFolderPath.prefetch({ folderId }),
           ]),
-        ]);
+        );
       }
     };
 
     prefetchFolder().catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFolder.data]);
-
-  // Update URL path parsing to better detect folder IDs
-  useEffect(() => {
-    const pathParts = pathname.split("/").filter(Boolean);
-
-    console.log(pathParts);
-
-    // Detect if we are in bookmarks route
-    if (pathParts[0] === "bookmarks") {
-      // If there's a second part, it's a folder ID
-      if (pathParts.length > 1) {
-        const lastFolderId = pathParts[pathParts.length - 1];
-        if (lastFolderId) {
-          setCurrentFolderId(lastFolderId);
-        }
-      } else {
-        // We're at the root bookmarks route
-        setCurrentFolderId(null);
-      }
-
-      // Invalidate the folder query to ensure we get fresh data on navigation
-      void utils.bookmarks.getFolder.invalidate();
-    }
-  }, [pathname, utils.bookmarks.getFolder]);
-
-  // Fetch parent folder data when needed
-  useEffect(() => {
-    const fetchParentFolder = async () => {
-      if (currentFolder.data?.parentFolderId) {
-        try {
-          const data = await utils.bookmarks.getFolder.fetch({
-            folderId: currentFolder.data.parentFolderId,
-          });
-          setParentFolder(
-            data as BookmarkFolder & {
-              _count: { bookmarks: number; subfolders: number };
-            },
-          );
-        } catch (error) {
-          console.error(error);
-        }
-      } else {
-        setParentFolder(null);
-      }
-    };
-
-    void fetchParentFolder();
-  }, [currentFolder.data?.parentFolderId, utils.bookmarks.getFolder]);
 
   // Set up sensors for drag and drop
   const sensors = useSensors(
@@ -369,7 +313,7 @@ export default function BookmarksPage() {
             <Button
               onClick={(e) => e.stopPropagation()}
               variant="ghost"
-              className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800/80 p-0 text-zinc-400 opacity-0 backdrop-blur-sm transition-opacity hover:bg-zinc-700 hover:text-white group-hover/item:opacity-100"
+              className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800/80 p-0 text-zinc-400 opacity-0 backdrop-blur-sm transition-opacity group-hover/item:opacity-100 hover:bg-zinc-700 hover:text-white"
             >
               <IconDotsVertical className="h-4 w-4" />
             </Button>
@@ -482,7 +426,7 @@ export default function BookmarksPage() {
             <Button
               onClick={(e) => e.stopPropagation()}
               variant="ghost"
-              className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800/80 p-0 text-zinc-400 opacity-0 backdrop-blur-sm transition-opacity hover:bg-zinc-700 hover:text-white group-hover/item:opacity-100"
+              className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800/80 p-0 text-zinc-400 opacity-0 backdrop-blur-sm transition-opacity group-hover/item:opacity-100 hover:bg-zinc-700 hover:text-white"
             >
               <IconDotsVertical className="h-4 w-4" />
             </Button>
@@ -527,67 +471,6 @@ export default function BookmarksPage() {
 
     setActiveItem({ id, type, data });
     setIsDraggingActive(true);
-  };
-
-  // ParentFolder Droppable Component
-  const ParentFolderDroppable = ({
-    folder,
-  }: {
-    folder: BookmarkFolder & {
-      _count?: { bookmarks: number; subfolders: number };
-    };
-  }) => {
-    const { setNodeRef, isOver } = useDroppable({
-      id: "parent-folder",
-      data: {
-        type: "folder",
-        id: folder.id,
-        accept: ["bookmark", "folder"],
-      },
-    });
-
-    return (
-      <div
-        ref={setNodeRef}
-        className={`flex h-min w-full flex-col items-start space-y-2 rounded-lg border-2 transition-all duration-200 ${
-          isOver
-            ? "border-dashed border-green-500 bg-green-900/20 shadow-lg shadow-green-500/30"
-            : isDraggingActive
-              ? "border-dashed border-orange-500/70 bg-orange-900/10 shadow-md shadow-orange-500/20"
-              : "border-dashed border-amber-500/50 bg-amber-900/10 hover:border-amber-500 hover:bg-amber-900/20"
-        } relative p-4 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:space-y-0`}
-      >
-        {isOver && (
-          <div className="pointer-events-none absolute inset-0 animate-pulse rounded-lg bg-green-500/20 opacity-30"></div>
-        )}
-        {isDraggingActive && !isOver && (
-          <div className="pointer-events-none absolute inset-0 rounded-lg bg-orange-500/10 opacity-20"></div>
-        )}
-        <div className="relative z-10 flex items-center">
-          <div
-            className="mr-4 flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg"
-            style={{
-              backgroundColor: folder.color ?? "#f59e0b",
-              boxShadow: `0 10px 15px -3px ${folder.color ?? "#f59e0b"}30`,
-            }}
-          >
-            <IconArrowBackUp className="h-6 w-6" />
-          </div>
-          <div>
-            <h2 className="flex items-center text-lg font-medium text-white">
-              <IconArrowBackUp className="mr-2 h-4 w-4" />
-              Move to {folder.name}
-            </h2>
-          </div>
-        </div>
-        <div className="relative z-10 flex space-x-6 text-sm text-zinc-400">
-          <div className="flex items-center">
-            <IconFolder className="mr-2 h-5 w-5 text-amber-400" />
-            <span>Parent folder</span>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -705,52 +588,6 @@ export default function BookmarksPage() {
       : false;
   };
 
-  // CurrentFolder Droppable Component
-  const CurrentFolder = ({
-    folder,
-  }: {
-    folder: BookmarkFolder & {
-      _count: { bookmarks: number; subfolders: number };
-    };
-  }) => {
-    // Remove droppable functionality - this is just an informational display now
-    return (
-      <div className="relative mb-8 flex w-full flex-col items-start space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/30 p-4 backdrop-blur-sm transition-all duration-200 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-        <div className="relative z-10 flex items-center">
-          <div
-            className="mr-4 flex h-10 w-10 items-center justify-center rounded-full text-white"
-            style={{
-              backgroundColor: folder.color ?? "#3b82f6",
-              boxShadow: `0 10px 15px -3px ${folder.color ?? "#3b82f6"}30`,
-            }}
-          >
-            <IconFolder className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-xs text-zinc-500">Current folder</p>
-            <h2 className="text-lg font-medium text-white">{folder.name}</h2>
-          </div>
-        </div>
-        <div className="relative z-10 flex space-x-6 text-sm text-zinc-500">
-          <div className="flex items-center">
-            <IconBookmark className="mr-2 h-4 w-4" />
-            <span>
-              {folder._count.bookmarks} bookmark
-              {folder._count.bookmarks !== 1 ? "s" : ""}
-            </span>
-          </div>
-          <div className="flex items-center">
-            <IconFolderFilled className="mr-2 h-4 w-4" />
-            <span>
-              {folder._count.subfolders} folder
-              {folder._count.subfolders !== 1 ? "s" : ""}
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   // Function to add sample bookmarks
   const handleAddSampleBookmarks = async () => {
     setIsCreatingSamples(true);
@@ -773,8 +610,8 @@ export default function BookmarksPage() {
     <>
       <main className="relative flex min-h-screen w-screen flex-col overflow-hidden bg-gradient-to-br from-zinc-950 to-zinc-900">
         {/* Decorative elements */}
-        <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-blue-500/5 blur-3xl"></div>
-        <div className="absolute -left-24 top-1/2 h-96 w-96 rounded-full bg-indigo-500/5 blur-3xl"></div>
+        <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-blue-500/5 blur-3xl"></div>
+        <div className="absolute top-1/2 -left-24 h-96 w-96 rounded-full bg-indigo-500/5 blur-3xl"></div>
 
         <Nav user={myUser.data} />
 
@@ -832,7 +669,7 @@ export default function BookmarksPage() {
                   placeholder="Search bookmarks..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 pl-10 pr-4 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 py-2 pr-4 pl-10 text-white placeholder-zinc-400 backdrop-blur-sm transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -907,7 +744,10 @@ export default function BookmarksPage() {
               <div className="flex w-full gap-4">
                 {/* Folder Info - Droppable areas */}
                 {activeItem && parentFolder && (
-                  <ParentFolderDroppable folder={parentFolder} />
+                  <ParentFolderDroppable
+                    folder={parentFolder}
+                    isDraggingActive={isDraggingActive}
+                  />
                 )}
 
                 {currentFolder.data?.id && (
@@ -917,70 +757,69 @@ export default function BookmarksPage() {
 
               {/* Grid Layout */}
 
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {/* Folders */}
-                  {filteredFolders.map((folder) => (
-                    <DraggableFolder
-                      key={folder.id}
-                      folder={folder}
-                      onFolderClick={handleFolderClick}
-                      onEditFolder={handleEditFolder}
-                      onDeleteFolder={(folderId) =>
-                        deleteFolderMutation.mutate({ folderId })
-                      }
-                    />
-                  ))}
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {/* Folders */}
+                {filteredFolders.map((folder) => (
+                  <DraggableFolder
+                    key={folder.id}
+                    folder={folder}
+                    onFolderClick={handleFolderClick}
+                    onEditFolder={handleEditFolder}
+                    onDeleteFolder={(folderId) =>
+                      deleteFolderMutation.mutate({ folderId })
+                    }
+                  />
+                ))}
 
-                  {/* Bookmarks */}
-                  {filteredBookmarks.map((bookmark) => (
-                    <DraggableBookmark
-                      key={bookmark.id}
-                      bookmark={bookmark}
-                      onEditBookmark={handleEditBookmark}
-                      onDeleteBookmark={(bookmarkId) =>
-                        deleteBookmarkMutation.mutate({ bookmarkId })
-                      }
-                    />
-                  ))}
+                {/* Bookmarks */}
+                {filteredBookmarks.map((bookmark) => (
+                  <DraggableBookmark
+                    key={bookmark.id}
+                    bookmark={bookmark}
+                    onEditBookmark={handleEditBookmark}
+                    onDeleteBookmark={(bookmarkId) =>
+                      deleteBookmarkMutation.mutate({ bookmarkId })
+                    }
+                  />
+                ))}
 
-                  {/* Empty State */}
-                  {filteredFolders.length === 0 &&
-                    filteredBookmarks.length === 0 && (
-                      <div className="col-span-full flex min-h-[30vh] flex-col items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/50 p-8 text-center backdrop-blur-sm">
-                        <div className="relative">
-                          <div className="mb-4 rounded-full bg-blue-500/10 p-5">
-                            <IconBookmark className="h-10 w-10 text-blue-400" />
-                          </div>
-                          <div className="absolute inset-0 animate-ping rounded-full bg-blue-500/10 p-5 duration-1000 ease-out"></div>
+                {/* Empty State */}
+                {filteredFolders.length === 0 &&
+                  filteredBookmarks.length === 0 && (
+                    <div className="col-span-full flex min-h-[30vh] flex-col items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/50 p-8 text-center backdrop-blur-sm">
+                      <div className="relative">
+                        <div className="mb-4 rounded-full bg-blue-500/10 p-5">
+                          <IconBookmark className="h-10 w-10 text-blue-400" />
                         </div>
-                        <h3 className="text-2xl font-medium text-white">
-                          No bookmarks found
-                        </h3>
-                        <p className="mt-2 max-w-md text-zinc-400">
-                          {searchQuery
-                            ? "No bookmarks match your search. Try a different query."
-                            : "Get started by adding your first bookmark or folder."}
-                        </p>
-                        <div className="mt-6 flex space-x-3">
-                          <Button
-                            onClick={() => {
-                              setEditingBookmark(null);
-                              setAddBookmarkOpen(true);
-                            }}
-                            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-blue-500/20 transition-all hover:translate-y-[-1px] hover:shadow-xl hover:shadow-blue-500/30 active:translate-y-[1px]"
-                          >
-                            <IconPlus className="h-4 w-4" />
-                            Add Bookmark
-                          </Button>
-                        </div>
+                        <div className="absolute inset-0 animate-ping rounded-full bg-blue-500/10 p-5 duration-1000 ease-out"></div>
                       </div>
-                    )}
-                </div>
-
+                      <h3 className="text-2xl font-medium text-white">
+                        No bookmarks found
+                      </h3>
+                      <p className="mt-2 max-w-md text-zinc-400">
+                        {searchQuery
+                          ? "No bookmarks match your search. Try a different query."
+                          : "Get started by adding your first bookmark or folder."}
+                      </p>
+                      <div className="mt-6 flex space-x-3">
+                        <Button
+                          onClick={() => {
+                            setEditingBookmark(null);
+                            setAddBookmarkOpen(true);
+                          }}
+                          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-blue-500/20 transition-all hover:translate-y-[-1px] hover:shadow-xl hover:shadow-blue-500/30 active:translate-y-[1px]"
+                        >
+                          <IconPlus className="h-4 w-4" />
+                          Add Bookmark
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+              </div>
 
               {/* Drag Overlay */}
               <DragOverlay modifiers={[restrictToWindowEdges]}>
-                {activeItem && activeItem.type === "folder" && (
+                {activeItem?.type === "folder" && (
                   <div className="relative h-full opacity-80">
                     <div className="group relative h-full cursor-grabbing overflow-hidden rounded-xl border border-blue-500 bg-gradient-to-br from-zinc-800 to-zinc-900 shadow-lg shadow-blue-500/20">
                       <div
@@ -1012,7 +851,7 @@ export default function BookmarksPage() {
                     </div>
                   </div>
                 )}
-                {activeItem && activeItem.type === "bookmark" && (
+                {activeItem?.type === "bookmark" && (
                   <div className="relative h-full opacity-80">
                     <div className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-blue-500 bg-gradient-to-br from-zinc-800 to-zinc-900 shadow-lg shadow-blue-500/20">
                       <div
@@ -1054,7 +893,7 @@ export default function BookmarksPage() {
 
         {/* Admin button for sample bookmarks - only visible to admins */}
         {myUser.data?.user?.admin && (
-          <div className="fixed bottom-8 right-8 z-50">
+          <div className="fixed right-8 bottom-8 z-50">
             <div className="group relative">
               <div className="absolute -inset-0.5 rounded-lg bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 blur transition duration-200 group-hover:opacity-100"></div>
               <Button
@@ -1075,6 +914,8 @@ export default function BookmarksPage() {
       </main>
 
       <AddBookmark
+        // Remount to reseed the form when the edited item or folder changes.
+        key={`${editingBookmark?.id ?? "new"}:${currentFolder.data?.id ?? ""}`}
         isOpen={addBookmarkOpen}
         setIsOpen={setAddBookmarkOpen}
         currentFolderId={currentFolder.data?.id ?? ""}
@@ -1082,11 +923,119 @@ export default function BookmarksPage() {
       />
 
       <AddFolder
+        // Remount to reseed the form when the edited item or folder changes.
+        key={`${editingFolder?.id ?? "new"}:${currentFolder.data?.id ?? ""}`}
         isOpen={addFolderOpen}
         setIsOpen={setAddFolderOpen}
         currentFolderId={currentFolder.data?.id ?? ""}
         editingFolder={editingFolder}
       />
     </>
+  );
+}
+
+/** Drop target for moving items up into the parent folder. */
+function ParentFolderDroppable({
+  folder,
+  isDraggingActive,
+}: {
+  folder: BookmarkFolder;
+  isDraggingActive: boolean;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: "parent-folder",
+    data: {
+      type: "folder",
+      id: folder.id,
+      accept: ["bookmark", "folder"],
+    },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`flex h-min w-full flex-col items-start space-y-2 rounded-lg border-2 transition-all duration-200 ${
+        isOver
+          ? "border-dashed border-green-500 bg-green-900/20 shadow-lg shadow-green-500/30"
+          : isDraggingActive
+            ? "border-dashed border-orange-500/70 bg-orange-900/10 shadow-md shadow-orange-500/20"
+            : "border-dashed border-amber-500/50 bg-amber-900/10 hover:border-amber-500 hover:bg-amber-900/20"
+      } relative p-4 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:space-y-0`}
+    >
+      {isOver && (
+        <div className="pointer-events-none absolute inset-0 animate-pulse rounded-lg bg-green-500/20 opacity-30"></div>
+      )}
+      {isDraggingActive && !isOver && (
+        <div className="pointer-events-none absolute inset-0 rounded-lg bg-orange-500/10 opacity-20"></div>
+      )}
+      <div className="relative z-10 flex items-center">
+        <div
+          className="mr-4 flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg"
+          style={{
+            backgroundColor: folder.color ?? "#f59e0b",
+            boxShadow: `0 10px 15px -3px ${folder.color ?? "#f59e0b"}30`,
+          }}
+        >
+          <IconArrowBackUp className="h-6 w-6" />
+        </div>
+        <div>
+          <h2 className="flex items-center text-lg font-medium text-white">
+            <IconArrowBackUp className="mr-2 h-4 w-4" />
+            Move to {folder.name}
+          </h2>
+        </div>
+      </div>
+      <div className="relative z-10 flex space-x-6 text-sm text-zinc-400">
+        <div className="flex items-center">
+          <IconFolder className="mr-2 h-5 w-5 text-amber-400" />
+          <span>Parent folder</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Header card for the folder being viewed. */
+function CurrentFolder({
+  folder,
+}: {
+  folder: BookmarkFolder & {
+    _count: { bookmarks: number; subfolders: number };
+  };
+}) {
+  return (
+    <div className="relative mb-8 flex w-full flex-col items-start space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/30 p-4 backdrop-blur-sm transition-all duration-200 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+      <div className="relative z-10 flex items-center">
+        <div
+          className="mr-4 flex h-10 w-10 items-center justify-center rounded-full text-white"
+          style={{
+            backgroundColor: folder.color ?? "#3b82f6",
+            boxShadow: `0 10px 15px -3px ${folder.color ?? "#3b82f6"}30`,
+          }}
+        >
+          <IconFolder className="h-5 w-5" />
+        </div>
+        <div>
+          <p className="text-xs text-zinc-500">Current folder</p>
+          <h2 className="text-lg font-medium text-white">{folder.name}</h2>
+        </div>
+      </div>
+      <div className="relative z-10 flex space-x-6 text-sm text-zinc-500">
+        <div className="flex items-center">
+          <IconBookmark className="mr-2 h-4 w-4" />
+          <span>
+            {folder._count.bookmarks} bookmark
+            {folder._count.bookmarks !== 1 ? "s" : ""}
+          </span>
+        </div>
+        <div className="flex items-center">
+          <IconFolderFilled className="mr-2 h-4 w-4" />
+          <span>
+            {folder._count.subfolders} folder
+            {folder._count.subfolders !== 1 ? "s" : ""}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 }

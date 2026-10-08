@@ -2,7 +2,8 @@ import { type Profile, type ProfileLink } from "~/generated/prisma/client";
 import { useState } from "react";
 import DashProfileEditModel from "./DashProfileEditModel";
 import Link from "next/link";
-import { env } from "~/env";
+import { shareUrl } from "~/lib/domains";
+import { useShareDomain } from "~/lib/use-share-domain";
 import { IconPencil } from "@tabler/icons-react";
 import { Button } from "~/components/ui/button";
 
@@ -16,6 +17,7 @@ export default function DashProfileListItem({
   profile: Profile_ProjectLinks;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [shareDomain] = useShareDomain();
 
   const editBtn = () => {
     setIsOpen(true);
@@ -32,11 +34,11 @@ export default function DashProfileListItem({
             {profile.slug}
           </span> */}
           <Link
-            href={`${env.NEXT_PUBLIC_DOMAIN}/p/${profile.slug}`}
+            href={shareUrl(shareDomain, `p/${profile.slug}`)}
             target="_blank"
             className="break-all text-sm font-semibold text-blue-600 underline md:text-lg"
           >
-            {`${env.NEXT_PUBLIC_DOMAIN}/p/${profile.slug}`}
+            {`${shareDomain.host}/p/${profile.slug}`}
           </Link>
         </div>
 

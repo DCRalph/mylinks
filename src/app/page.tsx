@@ -1,9 +1,7 @@
 "use client";
-import { signIn } from "next-auth/react";
 import Link from "next/link";
 import {
   IconArrowRight,
-  IconBrandTwitter,
   IconChartBar,
   IconLink,
   IconBookmark,
@@ -226,13 +224,13 @@ export default function Home() {
                   <IconArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               ) : (
-                <button
-                  onClick={() => void signIn()}
+                <Link
+                  href="/signin"
                   className="group flex h-14 min-w-[200px] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 px-6 text-lg font-semibold text-white shadow-lg shadow-sky-500/25 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-sky-500/30"
                 >
                   Get Started Free
                   <IconArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                </button>
+                </Link>
               )}
               <a
                 href="#features"
@@ -502,13 +500,13 @@ export default function Home() {
                       </Link>
                     </>
                   ) : (
-                    <button
-                      onClick={() => void signIn()}
+                    <Link
+                      href="/signin"
                       className="group flex h-14 min-w-[200px] items-center justify-center gap-2 rounded-xl bg-white px-8 text-lg font-semibold text-blue-600 shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
                     >
                       Create Free Account
                       <IconArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                    </button>
+                    </Link>
                   )}
                 </div>
 

@@ -1,84 +1,39 @@
-import { NextResponse } from "next/server";
+import { visitorInfo } from "~/server/clicks";
 import { db } from "~/server/db";
-// import { use } from "react";
 
-// Base64 for a 1x1 PNG
-const imageBase64 =
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAAtJREFUGFdjYAACAAAFAAGq1chRAAAAAElFTkSuQmCC";
+// 1x1 transparent PNG.
+const PIXEL = Uint8Array.from(
+  atob(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAAtJREFUGFdjYAACAAAFAAGq1chRAAAAAElFTkSuQmCC",
+  ),
+  (char) => char.charCodeAt(0),
+);
 
-// Convert base64 to binary
-function base64ToArrayBuffer(base64: string) {
-  const binaryString = atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes.buffer;
-}
+async function recordLoad(req: Request, slug: string) {
+  const pixel = await db.spyPixel.findUnique({ where: { slug } });
+  if (!pixel) return;
 
-// Tracking function
-const tracking = async (req: Request, id: string) => {
-  const userAgent = req.headers.get("user-agent") ?? "Unknown";
-  const referer = req.headers.get("referer") ?? "No referer";
-  const ipAddress =
-    req.headers.get("x-forwarded-for") ??
-    req.headers.get("x-real-ip") ??
-    "Unknown";
-  const allHeadersString = JSON.stringify(req.headers);
-
-  console.log("Tracking ID:", id);
-  console.log("User-Agent:", userAgent);
-  console.log("IP Address:", ipAddress);
-  console.log("Referer:", referer);
-
-  console.log("Request Headers:", req.headers);
-
-  // check if the ID exists in the database
-  const pixel = await db.spyPixel.findUnique({
-    where: {
-      slug: id,
-    },
-  });
-
-  // If the ID exists, create a click record
-  if (!pixel) {
-    console.error("Pixel not found:", id);
-    return;
-  }
-
-  // Create a click record
   await db.click.create({
     data: {
       spyPixelId: pixel.id,
-      userAgent,
-      ipAddress,
-      referer,
-      allHeaders: allHeadersString,
+      ...visitorInfo(req.headers),
+      allHeaders: JSON.stringify(Object.fromEntries(req.headers)),
     },
   });
+}
 
-  
-};
-
-// Dynamic route handler
+/** Spy pixel: always answers with the image, records the load in the background. */
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = await params; // Extract the dynamic [id] from the URL
+  const { id } = await params;
+  recordLoad(req, id).catch(console.error);
 
-  // Trigger the tracking function (asynchronously)
-  tracking(req, id).catch(console.error);
-
-  // Prepare response with a 1x1 PNG image
-  const arrayBuffer = base64ToArrayBuffer(imageBase64);
-  const headers = new Headers({
-    "Content-Type": "image/png",
-    "Content-Length": arrayBuffer.byteLength.toString(),
-    "Cache-Control": "no-cache, no-store, must-revalidate",
+  return new Response(PIXEL, {
+    headers: {
+      "Content-Type": "image/png",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+    },
   });
-
-  // Send the PNG image as the response
-  return new NextResponse(arrayBuffer, { headers });
 }

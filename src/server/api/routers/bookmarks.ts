@@ -1,9 +1,10 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { db } from "~/server/db";
 // get db type
 import type { PrismaClient } from "~/generated/prisma/client";
 
-// import badWords from "~/utils/badWords";
+import { httpUrlSchema } from "~/lib/validation";
 
 import {
   createTRPCRouter,
@@ -224,7 +225,7 @@ const createBookmark = protectedProcedure
   .input(
     z.object({
       name: z.string(),
-      url: z.string().url(),
+      url: httpUrlSchema,
       color: z.string(),
       folderId: z.string(),
     }),
@@ -332,6 +333,29 @@ const createFolder = protectedProcedure
     return folder;
   });
 
+/** Throws if putting `folderIds` under `targetId` would nest a folder inside itself. */
+async function assertNotIntoOwnSubtree(
+  folderIds: string[],
+  targetId: string,
+  userId: string,
+) {
+  let current: string | null = targetId;
+  while (current) {
+    if (folderIds.includes(current)) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "A folder can't be moved inside itself",
+      });
+    }
+    const folder: { parentFolderId: string | null } | null =
+      await db.bookmarkFolder.findUnique({
+        where: { id: current, userId },
+        select: { parentFolderId: true },
+      });
+    current = folder?.parentFolderId ?? null;
+  }
+}
+
 const moveItem = protectedProcedure
   .input(
     z.object({
@@ -377,6 +401,12 @@ const moveItem = protectedProcedure
     }
 
     if (input.folderIds) {
+      await assertNotIntoOwnSubtree(
+        input.folderIds,
+        input.targetFolderId,
+        userId,
+      );
+
       await db.bookmarkFolder.updateMany({
         where: {
           id: {
@@ -398,7 +428,7 @@ const editBookmark = protectedProcedure
     z.object({
       bookmarkId: z.string(),
       newName: z.string(),
-      newUrl: z.string().url(),
+      newUrl: httpUrlSchema,
       newColor: z.string(),
       newFolderId: z.string(),
     }),
@@ -471,9 +501,19 @@ const editFolder = protectedProcedure
       throw new Error("Folder not found");
     }
 
-    // if (badWords.some((word) => input.name.includes(word))) {
-    //   throw new Error("Name contains bad words");
-    // }
+    if (input.newFolderId !== folder.parentFolderId) {
+      const target = await db.bookmarkFolder.findUnique({
+        where: { id: input.newFolderId, userId },
+      });
+      if (!target) {
+        throw new Error("Target folder not found");
+      }
+      await assertNotIntoOwnSubtree(
+        [input.folderId],
+        input.newFolderId,
+        userId,
+      );
+    }
 
     await db.bookmarkFolder.update({
       where: {

@@ -44,3 +44,8 @@ yarn-error.log*
 
 # idea files
 .idea
+# prisma client (regenerated on install)
+/src/generated
+
+# local scratch
+/.scratch

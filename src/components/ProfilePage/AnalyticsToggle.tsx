@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { IconChartBar } from "@tabler/icons-react";
 import ProfileAnalytics from "./ProfileAnalytics";
-import { useSession } from "next-auth/react";
+import { authClient } from "~/lib/auth-client";
 import { type Profile } from "~/generated/prisma/client";
 
 export default function AnalyticsToggle({ profile }: { profile: Profile }) {
   const [showAnalytics, setShowAnalytics] = useState(false);
-  const { data: session } = useSession();
+  const { data: session } = authClient.useSession();
 
   const isOwner = session?.user?.id === profile.userId;
 

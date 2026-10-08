@@ -1,1 +1,51 @@
-# mylinks app router
+# link2it
+
+Short links, link-in-bio profiles, bookmarks and spy pixels. Next.js 16, tRPC,
+Prisma (Postgres) and better-auth.
+
+## Local development
+
+```sh
+bun install
+cp .env.example .env          # fill in DATABASE_URL and BETTER_AUTH_SECRET
+bunx prisma db push
+bun dev
+```
+
+`bun run check` runs the type checker and ESLint.
+
+## Domains
+
+`NEXT_PUBLIC_DOMAINS` lists every origin the deployment answers on, for example
+`https://link2it.xyz,https://l2.it`. On each of them:
+
+- the whole app works, sign-in included. Sessions are per domain, so signing in
+  on one domain does not sign you in on another;
+- every short link (`/<slug>`), profile (`/p/<slug>`) and pixel (`/img/<slug>`)
+  resolves;
+- the dashboard's "Share links on" picker chooses which domain copied links use.
+
+For Google sign-in and "Connect Google", register
+`https://<domain>/api/auth/callback/google` as an authorized redirect URI for
+each domain in Google Cloud. Requests on hosts that aren't listed fall back to
+the first domain for auth.
+
+Behind a reverse proxy, forward the public host (`proxy_set_header Host $host;`
+or `X-Forwarded-Host`). When every listed domain is https, callback URLs are
+always https even if the proxy talks plain http to the app.
+
+## Upgrading from the NextAuth version
+
+Auth moved from NextAuth v4 to better-auth. Users, Google accounts and passwords
+carry over; existing sessions do not, so everyone signs in once. Before
+`prisma db push`, run:
+
+```sh
+bunx prisma db execute --file prisma/sql/migrate-to-better-auth.sql
+```
+
+`buildandstart.sh` does this on every deploy (it is a no-op once applied). The
+first time, run `git pull` before `./buildandstart.sh`: bash keeps executing the
+copy of the script it started with, and the old one doesn't migrate. Env
+changes: `NEXTAUTH_SECRET`/`NEXTAUTH_URL` become `BETTER_AUTH_SECRET`, and
+`NEXT_PUBLIC_DOMAIN`/`NEXT_PUBLIC_SHORT_DOMAIN` become `NEXT_PUBLIC_DOMAINS`.

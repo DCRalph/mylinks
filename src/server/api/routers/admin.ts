@@ -1,493 +1,200 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { db } from "~/server/db";
 
-import { createTRPCRouter, adminProcedure } from "~/server/api/trpc";
+import { linkUrlSchema, slugSchema, usernameSchema } from "~/lib/validation";
+import { profileLinkInput } from "~/server/api/routers/profile";
+import { adminProcedure, createTRPCRouter } from "~/server/api/trpc";
+import { db } from "~/server/db";
 import parseProfileLinkOrder from "~/utils/parseProfileLinkOrder";
+
+const conflict = (message: string) =>
+  new TRPCError({ code: "CONFLICT", message });
+
+const notFound = (message: string) =>
+  new TRPCError({ code: "NOT_FOUND", message });
 
 export const adminRouter = createTRPCRouter({
   getUser: adminProcedure
     .input(z.object({ userID: z.string() }))
     .query(async ({ input }) => {
       const user = await db.user.findUnique({
-        where: {
-          id: input.userID,
-        },
+        where: { id: input.userID },
         include: {
-          accounts: {
-            select: {
-              provider: true,
-            },
-          },
+          accounts: { select: { providerId: true } },
           Links: true,
-          Profiles: {
-            include: {
-              profileLinks: true,
-            },
-          },
+          Profiles: { include: { profileLinks: true } },
         },
       });
 
-      return {
-        user,
-      };
+      return { user };
     }),
 
-  getUsers: adminProcedure.query(async () => {
-    const data = await db.user.findMany({
+  getUsers: adminProcedure.query(() =>
+    db.user.findMany({
       include: {
-        accounts: {
-          select: {
-            provider: true,
-          },
-        },
+        accounts: { select: { providerId: true } },
         Links: true,
         Profiles: true,
       },
-      orderBy: {
-        email: "asc",
-      },
-    });
-
-    return data;
-  }),
+      orderBy: { email: "asc" },
+    }),
+  ),
 
   updateUsername: adminProcedure
-    .input(
-      z.object({
-        userID: z.string(),
-        username: z.string().min(3).max(20),
-      }),
-    )
+    .input(z.object({ userID: z.string(), username: usernameSchema }))
     .mutation(async ({ input }) => {
-      const { userID, username } = input;
+      const taken = await db.user.findFirst({
+        where: { username: input.username, NOT: { id: input.userID } },
+      });
+      if (taken) throw conflict("Username already taken");
 
-      // Check if username is already taken
-      const existingUser = await db.user.findFirst({
-        where: {
-          username,
-          NOT: {
-            id: userID,
-          },
-        },
+      const user = await db.user.update({
+        where: { id: input.userID },
+        data: { username: input.username },
       });
 
-      if (existingUser) {
-        throw new Error("Username already taken");
-      }
-
-      // Update the user
-      const updatedUser = await db.user.update({
-        where: {
-          id: userID,
-        },
-        data: {
-          username,
-        },
-      });
-
-      return {
-        success: true,
-        user: updatedUser,
-      };
+      return { success: true, user };
     }),
 
   toggleAdminStatus: adminProcedure
     .input(z.object({ userID: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const { userID } = input;
-
-      // Don't allow self-demotion
-      if (userID === ctx.session.user.id) {
-        throw new Error("Cannot change your own admin status");
+      if (input.userID === ctx.session.user.id) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Cannot change your own admin status",
+        });
       }
 
-      // Get current user to toggle status
-      const user = await db.user.findUnique({
-        where: {
-          id: userID,
-        },
+      const user = await db.user.findUnique({ where: { id: input.userID } });
+      if (!user) throw notFound("User not found");
+
+      const updated = await db.user.update({
+        where: { id: input.userID },
+        data: { admin: !user.admin },
       });
 
-      if (!user) {
-        throw new Error("User not found");
-      }
-
-      // Toggle admin status
-      const updatedUser = await db.user.update({
-        where: {
-          id: userID,
-        },
-        data: {
-          admin: !user.admin,
-        },
-      });
-
-      return {
-        success: true,
-        user: updatedUser,
-      };
+      return { success: true, user: updated };
     }),
 
   toggleSpyPixelStatus: adminProcedure
     .input(z.object({ userID: z.string() }))
     .mutation(async ({ input }) => {
-      const { userID } = input;
+      const user = await db.user.findUnique({ where: { id: input.userID } });
+      if (!user) throw notFound("User not found");
 
-      // Get current user to toggle status
-      const user = await db.user.findUnique({
-        where: {
-          id: userID,
-        },
+      const updated = await db.user.update({
+        where: { id: input.userID },
+        data: { spyPixel: !user.spyPixel },
       });
 
-      if (!user) {
-        throw new Error("User not found");
-      }
-
-      // Toggle spyPixel status
-      const updatedUser = await db.user.update({
-        where: {
-          id: userID,
-        },
-        data: {
-          spyPixel: !user.spyPixel,
-        },
-      });
-
-      return {
-        success: true,
-        user: updatedUser,
-      };
+      return { success: true, user: updated };
     }),
 
-  // New mutations for managing user links
   updateLink: adminProcedure
     .input(
       z.object({
         linkID: z.string(),
-        name: z.string().min(1).max(50),
-        url: z.string().url(),
-        slug: z.string().min(1).max(50).optional(),
+        name: z.string().trim().min(1).max(50),
+        url: linkUrlSchema,
+        slug: slugSchema.optional(),
       }),
     )
     .mutation(async ({ input }) => {
       const { linkID, name, url, slug } = input;
 
-      // Check if slug is already taken (if provided)
       if (slug) {
-        const existingLink = await db.link.findFirst({
-          where: {
-            slug,
-            NOT: {
-              id: linkID,
-            },
-          },
+        const taken = await db.link.findFirst({
+          where: { slug, NOT: { id: linkID } },
         });
-
-        if (existingLink) {
-          throw new Error("Slug already taken");
-        }
+        if (taken) throw conflict("Slug already taken");
       }
 
-      // Update the link
-      const updatedLink = await db.link.update({
-        where: {
-          id: linkID,
-        },
-        data: {
-          name,
-          url,
-          ...(slug && { slug }),
-        },
+      const link = await db.link.update({
+        where: { id: linkID },
+        data: { name, url, ...(slug && { slug }) },
       });
 
-      return {
-        success: true,
-        link: updatedLink,
-      };
+      return { success: true, link };
     }),
 
   deleteLink: adminProcedure
     .input(z.object({ linkID: z.string() }))
     .mutation(async ({ input }) => {
-      const { linkID } = input;
-
-      // Delete the link
-      await db.link.delete({
-        where: {
-          id: linkID,
-        },
-      });
-
-      return {
-        success: true,
-      };
+      await db.link.delete({ where: { id: input.linkID } });
+      return { success: true };
     }),
 
-  // Admin mutations for managing profiles
   updateProfile: adminProcedure
     .input(
       z.object({
         id: z.string(),
-        name: z.string(),
-        altName: z.string().nullable(),
-        slug: z.string(),
-        bio: z.string().nullable(),
+        name: z.string().trim().min(1).max(50),
+        altName: z.string().trim().max(50).nullable(),
+        slug: slugSchema.pipe(z.string().min(1, "Slug is required")),
+        bio: z.string().trim().max(300).nullable(),
       }),
     )
-    .mutation(async ({ input }) => {
-      const { id, name, altName, slug, bio } = input;
-
-      const profile = await db.profile.findUnique({
-        where: {
-          id,
-        },
+    .mutation(async ({ input: { id, ...data } }) => {
+      const taken = await db.profile.findFirst({
+        where: { slug: data.slug, NOT: { id } },
       });
+      if (taken) throw conflict("Slug is already taken");
 
-      if (!profile) {
-        throw new Error("Profile not found");
-      }
-
-      // Check if slug is already taken by another profile
-      const existingProfile = await db.profile.findFirst({
-        where: {
-          slug,
-          NOT: {
-            id,
-          },
-        },
-      });
-
-      if (existingProfile) {
-        throw new Error("Slug is already taken");
-      }
-
-      await db.profile.update({
-        where: {
-          id,
-        },
-        data: {
-          name,
-          altName,
-          slug,
-          bio,
-        },
-      });
-
-      return {
-        success: true,
-      };
+      await db.profile.update({ where: { id }, data });
+      return { success: true };
     }),
 
   deleteProfile: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
-      const { id } = input;
-
-      const profile = await db.profile.findUnique({
-        where: {
-          id,
-        },
-        include: {
-          profileLinks: true,
-        },
-      });
-
-      if (!profile) {
-        throw new Error("Profile not found");
-      }
-
-      // Delete all profile links first
-      await db.profileLink.deleteMany({
-        where: {
-          profileId: id,
-        },
-      });
-
-      // Then delete the profile
-      await db.profile.delete({
-        where: {
-          id,
-        },
-      });
-
-      return {
-        success: true,
-      };
+      // Profile links cascade.
+      await db.profile.delete({ where: { id: input.id } });
+      return { success: true };
     }),
 
-  // Admin mutations for managing profile links
   updateProfileLink: adminProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        title: z.string(),
-        url: z.string(),
-        description: z.string(),
-        bgColor: z.string(),
-        fgColor: z.string(),
-        iconUrl: z.string(),
-      }),
-    )
-    .mutation(async ({ input }) => {
-      const { id, title, url, description, bgColor, fgColor, iconUrl } = input;
-
-      const profileLink = await db.profileLink.findUnique({
-        where: {
-          id,
-        },
-        include: {
-          profile: true,
-        },
-      });
-
-      if (!profileLink) {
-        throw new Error("Link not found");
-      }
-
-      await db.profileLink.update({
-        where: {
-          id,
-        },
-        data: {
-          title,
-          url,
-          description,
-          bgColor,
-          fgColor,
-          iconUrl,
-        },
-      });
-
-      return {
-        success: true,
-      };
-    }),
-
-  toggleProfileLinkVisibility: adminProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ input }) => {
-      const { id } = input;
-
-      const profileLink = await db.profileLink.findUnique({
-        where: {
-          id,
-        },
-        include: {
-          profile: true,
-        },
-      });
-
-      if (!profileLink) {
-        throw new Error("Link not found");
-      }
-
-      await db.profileLink.update({
-        where: {
-          id,
-        },
-        data: {
-          visible: !profileLink.visible,
-        },
-      });
-
-      return {
-        success: true,
-        visible: !profileLink.visible,
-      };
+    .input(profileLinkInput.extend({ id: z.string() }))
+    .mutation(async ({ input: { id, ...data } }) => {
+      await db.profileLink.update({ where: { id }, data });
+      return { success: true };
     }),
 
   deleteProfileLink: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
-      const { id } = input;
-
-      const profileLink = await db.profileLink.findUnique({
-        where: {
-          id,
-        },
-        include: {
-          profile: {
-            include: {
-              profileLinks: true,
-            },
-          },
-        },
+      const link = await db.profileLink.findUnique({
+        where: { id: input.id },
+        include: { profile: { include: { profileLinks: true } } },
       });
+      if (!link) throw notFound("Link not found");
 
-      if (!profileLink) {
-        throw new Error("Link not found");
-      }
-
-      await db.profileLink.delete({
-        where: {
-          id,
-        },
-      });
+      await db.profileLink.delete({ where: { id: input.id } });
 
       const linkOrder = parseProfileLinkOrder({
-        linkOrderS: profileLink.profile.linkOrder,
-        profileLinks: profileLink.profile.profileLinks,
-      });
-
-      const index = linkOrder.indexOf(id);
-      if (index > -1) {
-        linkOrder.splice(index, 1);
-      }
+        linkOrderS: link.profile.linkOrder,
+        profileLinks: link.profile.profileLinks,
+      }).filter((id) => id !== input.id);
 
       await db.profile.update({
-        where: {
-          id: profileLink.profileId,
-        },
-        data: {
-          linkOrder: JSON.stringify(linkOrder),
-        },
+        where: { id: link.profileId },
+        data: { linkOrder: JSON.stringify(linkOrder) },
       });
 
-      return {
-        success: true,
-      };
+      return { success: true };
     }),
 
   createProfileLink: adminProcedure
-    .input(
-      z.object({
-        profileId: z.string(),
-        title: z.string(),
-        url: z.string(),
-        description: z.string(),
-        bgColor: z.string(),
-        fgColor: z.string(),
-        iconUrl: z.string(),
-      }),
-    )
-    .mutation(async ({ input }) => {
-      const { profileId, title, url, description, bgColor, fgColor, iconUrl } =
-        input;
-
+    .input(profileLinkInput.extend({ profileId: z.string() }))
+    .mutation(async ({ input: { profileId, ...data } }) => {
       const profile = await db.profile.findUnique({
-        where: {
-          id: profileId,
-        },
-        include: {
-          profileLinks: true,
-        },
+        where: { id: profileId },
+        include: { profileLinks: true },
       });
-
-      if (!profile) {
-        throw new Error("Profile not found");
-      }
+      if (!profile) throw notFound("Profile not found");
 
       const profileLink = await db.profileLink.create({
-        data: {
-          profileId,
-          title,
-          url,
-          description,
-          bgColor,
-          fgColor,
-          iconUrl,
-        },
+        data: { ...data, profileId },
       });
 
       const linkOrder = parseProfileLinkOrder({
@@ -495,19 +202,11 @@ export const adminRouter = createTRPCRouter({
         profileLinks: profile.profileLinks,
       });
 
-      linkOrder.push(profileLink.id);
-
       await db.profile.update({
-        where: {
-          id: profileId,
-        },
-        data: {
-          linkOrder: JSON.stringify(linkOrder),
-        },
+        where: { id: profileId },
+        data: { linkOrder: JSON.stringify([...linkOrder, profileLink.id]) },
       });
 
-      return {
-        profileLink,
-      };
+      return { profileLink };
     }),
 });
