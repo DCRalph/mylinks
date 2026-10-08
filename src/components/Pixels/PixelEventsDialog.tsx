@@ -11,6 +11,7 @@ import {
 } from "~/components/ui/dialog";
 import { formatNumber, formatRelative, hostOf } from "~/lib/format";
 import type { DecodedVisit, Fact } from "~/lib/decode-visit";
+import type { UserAgentPart } from "~/lib/user-agent-parts";
 import { cn } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 
@@ -266,7 +267,11 @@ function EventDetails({ event }: { event: PixelEvent }) {
         </Detail>
         <Detail label="User agent" mono>
           {event.userAgent ?? "None sent"}
-          <Meaning facts={decodedFrom("user-agent")} />
+          {decoded.userAgentParts.length > 0 ? (
+            <UserAgentParts parts={decoded.userAgentParts} />
+          ) : (
+            <Meaning facts={decodedFrom("user-agent")} />
+          )}
         </Detail>
         {headers.length > 0 && (
           <Detail label="Headers">
@@ -278,7 +283,7 @@ function EventDetails({ event }: { event: PixelEvent }) {
                     <tr key={name} className="align-top">
                       <td
                         className={cn(
-                          "py-1 pr-4 whitespace-nowrap",
+                          "py-1 pr-4 whitespace-nowrap sm:w-56",
                           facts.length > 0 ? "text-lime" : "text-muted",
                         )}
                       >
@@ -297,6 +302,34 @@ function EventDetails({ event }: { event: PixelEvent }) {
         )}
       </dl>
     </div>
+  );
+}
+
+/** The user agent piece by piece, each part explained where it's known. */
+function UserAgentParts({ parts }: { parts: UserAgentPart[] }) {
+  return (
+    <table className="mt-2 w-full text-xs">
+      <tbody className="divide-line divide-y">
+        {parts.map((part, i) => (
+          <tr key={i} className="align-top">
+            <td
+              className={cn(
+                "py-1 pr-4 break-all sm:w-56",
+                part.meaning ? "text-lime" : "text-muted",
+              )}
+            >
+              {part.token}
+            </td>
+            <td className="py-1 font-sans break-normal">
+              {part.meaning && <span className="block">{part.meaning}</span>}
+              {part.note && (
+                <span className="text-faint block">{part.note}</span>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
