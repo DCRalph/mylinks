@@ -1,47 +1,21 @@
-type Icon = {
-  name: string;
-  icon: string;
-};
+/** Icons a profile button can show, from public/profileLinkIcons. */
+export const profileLinkIcons = [
+  { name: "Generic", file: "generic.png" },
+  { name: "GitHub", file: "github.png" },
+  { name: "Instagram", file: "instagram.png" },
+  { name: "LinkedIn", file: "linkedin.png" },
+  { name: "Twitter", file: "twitter.svg" },
+  { name: "X", file: "x(twitter).png" },
+  { name: "YouTube", file: "youtube.png" },
+  { name: "Snapchat", file: "snapchat.png" },
+  { name: "Discord", file: "discord.png" },
+  { name: "Facebook", file: "facebook.svg" },
+] as const;
 
-const defualtIcon: Icon = {
-  name: "Generic",
-  icon: "generic.png",
-};
+export type ProfileLinkIcon = (typeof profileLinkIcons)[number]["file"];
 
-const Icons: Icon[] = [
-  defualtIcon,
-  {
-    name: "Github",
-    icon: "github.png",
-  },
-  {
-    name: "Instagram",
-    icon: "instagram.png",
-  },
-  {
-    name: "Linkedin",
-    icon: "linkedin.png",
-  },
-  {
-    name: "Twitter old",
-    icon: "twitter.svg",
-  },
-  {
-    name: "X",
-    icon: "x(twitter).png",
-  },
-  {
-    name: "Youtube",
-    icon: "youtube.png",
-  },
-  {
-    name: "Snapchat",
-    icon: "snapchat.png",
-  },
-  {
-    name: "Discord",
-    icon: "discord.png",
-  },
-];
+export const iconSrc = (file: string) =>
+  `/profileLinkIcons/${encodeURIComponent(file)}`;
 
-export { defualtIcon, Icons };
+export const isProfileLinkIcon = (file: string): file is ProfileLinkIcon =>
+  profileLinkIcons.some((icon) => icon.file === file);

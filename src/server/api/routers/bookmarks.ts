@@ -1,9 +1,11 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { db } from "~/server/db";
-// get db type
-import type { PrismaClient } from "~/generated/prisma/client";
+import type { Bookmark, BookmarkFolder } from "~/generated/prisma/client";
 
-// import badWords from "~/utils/badWords";
+import { httpUrlSchema } from "~/lib/validation";
+
+const nameSchema = z.string().trim().min(1, "Name is required").max(60);
 
 import {
   createTRPCRouter,
@@ -11,85 +13,46 @@ import {
   adminProcedure,
 } from "~/server/api/trpc";
 
-async function fetchFolderWithSubfolders(
-  folderId: string,
-  userId: string,
-  db: PrismaClient,
-  includeBookmarks = true,
-) {
-  const folder = await db.bookmarkFolder.findUnique({
-    where: { id: folderId, userId: userId },
-    include: {
-      bookmarks: includeBookmarks,
-      subfolders: {
-        include: {
-          bookmarks: includeBookmarks,
-          _count: {
-            select: {
-              bookmarks: true,
-              subfolders: true,
-            },
-          },
-        },
-      },
-      _count: {
-        select: {
-          bookmarks: true,
-          subfolders: true,
-        },
-      },
-    },
-  });
-
-  if (!folder) {
-    throw new Error("Folder not found");
-  }
-
-  if (folder.subfolders.length > 0) {
-    const subfolders = await Promise.all(
-      folder.subfolders.map((subfolder) =>
-        fetchFolderWithSubfolders(subfolder.id, userId, db),
-      ),
-    );
-
-    folder.subfolders = subfolders;
-  }
-
-  return folder;
-}
-
-// Initial query for the root folder:
-const _getRootFolder = async (userId: string, db: PrismaClient) => {
-  const folder = await db.bookmarkFolder.findFirst({
-    where: {
-      userId,
-      parentFolderId: null,
-    },
-  });
-
-  if (!folder) {
-    throw new Error("Root folder not found");
-  }
-
-  return folder;
+type FolderTree = BookmarkFolder & {
+  bookmarks: Bookmark[];
+  subfolders: FolderTree[];
 };
 
-const getAllBookmarks = protectedProcedure.query(async ({ ctx }) => {
-  const userId = ctx.session?.user.id;
-  if (!userId) {
-    throw new Error("Not authenticated");
+/** All of a user's folders and bookmarks as one tree, from two queries. */
+async function getFolderTree(userId: string): Promise<FolderTree> {
+  const [folders, bookmarks] = await Promise.all([
+    db.bookmarkFolder.findMany({
+      where: { userId },
+      orderBy: { createdAt: "asc" },
+    }),
+    db.bookmark.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }),
+  ]);
+
+  const nodes = new Map<string, FolderTree>(
+    folders.map((folder) => [
+      folder.id,
+      { ...folder, bookmarks: [], subfolders: [] },
+    ]),
+  );
+  for (const bookmark of bookmarks) {
+    nodes.get(bookmark.folderId)?.bookmarks.push(bookmark);
   }
 
-  const root = await _getRootFolder(userId, db);
+  let root: FolderTree | undefined;
+  for (const node of nodes.values()) {
+    if (node.parentFolderId) nodes.get(node.parentFolderId)?.subfolders.push(node);
+    else root ??= node;
+  }
 
   if (!root) {
-    throw new Error("Root folder not found");
+    throw new TRPCError({ code: "NOT_FOUND", message: "No bookmarks yet" });
   }
+  return root;
+}
 
-  const bookmarks = await fetchFolderWithSubfolders(root.id, userId, db);
-
-  return bookmarks;
-});
+const getAllBookmarks = protectedProcedure.query(({ ctx }) =>
+  getFolderTree(ctx.session.user.id),
+);
 
 const getFolder = protectedProcedure
   .input(z.object({ folderId: z.string().nullable() }))
@@ -223,8 +186,8 @@ const deleteBookmark = protectedProcedure
 const createBookmark = protectedProcedure
   .input(
     z.object({
-      name: z.string(),
-      url: z.string().url(),
+      name: nameSchema,
+      url: httpUrlSchema,
       color: z.string(),
       folderId: z.string(),
     }),
@@ -300,7 +263,7 @@ const deleteFolder = protectedProcedure
 
 const createFolder = protectedProcedure
   .input(
-    z.object({ name: z.string(), color: z.string(), folderId: z.string() }),
+    z.object({ name: nameSchema, color: z.string(), folderId: z.string() }),
   )
   .mutation(async ({ input, ctx }) => {
     const userId = ctx.session?.user.id;
@@ -331,6 +294,29 @@ const createFolder = protectedProcedure
 
     return folder;
   });
+
+/** Throws if putting `folderIds` under `targetId` would nest a folder inside itself. */
+async function assertNotIntoOwnSubtree(
+  folderIds: string[],
+  targetId: string,
+  userId: string,
+) {
+  let current: string | null = targetId;
+  while (current) {
+    if (folderIds.includes(current)) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "A folder can't be moved inside itself",
+      });
+    }
+    const folder: { parentFolderId: string | null } | null =
+      await db.bookmarkFolder.findUnique({
+        where: { id: current, userId },
+        select: { parentFolderId: true },
+      });
+    current = folder?.parentFolderId ?? null;
+  }
+}
 
 const moveItem = protectedProcedure
   .input(
@@ -377,6 +363,12 @@ const moveItem = protectedProcedure
     }
 
     if (input.folderIds) {
+      await assertNotIntoOwnSubtree(
+        input.folderIds,
+        input.targetFolderId,
+        userId,
+      );
+
       await db.bookmarkFolder.updateMany({
         where: {
           id: {
@@ -397,8 +389,8 @@ const editBookmark = protectedProcedure
   .input(
     z.object({
       bookmarkId: z.string(),
-      newName: z.string(),
-      newUrl: z.string().url(),
+      newName: nameSchema,
+      newUrl: httpUrlSchema,
       newColor: z.string(),
       newFolderId: z.string(),
     }),
@@ -448,7 +440,7 @@ const editFolder = protectedProcedure
   .input(
     z.object({
       folderId: z.string(),
-      newName: z.string(),
+      newName: nameSchema,
       newColor: z.string(),
       newFolderId: z.string(),
     }),
@@ -471,9 +463,19 @@ const editFolder = protectedProcedure
       throw new Error("Folder not found");
     }
 
-    // if (badWords.some((word) => input.name.includes(word))) {
-    //   throw new Error("Name contains bad words");
-    // }
+    if (input.newFolderId !== folder.parentFolderId) {
+      const target = await db.bookmarkFolder.findUnique({
+        where: { id: input.newFolderId, userId },
+      });
+      if (!target) {
+        throw new Error("Target folder not found");
+      }
+      await assertNotIntoOwnSubtree(
+        [input.folderId],
+        input.newFolderId,
+        userId,
+      );
+    }
 
     await db.bookmarkFolder.update({
       where: {

@@ -1,24 +1,32 @@
-import { string, array } from "zod";
+import { z } from "zod";
+
 import { type ProfileLink } from "~/generated/prisma/client";
 
-const schema = array(string());
+const orderSchema = z.array(z.string());
 
-type Prams = {
-  linkOrderS: string;
-  profileLinks: ProfileLink[];
-};
-
+/**
+ * Display order for `profileLinks`. `linkOrderS` is the stored JSON array of
+ * ids. Ids that aren't in `profileLinks` are dropped, and links missing from the
+ * stored order (or a corrupt value) follow in creation order, so a link can
+ * never silently disappear from a profile.
+ */
 export default function parseProfileLinkOrder({
   linkOrderS,
   profileLinks,
-}: Prams): string[] {
-  let linkOrder: string[];
-
-  if (linkOrderS === null) {
-    linkOrder = profileLinks.map((link) => link.id);
-  } else {
-    linkOrder = schema.parse(JSON.parse(linkOrderS));
+}: {
+  linkOrderS: string;
+  profileLinks: Pick<ProfileLink, "id">[];
+}): string[] {
+  let order: string[] = [];
+  try {
+    order = orderSchema.parse(JSON.parse(linkOrderS));
+  } catch {
+    // Corrupt or legacy value; rebuild from the links themselves.
   }
 
-  return linkOrder;
+  const ids = profileLinks.map((link) => link.id);
+  const known = order.filter((id) => ids.includes(id));
+  const missing = ids.filter((id) => !known.includes(id));
+
+  return [...known, ...missing];
 }

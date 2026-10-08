@@ -1,26 +1,53 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import * as LabelPrimitive from "@radix-ui/react-label"
-import { cva, type VariantProps } from "class-variance-authority"
+import { Label as LabelPrimitive } from "radix-ui";
+import type * as React from "react";
 
-import { cn } from "~/lib/utils"
+import { cn } from "~/lib/utils";
 
-const labelVariants = cva(
-  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-)
+function Label({
+  className,
+  ...props
+}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+  return (
+    <LabelPrimitive.Root
+      data-slot="label"
+      className={cn(
+        "display flex items-center gap-2 text-base text-muted select-none",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
-const Label = React.forwardRef<
-  React.ElementRef<typeof LabelPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
-    VariantProps<typeof labelVariants>
->(({ className, ...props }, ref) => (
-  <LabelPrimitive.Root
-    ref={ref}
-    className={cn(labelVariants(), className)}
-    {...props}
-  />
-))
-Label.displayName = LabelPrimitive.Root.displayName
+/** Label + control + optional inline error, stacked. */
+function Field({
+  label,
+  htmlFor,
+  error,
+  hint,
+  children,
+  className,
+}: {
+  label: string;
+  htmlFor?: string;
+  error?: string | null;
+  hint?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("grid content-start gap-1.5", className)}>
+      <Label htmlFor={htmlFor}>{label}</Label>
+      {children}
+      {error ? (
+        <p className="text-sm text-danger">{error}</p>
+      ) : hint ? (
+        <p className="text-sm text-faint">{hint}</p>
+      ) : null}
+    </div>
+  );
+}
 
-export { Label }
+export { Field, Label };

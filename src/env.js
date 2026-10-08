@@ -1,77 +1,71 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
+/**
+ * Deployments from before better-auth set one app URL and one short host
+ * (NEXT_PUBLIC_DOMAIN / NEXT_PUBLIC_SHORT_DOMAIN). Turn those into the
+ * NEXT_PUBLIC_DOMAINS list so they keep working without env changes.
+ */
+function legacyDomains() {
+  const app = process.env.NEXT_PUBLIC_DOMAIN;
+  if (!app) return undefined;
+  const short = process.env.NEXT_PUBLIC_SHORT_DOMAIN?.replace(/^https?:\/\//, "");
+  const protocol = app.startsWith("http://") ? "http://" : "https://";
+  return short ? `${app},${protocol}${short}` : app;
+}
+
 export const env = createEnv({
-  /**
-   * Specify your server-side environment variables schema here. This way you can ensure the app
-   * isn't built with invalid env vars.
-   */
   server: {
-    DATABASE_URL: z
-      .string()
-      .url()
-      .refine(
-        (str) => !str.includes("YOUR_MYSQL_URL_HERE"),
-        "You forgot to change the default URL",
-      ),
+    DATABASE_URL: z.url(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-    NEXTAUTH_SECRET:
+    // better-auth warns at startup if this is short or low-entropy.
+    BETTER_AUTH_SECRET:
       process.env.NODE_ENV === "production"
         ? z.string()
         : z.string().optional(),
-    NEXTAUTH_URL: z.preprocess(
-      // This makes Vercel deployments not fail if you don't set NEXTAUTH_URL
-      // Since NextAuth.js automatically uses the VERCEL_URL if present.
-      (str) => process.env.VERCEL_URL ?? str,
-      // VERCEL_URL doesn't include `https` so it cant be validated as a URL
-      process.env.VERCEL ? z.string() : z.string().url(),
-    ),
-    // Add ` on ID and SECRET if you want to make sure they're not empty
-    DISCORD_CLIENT_ID: z.string(),
-    DISCORD_CLIENT_SECRET: z.string(),
-
-    GOOGLE_CLIENT_ID: z.string(),
-    GOOGLE_CLIENT_SECRET: z.string(),
+    // Google sign-in is hidden unless both are set.
+    GOOGLE_CLIENT_ID: z.string().optional(),
+    GOOGLE_CLIENT_SECRET: z.string().optional(),
   },
 
-  /**
-   * Specify your client-side environment variables schema here. This way you can ensure the app
-   * isn't built with invalid env vars. To expose them to the client, prefix them with
-   * `NEXT_PUBLIC_`.
-   */
   client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
-    NEXT_PUBLIC_DOMAIN: z.string(),
-    NEXT_PUBLIC_SHORT_DOMAIN: z.string(),
+    // Comma-separated origins this deployment answers on, e.g.
+    // "https://link2it.xyz,https://l2.it". Every domain serves the full app,
+    // sign-in included, and resolves every short link. The first is the default.
+    NEXT_PUBLIC_DOMAINS: z
+      .string()
+      .transform((value) =>
+        value
+          .split(",")
+          .map((domain) => domain.trim())
+          .filter(Boolean),
+      )
+      .pipe(
+        z
+          .array(
+            z
+              .url({ protocol: /^https?$/ })
+              .transform((url) => new URL(url).origin),
+          )
+          .min(1)
+          .transform((origins) => [...new Set(origins)]),
+      ),
   },
 
-  /**
-   * You can't destruct `process.env` as a regular object in the Next.js edge runtimes (e.g.
-   * middlewares) or client-side so we need to destruct manually.
-   */
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
-    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-    DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
-    DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET,
+    // Falls back to the NextAuth secret from older deployments.
+    BETTER_AUTH_SECRET:
+      process.env.BETTER_AUTH_SECRET || process.env.NEXTAUTH_SECRET,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-
-    NEXT_PUBLIC_DOMAIN: process.env.NEXT_PUBLIC_DOMAIN,
-    NEXT_PUBLIC_SHORT_DOMAIN: process.env.NEXT_PUBLIC_SHORT_DOMAIN,
+    NEXT_PUBLIC_DOMAINS: process.env.NEXT_PUBLIC_DOMAINS || legacyDomains(),
   },
-  /**
-   * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
-   * useful for Docker builds.
-   */
+  // Run `build` or `dev` with SKIP_ENV_VALIDATION to skip validation (e.g. Docker builds).
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
-  /**
-   * Makes it so that empty strings are treated as undefined.
-   * `SOME_VAR: z.string()` and `SOME_VAR=''` will throw an error.
-   */
+  // Treat empty strings as undefined.
   emptyStringAsUndefined: true,
 });

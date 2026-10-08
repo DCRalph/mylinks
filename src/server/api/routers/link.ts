@@ -1,290 +1,132 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+
+import { linkUrlSchema, slugSchema } from "~/lib/validation";
+import { canManage } from "~/server/api/access";
+import { assertSlugLength, randomSlug } from "~/server/api/slugs";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
+import { findLinkSlugClash } from "~/server/slugs";
 
-import badWords from "~/utils/badWords";
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "~/server/api/trpc";
-import { randomUUID } from "crypto";
+const linkInput = z.object({
+  // Empty means "use the destination's hostname".
+  name: z.string().trim().max(50),
+  url: linkUrlSchema,
+  // Empty means "generate one".
+  slug: slugSchema,
+});
+
+async function assertSlugFree(slug: string, exceptId?: string) {
+  if (await findLinkSlugClash(slug, exceptId)) {
+    throw new TRPCError({ code: "CONFLICT", message: "Slug already exists" });
+  }
+}
+
+async function findOwnLink(id: string, user: { id: string; admin: boolean }) {
+  const link = await db.link.findUnique({ where: { id } });
+  if (!link || !canManage(link.userId, user)) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Link not found" });
+  }
+  return link;
+}
 
 export const linkRouter = createTRPCRouter({
-  getLongUrl: publicProcedure
-    .input(z.object({ slug: z.string() }))
-    .query(async ({ input }) => {
-      const { slug } = input;
-      const url = await db.link.findUnique({
-        where: {
-          slug,
-        },
-      });
-
-      if (!url) {
-        return {
-          error: "Link not found",
-        };
-      }
-
-      return {
-        url: url.url,
-      };
-    }),
   getMyLinks: protectedProcedure.query(async ({ ctx }) => {
-    // console.log("link here", ctx.session?.user)
-
     const links = await db.link.findMany({
-      where: {
-        userId: ctx.session?.user.id,
-      },
+      where: { userId: ctx.session.user.id },
+      include: { _count: { select: { clicks: true } } },
+      orderBy: { createdAt: "desc" },
     });
 
-    return {
-      links,
-    };
+    return { links };
   }),
-  createLink: protectedProcedure
-    .input(z.object({ name: z.string(), url: z.string(), slug: z.string() }))
-    .mutation(async ({ input, ctx }) => {
-      const { name, url } = input;
-      let { slug } = input;
 
-      if (name.length < 3) {
-        throw new Error("Name must be at least 3 characters long");
-      }
+  /** Clicks across all of the user's links this week and the week before. */
+  getStats: protectedProcedure.query(async ({ ctx }) => {
+    const now = Date.now();
+    const mine = { link: { userId: ctx.session.user.id } };
 
-      if (name.length > 20) {
-        throw new Error("Name must be at most 20 characters long");
-      }
-
-      if (slug.length > 0) {
-        if (slug.length < 3 && ctx.session.user.admin) {
-          throw new Error("Slug must be at least 3 characters long");
-        }
-
-        if (slug.length > 20) {
-          throw new Error("Slug must be at most 20 characters long");
-        }
-
-        if (!/^[a-zA-Z0-9_]*$/.test(slug)) {
-          throw new Error(
-            "Slug can only contain letters, numbers and underscores",
-          );
-        }
-
-        const lowerSlug = slug.toLowerCase();
-        const indexInBadSlugs = badWords.badSlugs.indexOf(lowerSlug);
-
-        if (indexInBadSlugs !== -1) {
-          throw new Error(
-            `Slug cannot be "${badWords.badSlugs[indexInBadSlugs]}" you cheaky barstard`,
-          );
-        }
-      } else {
-        slug = randomUUID().slice(0, 8);
-      }
-
-      const urlExists = await db.link.findUnique({
-        where: {
-          slug,
-        },
-      });
-
-      if (urlExists) {
-        throw new Error("Slug already exists");
-      }
-
-      const indexInBadUrlFilter = badWords.badUrlFilter.findIndex((badWord) =>
-        url.includes(badWord),
-      );
-
-      if (indexInBadUrlFilter !== -1) {
-        throw new Error(
-          `URL cannot contain "${badWords.badUrlFilter[indexInBadUrlFilter]}"`,
-        );
-      }
-
-      try {
-        new URL(url);
-      } catch (error) {
-        console.log(error);
-        throw new Error("Invalid URL");
-      }
-
-      const newLink = await db.link.create({
-        data: {
-          name,
-          url,
-          slug,
-          userId: ctx.session?.user.id,
-        },
-      });
-
-      return {
-        link: newLink,
-      };
-    }),
-  editLink: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        url: z.string(),
-        slug: z.string(),
+    const [thisWeek, lastWeek] = await Promise.all([
+      db.click.count({
+        where: { ...mine, createdAt: { gte: new Date(now - 7 * DAY_MS) } },
       }),
-    )
-    .mutation(async ({ input, ctx }) => {
-      const { id, name, url } = input;
-      let { slug } = input;
-
-      if (name.length < 3) {
-        throw new Error("Name must be at least 3 characters long");
-      }
-
-      if (name.length > 20) {
-        throw new Error("Name must be at most 20 characters long");
-      }
-
-      if (slug.length > 0) {
-        if (slug.length < 3 && ctx.session.user.admin) {
-          throw new Error("Slug must be at least 3 characters long");
-        }
-
-        if (slug.length > 20) {
-          throw new Error("Slug must be at most 20 characters long");
-        }
-
-        if (!/^[a-zA-Z0-9_]*$/.test(slug)) {
-          throw new Error(
-            "Slug can only contain letters, numbers and underscores",
-          );
-        }
-
-        const lowerSlug = slug.toLowerCase();
-        const indexInBadSlugs = badWords.badSlugs.indexOf(lowerSlug);
-
-        if (indexInBadSlugs !== -1) {
-          throw new Error(
-            `Slug cannot be "${badWords.badSlugs[indexInBadSlugs]}" you cheaky barstard`,
-          );
-        }
-      } else {
-        slug = randomUUID().slice(0, 8);
-      }
-
-      const link = await db.link.findUnique({
+      db.click.count({
         where: {
-          id,
-        },
-      });
-
-      if (!link) {
-        throw new Error("Link not found");
-      }
-
-      if (link.userId !== ctx.session?.user.id) {
-        throw new Error("Not authorized");
-      }
-
-      const urlExists = await db.link.findUnique({
-        where: {
-          slug,
-          AND: {
-            NOT: {
-              id,
-            },
+          ...mine,
+          createdAt: {
+            gte: new Date(now - 14 * DAY_MS),
+            lt: new Date(now - 7 * DAY_MS),
           },
         },
+      }),
+    ]);
+
+    return { thisWeek, lastWeek };
+  }),
+
+  createLink: protectedProcedure
+    .input(linkInput)
+    .mutation(async ({ input, ctx }) => {
+      const slug = input.slug || randomSlug();
+      assertSlugLength(slug, ctx.session.user.admin);
+      await assertSlugFree(slug);
+
+      const link = await db.link.create({
+        data: {
+          name: input.name || new URL(input.url).hostname,
+          url: input.url,
+          slug,
+          userId: ctx.session.user.id,
+        },
       });
 
-      if (urlExists) {
-        throw new Error("Slug already exists");
-      }
+      return { link };
+    }),
 
-      const indexInBadUrlFilter = badWords.badUrlFilter.findIndex((badWord) =>
-        url.includes(badWord),
-      );
+  editLink: protectedProcedure
+    .input(linkInput.extend({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      await findOwnLink(input.id, ctx.session.user);
 
-      if (indexInBadUrlFilter !== -1) {
-        throw new Error(
-          `URL cannot contain "${badWords.badUrlFilter[indexInBadUrlFilter]}"`,
-        );
-      }
+      const slug = input.slug || randomSlug();
+      assertSlugLength(slug, ctx.session.user.admin);
+      await assertSlugFree(slug, input.id);
 
-      try {
-        new URL(url);
-      } catch (error) {
-        console.log(error);
-        throw new Error("Invalid URL");
-      }
-
-      const updatedLink = await db.link.update({
-        where: {
-          id,
-        },
+      const link = await db.link.update({
+        where: { id: input.id },
         data: {
-          name,
-          url,
+          name: input.name || new URL(input.url).hostname,
+          url: input.url,
           slug,
         },
       });
 
-      return {
-        link: updatedLink,
-      };
+      return { link };
     }),
+
   deleteLink: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const { id } = input;
-
-      const link = await db.link.findUnique({
-        where: {
-          id,
-        },
-      });
-
-      if (!link) {
-        throw new Error("Link not found");
-      }
-
-      if (link.userId !== ctx.session?.user.id) {
-        throw new Error("Not authorized");
-      }
-
-      await db.link.delete({
-        where: {
-          id,
-        },
-      });
-
-      return {
-        success: true,
-      };
+      await findOwnLink(input.id, ctx.session.user);
+      await db.link.delete({ where: { id: input.id } });
+      return { success: true };
     }),
 
+  /** Most recent clicks on a link, newest first. */
   getClicks: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input, ctx }) => {
-      const { id } = input;
+      await findOwnLink(input.id, ctx.session.user);
 
-      const link = await db.link.findUnique({
-        where: {
-          id,
-          userId: ctx.session?.user.id,
-        },
-        include: {
-          clicks: true,
-        },
+      const clicks = await db.click.findMany({
+        where: { linkId: input.id },
+        select: { id: true, createdAt: true, userAgent: true, referer: true },
+        orderBy: { createdAt: "desc" },
+        take: 25,
       });
 
-      if (!link) {
-        throw new Error("Link not found");
-      }
-
-      return {
-        clicks: link.clicks,
-      };
+      return { clicks };
     }),
 });

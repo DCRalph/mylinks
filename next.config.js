@@ -6,6 +6,10 @@ await import("./src/env.js");
 
 /** @type {import("next").NextConfig} */
 const config = {
+  // Old route names.
+  redirects: async () => [
+    { source: "/spy-pixel", destination: "/pixels", permanent: true },
+  ],
   images: {
     remotePatterns: [
       {
