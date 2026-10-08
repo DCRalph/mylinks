@@ -2,6 +2,11 @@ import DeviceDetector from "node-device-detector";
 import ClientHints from "node-device-detector/client-hints";
 
 import { parseUserAgent, type ParsedUserAgent } from "~/lib/user-agent";
+import {
+  languageName,
+  userAgentParts,
+  type UserAgentPart,
+} from "~/lib/user-agent-parts";
 
 /** One decoded detail, e.g. Model: "Galaxy S23 Ultra". */
 export type Fact = {
@@ -27,6 +32,8 @@ export type DecodedVisit = {
   /** Most specific place known ("Christchurch"), then the rest ("🇳🇿 Canterbury, New Zealand"). */
   place: { title: string; subtitle: string } | null;
   facts: Fact[];
+  /** The user agent piece by piece. Empty for bots and proxies, whose are made up. */
+  userAgentParts: UserAgentPart[];
 };
 
 /**
@@ -64,10 +71,6 @@ const getDetector = () =>
 const clientHints = new ClientHints();
 
 const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
-const languageNames = new Intl.DisplayNames(["en"], {
-  type: "language",
-  languageDisplay: "standard",
-});
 
 const CONTINENTS: Record<string, string> = {
   AF: "Africa",
@@ -124,15 +127,6 @@ const joined = (
   parts: (string | null | undefined | false)[],
   separator = " · ",
 ) => parts.filter(Boolean).join(separator);
-
-/** "en_NZ" or "en-NZ" -> "English (New Zealand)". */
-function languageName(tag: string) {
-  try {
-    return languageNames.of(tag.replace("_", "-")) ?? tag;
-  } catch {
-    return tag;
-  }
-}
 
 /** "en-NZ,en;q=0.9,mi;q=0.8" -> "English (New Zealand), English, Māori". */
 function languages(acceptLanguage: string | undefined) {
@@ -209,6 +203,7 @@ export function decodeVisit(
   let summary: string;
   let title: string;
   let subtitle: string;
+  let parts: UserAgentPart[] = [];
 
   if (parsed.kind === "bot" || parsed.kind === "email-proxy" || bot?.name) {
     // A proxy or bot's device details are made up, so only say who it is.
@@ -329,6 +324,11 @@ export function decodeVisit(
         osValue,
       ]) || "Unknown client";
     title = deviceName ?? osValue ?? clientName ?? "Unknown client";
+    parts = userAgentParts(ua, {
+      deviceName,
+      modelCode,
+      hintedSystem: hinted("sec-ch-ua-platform-version") ? osValue : undefined,
+    });
     subtitle = joined(
       [osValue, clientName, typeName, processorName].filter(
         (part) => part !== title,
@@ -531,5 +531,13 @@ export function decodeVisit(
     ),
   );
 
-  return { kind, summary, title, subtitle, place, facts };
+  return {
+    kind,
+    summary,
+    title,
+    subtitle,
+    place,
+    facts,
+    userAgentParts: parts,
+  };
 }
