@@ -3,8 +3,19 @@ import { z } from "zod";
 
 import { linkUrlSchema, slugSchema } from "~/lib/validation";
 import { canManage } from "~/server/api/access";
-import { assertSlugLength, randomSlug } from "~/server/api/slugs";
+import { assertWithinLimit } from "~/server/api/limits";
+import {
+  assertSlugAllowed,
+  assertUrlAllowed,
+  randomSlug,
+} from "~/server/api/slugs";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import {
+  botCounts,
+  clickAnalytics,
+  humanClicks,
+  withBots,
+} from "~/server/analytics";
 import { db } from "~/server/db";
 import { findLinkSlugClash } from "~/server/slugs";
 
@@ -36,45 +47,73 @@ async function findOwnLink(
 }
 
 export const linkRouter = createTRPCRouter({
+  /** The user's links. `_count.clicks` counts people; `bots` the rest. */
   getMyLinks: protectedProcedure.query(async ({ ctx }) => {
     const links = await db.link.findMany({
       where: { userId: ctx.session.user.id },
-      include: { _count: { select: { clicks: true } } },
+      include: { _count: { select: humanClicks } },
       orderBy: { createdAt: "desc" },
     });
 
-    return { links };
+    return { links: await withBots("linkId", links) };
   }),
 
-  /** Clicks across all of the user's links this week and the week before. */
+  /** People across all of the user's links this week and the week before, plus this week's bots. */
   getStats: protectedProcedure.query(async ({ ctx }) => {
     const now = Date.now();
     const mine = { link: { userId: ctx.session.user.id } };
+    const thisWeekOnly = { gte: new Date(now - 7 * DAY_MS) };
 
-    const [thisWeek, lastWeek] = await Promise.all([
+    const [thisWeek, lastWeek, botsThisWeek] = await Promise.all([
       db.click.count({
-        where: { ...mine, createdAt: { gte: new Date(now - 7 * DAY_MS) } },
+        where: { ...mine, isBot: false, createdAt: thisWeekOnly },
       }),
       db.click.count({
         where: {
           ...mine,
+          isBot: false,
           createdAt: {
             gte: new Date(now - 14 * DAY_MS),
             lt: new Date(now - 7 * DAY_MS),
           },
         },
       }),
+      db.click.count({
+        where: { ...mine, isBot: true, createdAt: thisWeekOnly },
+      }),
     ]);
 
-    return { thisWeek, lastWeek };
+    return { thisWeek, lastWeek, botsThisWeek };
   }),
+
+  /** One link with its counts, for the stats page. */
+  getLink: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input, ctx }) => {
+      await findOwnLink(input.id, ctx.session.user);
+      const link = await db.link.findUniqueOrThrow({
+        where: { id: input.id },
+        include: { _count: { select: humanClicks } },
+      });
+      const bots = await botCounts("linkId", [link.id]);
+      return { ...link, bots: bots.get(link.id) ?? 0 };
+    }),
+
+  getAnalytics: protectedProcedure
+    .input(z.object({ id: z.string(), days: z.number().int().min(1).max(90) }))
+    .query(async ({ input, ctx }) => {
+      await findOwnLink(input.id, ctx.session.user);
+      return clickAnalytics({ linkId: input.id }, input.days);
+    }),
 
   createLink: protectedProcedure
     .input(linkInput)
     .mutation(async ({ input, ctx }) => {
       const slug = input.slug || randomSlug();
-      assertSlugLength(slug, ctx.session.user);
+      await assertSlugAllowed(slug, ctx.session.user);
+      await assertUrlAllowed(input.url);
       await assertSlugFree(slug);
+      await assertWithinLimit("link", ctx.session.user);
 
       const link = await db.link.create({
         data: {
@@ -94,7 +133,8 @@ export const linkRouter = createTRPCRouter({
       await findOwnLink(input.id, ctx.session.user);
 
       const slug = input.slug || randomSlug();
-      assertSlugLength(slug, ctx.session.user);
+      await assertSlugAllowed(slug, ctx.session.user);
+      await assertUrlAllowed(input.url);
       await assertSlugFree(slug, input.id);
 
       const link = await db.link.update({
@@ -117,19 +157,35 @@ export const linkRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  /** Most recent clicks on a link, newest first. */
+  /** A link's clicks, newest first, 50 at a time. IP addresses stay private. */
   getClicks: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ id: z.string(), cursor: z.string().nullish() }))
     .query(async ({ input, ctx }) => {
       await findOwnLink(input.id, ctx.session.user);
 
       const clicks = await db.click.findMany({
         where: { linkId: input.id },
-        select: { id: true, createdAt: true, userAgent: true, referer: true },
-        orderBy: { createdAt: "desc" },
-        take: 25,
+        select: {
+          id: true,
+          createdAt: true,
+          isBot: true,
+          client: true,
+          os: true,
+          device: true,
+          country: true,
+          referer: true,
+          refererHost: true,
+          host: true,
+          userAgent: true,
+        },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 51,
+        ...(input.cursor && { cursor: { id: input.cursor }, skip: 1 }),
       });
 
-      return { clicks };
+      return {
+        clicks: clicks.slice(0, 50),
+        nextCursor: clicks.length > 50 ? clicks[49]?.id : null,
+      };
     }),
 });

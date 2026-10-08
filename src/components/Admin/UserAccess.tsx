@@ -84,8 +84,17 @@ export default function UserAccess({
   };
 
   const [banning, setBanning] = useState(false);
+  const canModerate = can(viewer, {
+    link: ["moderate"],
+    profile: ["moderate"],
+  });
+  const restoreContent = api.moderation.restoreUserContent.useMutation();
   const unban = useMutation({
-    mutationFn: () => unwrap(authClient.admin.unbanUser({ userId: user.id })),
+    mutationFn: async () => {
+      await unwrap(authClient.admin.unbanUser({ userId: user.id }));
+      // Links and profiles turned off with the ban come back with it.
+      if (canModerate) await restoreContent.mutateAsync({ userId: user.id });
+    },
     onSuccess: async () => {
       toast.success(`${user.name} can sign in again`);
       await refresh();
@@ -166,7 +175,7 @@ export default function UserAccess({
             <p className="font-semibold">Active</p>
             <p className="text-muted mt-1 text-sm">
               Banning signs them out everywhere and stops them signing back in.
-              Their links keep working.
+              You can also turn off their links and profiles.
             </p>
           </>
         )}
@@ -175,6 +184,7 @@ export default function UserAccess({
       {banning && (
         <BanDialog
           user={user}
+          canModerate={canModerate}
           onClose={() => setBanning(false)}
           onBanned={refresh}
         />
@@ -192,20 +202,25 @@ const DURATIONS = [
 
 function BanDialog({
   user,
+  canModerate,
   onClose,
   onBanned,
 }: {
   user: { id: string; name: string };
+  /** Whether the viewer may also turn off the user's links and profiles. */
+  canModerate: boolean;
   onClose: () => void;
   onBanned: () => Promise<unknown>;
 }) {
   const queryClient = useQueryClient();
   const [reason, setReason] = useState("");
   const [duration, setDuration] = useState("forever");
+  const [turnOffContent, setTurnOffContent] = useState(false);
+  const disableContent = api.moderation.disableUserContent.useMutation();
 
   const ban = useMutation({
-    mutationFn: () =>
-      unwrap(
+    mutationFn: async () => {
+      await unwrap(
         authClient.admin.banUser({
           userId: user.id,
           banReason: reason.trim() || undefined,
@@ -214,7 +229,11 @@ function BanDialog({
               ? undefined
               : Number(duration) * 24 * 60 * 60,
         }),
-      ),
+      );
+      if (turnOffContent) {
+        await disableContent.mutateAsync({ userId: user.id });
+      }
+    },
     onSuccess: async () => {
       toast.success(`${user.name} is banned`);
       onClose();
@@ -269,6 +288,23 @@ function BanDialog({
               </SelectContent>
             </Select>
           </div>
+          {canModerate && (
+            <label className="flex items-center justify-between gap-4">
+              <span>
+                <span className="block font-semibold">
+                  Also turn off their links and profiles
+                </span>
+                <span className="text-muted text-sm">
+                  Visitors see a “turned off” page. Unbanning turns them back
+                  on.
+                </span>
+              </span>
+              <Switch
+                checked={turnOffContent}
+                onCheckedChange={setTurnOffContent}
+              />
+            </label>
+          )}
         </form>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>

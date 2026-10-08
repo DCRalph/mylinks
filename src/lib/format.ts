@@ -1,5 +1,3 @@
-import { parseUserAgent } from "~/lib/user-agent";
-
 const numberFormat = new Intl.NumberFormat("en");
 
 /** 1284 -> "1,284" */
@@ -38,10 +36,6 @@ export function formatRelative(date: Date, now = Date.now()) {
   }
   return "just now";
 }
-
-/** Rough device class from a user agent string. */
-export const deviceType = (userAgent: string | null) =>
-  parseUserAgent(userAgent).device;
 
 /** Percentage change, rounded. 0 -> n counts as +100%. */
 export function growth(current: number, previous: number) {

@@ -4,10 +4,10 @@ import Link from "next/link";
 import Brand from "~/components/Brand";
 import ProfileView from "~/components/Profiles/ProfileView";
 import { Button } from "~/components/ui/button";
-import { domains } from "~/lib/domains";
 import { ticketTextSize } from "~/lib/format";
 import { cn } from "~/lib/utils";
 import { getSession } from "~/server/auth";
+import { getDomains } from "~/server/domains";
 
 const FEATURES = [
   {
@@ -60,7 +60,7 @@ const DEMO_PROFILE = [
 
 export default async function Home() {
   const signedIn = !!(await getSession());
-  const host = domains[0].host;
+  const host = (await getDomains()).active[0].host;
   const cta = signedIn
     ? { href: "/dashboard", label: "Open dashboard" }
     : { href: "/signin", label: "Get started" };

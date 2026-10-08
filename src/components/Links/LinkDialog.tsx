@@ -1,5 +1,7 @@
 "use client";
 
+import { IconArrowRight } from "@tabler/icons-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -14,19 +16,14 @@ import {
 } from "~/components/ui/dialog";
 import { Input, PrefixInput } from "~/components/ui/input";
 import { Field } from "~/components/ui/label";
-import {
-  deviceType,
-  formatNumber,
-  formatRelative,
-  hostOf,
-} from "~/lib/format";
+import { hostOf, plural } from "~/lib/format";
 import { useShareDomain } from "~/lib/use-share-domain";
 import { api } from "~/trpc/react";
 import type { TicketLink } from "./LinkTicket";
 
 /**
- * Edit or delete a short link, with its recent clicks. Works for the owner and
- * for admins (the link router allows both). Render with `key={link.id}`.
+ * Edit or delete a short link, with a way into its stats. Works for the owner
+ * and for moderators (the link router allows both). Render with `key={link.id}`.
  */
 export default function LinkDialog({
   link,
@@ -40,7 +37,6 @@ export default function LinkDialog({
   const [url, setUrl] = useState(link.url);
   const [slug, setSlug] = useState(link.slug);
   const utils = api.useUtils();
-  const clicks = api.link.getClicks.useQuery({ id: link.id });
 
   const refresh = () =>
     Promise.all([
@@ -111,37 +107,25 @@ export default function LinkDialog({
           )}
         </form>
 
-        <section className="rounded-xl bg-bg p-4">
-          <div className="mb-2 flex items-baseline justify-between">
-            <h3 className="display text-xl">Recent clicks</h3>
-            <span className="display text-xl text-muted">
-              {formatNumber(link._count.clicks)} total
+        <Link
+          href={`/dashboard/links/${link.id}`}
+          className="flex items-center justify-between gap-3 rounded-xl bg-bg p-4 hover:bg-raised"
+        >
+          <span>
+            <span className="display text-xl">
+              {plural(link._count.clicks, "click")}
             </span>
-          </div>
-          {clicks.data?.clicks.length ? (
-            <ul className="max-h-44 divide-y divide-line overflow-y-auto text-sm">
-              {clicks.data.clicks.map((click) => (
-                <li key={click.id} className="flex gap-3 py-2">
-                  <span className="w-28 shrink-0 text-muted">
-                    {formatRelative(click.createdAt)}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate">
-                    {click.referer && click.referer !== "unknown"
-                      ? hostOf(click.referer)
-                      : "Direct"}
-                  </span>
-                  <span className="shrink-0 text-muted">
-                    {deviceType(click.userAgent)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-muted">
-              {clicks.isPending ? "Loading…" : "No clicks yet."}
-            </p>
-          )}
-        </section>
+            {!!link.bots && (
+              <span className="text-sm text-muted">
+                {" "}
+                · {plural(link.bots, "bot")}
+              </span>
+            )}
+          </span>
+          <span className="display flex items-center gap-1 text-lg text-muted">
+            Stats <IconArrowRight className="size-5" />
+          </span>
+        </Link>
 
         <DialogFooter className="sm:justify-between">
           <ConfirmDelete

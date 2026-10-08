@@ -2,7 +2,8 @@
 
 import { useSyncExternalStore } from "react";
 
-import { domains, findDomain, type Domain } from "~/lib/domains";
+import { useDomains } from "~/components/DomainsProvider";
+import type { Domain } from "~/lib/domains";
 
 const STORAGE_KEY = "link2it:share-domain";
 const listeners = new Set<() => void>();
@@ -27,6 +28,7 @@ const getServerSnapshot = () => null;
  * the domain the dashboard is open on; a pick is remembered per browser.
  */
 export function useShareDomain(): [Domain, (domain: Domain) => void] {
+  const domains = useDomains();
   const host = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const setShareDomain = (domain: Domain) => {
@@ -34,5 +36,5 @@ export function useShareDomain(): [Domain, (domain: Domain) => void] {
     listeners.forEach((listener) => listener());
   };
 
-  return [findDomain(host) ?? domains[0], setShareDomain];
+  return [domains.find((d) => d.host === host) ?? domains[0], setShareDomain];
 }

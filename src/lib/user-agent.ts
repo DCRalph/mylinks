@@ -28,7 +28,7 @@ const BOTS: [RegExp, string][] = [
   [/Googlebot/i, "Googlebot"],
   [/bingbot/i, "Bingbot"],
   [
-    /bot|crawler|spider|preview|curl|wget|python-requests|httpclient/i,
+    /bot|crawler|spider|preview|headless|curl|wget|python-requests|httpclient|node-fetch|undici|axios|go-http-client|okhttp|libwww|scrapy|^node$|^java\//i,
     "Bot or script",
   ],
 ];
@@ -100,4 +100,33 @@ export function parseUserAgent(
   }
 
   return { client: null, os, device: parseDevice(ua, os), kind: "unknown" };
+}
+
+/** "https://www.Google.com/search?q=x" -> "google.com", or null. */
+export function refererHostOf(referer: string | null | undefined) {
+  if (!referer) return null;
+  try {
+    return new URL(referer).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The parsed columns stored on every Click. Versions are dropped so analytics
+ * group by family ("Chrome", "iOS"). A request without a user agent is a
+ * script, so it counts as a bot; mail image proxies are opens, not bots.
+ */
+export function visitColumns(
+  userAgent: string | null | undefined,
+  referer: string | null | undefined,
+) {
+  const ua = parseUserAgent(userAgent);
+  return {
+    isBot: ua.kind === "bot" || !userAgent,
+    client: ua.client?.replace(/ \d+$/, "") ?? null,
+    os: ua.os?.replace(/ [\d.]+$/, "") ?? null,
+    device: ua.device,
+    refererHost: refererHostOf(referer),
+  };
 }

@@ -20,6 +20,7 @@
   --color-lime: #c8f560;
   --color-lime-ink: #0b0b0a;
   --color-danger: #ff6b5b;
+  --color-warn: #ffb84d;
 
   --font-sans:
     var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,

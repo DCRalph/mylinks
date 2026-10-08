@@ -1,11 +1,17 @@
 "use client";
 
-import { IconPencil } from "@tabler/icons-react";
+import { IconChartBar, IconPencil } from "@tabler/icons-react";
+import Link from "next/link";
 
 import CopyButton from "~/components/CopyButton";
 import { Button } from "~/components/ui/button";
 import { shareUrl } from "~/lib/domains";
-import { displayUrl, formatNumber, ticketTextSize } from "~/lib/format";
+import {
+  displayUrl,
+  formatNumber,
+  plural,
+  ticketTextSize,
+} from "~/lib/format";
 import { useShareDomain } from "~/lib/use-share-domain";
 import { cn } from "~/lib/utils";
 
@@ -14,7 +20,11 @@ export type TicketLink = {
   name: string;
   slug: string;
   url: string;
+  /** People only; bots are counted separately. */
   _count: { clicks: number };
+  bots?: number;
+  disabledAt?: Date | null;
+  disabledReason?: string | null;
 };
 
 /** A short link as a big ticket. `hot` paints it lime (the top performer). */
@@ -60,14 +70,50 @@ export default function LinkTicket({
       >
         {displayUrl(link.url)}
       </p>
-      <div className="mt-auto flex items-end justify-between gap-3 pt-4">
-        <p className="display text-[40px]">
-          {formatNumber(link._count.clicks)}
-          <span className="ml-1.5 text-base">
-            {link._count.clicks === 1 ? "click" : "clicks"}
-          </span>
+      {link.disabledAt && (
+        <p className="mt-2 text-[13px] text-danger">
+          Turned off by a moderator
+          {link.disabledReason && `: ${link.disabledReason}`}
         </p>
+      )}
+      <div className="mt-auto flex items-end justify-between gap-3 pt-4">
+        <Link
+          href={`/dashboard/links/${link.id}`}
+          title="See stats"
+          className="group leading-none"
+        >
+          <span className="display text-[40px] group-hover:underline">
+            {formatNumber(link._count.clicks)}
+            <span className="ml-1.5 text-base">
+              {link._count.clicks === 1 ? "click" : "clicks"}
+            </span>
+          </span>
+          {!!link.bots && (
+            <span
+              className={cn(
+                "block text-xs",
+                hot ? "text-lime-ink/70" : "text-faint",
+              )}
+            >
+              + {plural(link.bots, "bot")}
+            </span>
+          )}
+        </Link>
         <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-current hover:bg-transparent"
+            asChild
+          >
+            <Link
+              href={`/dashboard/links/${link.id}`}
+              aria-label="Link stats"
+              title="Link stats"
+            >
+              <IconChartBar />
+            </Link>
+          </Button>
           <CopyButton value={shareUrl(shareDomain, link.slug)} />
           {onEdit && (
             <Button

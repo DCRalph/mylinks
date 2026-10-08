@@ -11,7 +11,6 @@ const badSlugs = [
   "robots.txt",
   "favicon.ico",
 ];
-const badUrlFilter = ["porn", "lgbt"];
 const badUsernames = [
   "unknown",
   "admin",
@@ -27,7 +26,6 @@ const badUsernames = [
 
 const badWords = {
   badSlugs,
-  badUrlFilter,
   badUsernames,
 };
 
