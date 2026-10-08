@@ -29,7 +29,14 @@ export const spypixelRouter = createTRPCRouter({
   getAll: spyPixelProcedure.query(({ ctx }) =>
     db.spyPixel.findMany({
       where: { userId: ctx.session.user.id },
-      include: { _count: { select: { clicks: true } } },
+      include: {
+        _count: { select: { clicks: true } },
+        clicks: {
+          select: { createdAt: true },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
       orderBy: { createdAt: "desc" },
     }),
   ),

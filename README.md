@@ -23,7 +23,8 @@ bun dev
   on one domain does not sign you in on another;
 - every short link (`/<slug>`), profile (`/p/<slug>`) and pixel (`/img/<slug>`)
   resolves;
-- the dashboard's "Share links on" picker chooses which domain copied links use.
+- the domain chip in the header chooses which domain copied links use. It
+  defaults to the domain you're browsing on.
 
 For Google sign-in and "Connect Google", register
 `https://<domain>/api/auth/callback/google` as an authorized redirect URI for

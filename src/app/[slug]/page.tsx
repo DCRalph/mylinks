@@ -1,9 +1,9 @@
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
-import ParallaxCard from "~/components/ParallaxCard";
 import { visitorInfo } from "~/server/clicks";
 import { db } from "~/server/db";
+import { findLinkBySlug } from "~/server/slugs";
 
 /** Short link resolver. Works on every configured domain. */
 export default async function Page({
@@ -11,26 +11,12 @@ export default async function Page({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
-  const link = await db.link.findUnique({ where: { slug } });
+  const link = await findLinkBySlug((await params).slug);
+  if (!link) notFound();
 
-  if (link) {
-    void db.click
-      .create({ data: { linkId: link.id, ...visitorInfo(await headers()) } })
-      .catch(console.error);
+  void db.click
+    .create({ data: { linkId: link.id, ...visitorInfo(await headers()) } })
+    .catch(console.error);
 
-    redirect(link.url);
-  }
-
-  return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950">
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -left-20 top-10 h-72 w-72 rounded-full bg-red-500/10 blur-3xl"></div>
-        <div className="absolute -right-20 bottom-20 h-80 w-80 rounded-full bg-orange-500/10 blur-3xl"></div>
-        <div className="absolute left-1/3 top-1/3 h-96 w-96 rounded-full bg-pink-500/10 blur-3xl"></div>
-      </div>
-
-      <ParallaxCard slug={slug} />
-    </main>
-  );
+  redirect(link.url);
 }

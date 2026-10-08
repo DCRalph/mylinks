@@ -73,6 +73,8 @@ export const auth = betterAuth({
   },
 
   user: {
+    // Requires the current password, or a sign-in within the last day.
+    deleteUser: { enabled: true },
     additionalFields: {
       username: { type: "string", required: false, input: false },
       admin: { type: "boolean", defaultValue: false, input: false },

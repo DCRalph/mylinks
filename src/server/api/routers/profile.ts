@@ -1,7 +1,14 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { profileLinkUrlSchema, slugSchema } from "~/lib/validation";
+import { deviceType } from "~/lib/format";
+import {
+  colorSchema,
+  iconSchema,
+  profileLinkUrlSchema,
+  slugSchema,
+} from "~/lib/validation";
+import { canManage } from "~/server/api/access";
 import { assertSlugLength } from "~/server/api/slugs";
 import {
   createTRPCRouter,
@@ -10,6 +17,7 @@ import {
 } from "~/server/api/trpc";
 import { visitorInfo } from "~/server/clicks";
 import { db } from "~/server/db";
+import { findProfileIdBySlug, findProfileSlugClash } from "~/server/slugs";
 import parseProfileLinkOrder from "~/utils/parseProfileLinkOrder";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -21,56 +29,46 @@ const profileInput = z.object({
   bio: z.string().trim().max(300).nullable(),
 });
 
-export const profileLinkInput = z.object({
+const profileLinkInput = z.object({
   title: z.string().trim().min(1, "Title is required").max(60),
   url: profileLinkUrlSchema,
   description: z.string().trim().max(120),
-  bgColor: z.string(),
-  fgColor: z.string(),
-  iconUrl: z.string(),
+  bgColor: colorSchema,
+  fgColor: colorSchema,
+  iconUrl: iconSchema,
 });
 
 /** UTC calendar day, e.g. "2026-10-08". */
 const utcDay = (date: Date) => date.toISOString().slice(0, 10);
 
 async function assertProfileSlugFree(slug: string, exceptId?: string) {
-  const existing = await db.profile.findUnique({ where: { slug } });
-  if (existing && existing.id !== exceptId) {
+  if (await findProfileSlugClash(slug, exceptId)) {
     throw new TRPCError({ code: "CONFLICT", message: "Slug is already taken" });
   }
 }
 
-async function findOwnProfile(id: string, userId: string) {
+type SessionUser = { id: string; admin: boolean };
+
+async function findOwnProfile(id: string, user: SessionUser) {
   const profile = await db.profile.findUnique({
     where: { id },
     include: { profileLinks: true },
   });
-  if (profile?.userId !== userId) {
+  if (!profile || !canManage(profile.userId, user)) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Profile not found" });
   }
   return profile;
 }
 
-async function findOwnProfileLink(id: string, userId: string) {
+async function findOwnProfileLink(id: string, user: SessionUser) {
   const link = await db.profileLink.findUnique({
     where: { id },
     include: { profile: { include: { profileLinks: true } } },
   });
-  if (link?.profile.userId !== userId) {
+  if (!link || !canManage(link.profile.userId, user)) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Link not found" });
   }
   return link;
-}
-
-/** Rough device class from a user agent string. */
-function deviceType(userAgent: string | null) {
-  const ua = (userAgent ?? "").toLowerCase();
-  if (ua.includes("ipad") || ua.includes("tablet")) return "Tablet";
-  if (ua.includes("mobile") || ua.includes("android") || ua.includes("iphone"))
-    return "Mobile";
-  if (ua.includes("windows") || ua.includes("macintosh") || ua.includes("linux"))
-    return "Desktop";
-  return "Unknown";
 }
 
 export const profileRouter = createTRPCRouter({
@@ -82,6 +80,21 @@ export const profileRouter = createTRPCRouter({
 
     return { profiles };
   }),
+
+  /** One profile with its links, for the editor. Owners and admins only. */
+  getProfile: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input, ctx }) => {
+      await findOwnProfile(input.id, ctx.session.user);
+      return db.profile.findUniqueOrThrow({
+        where: { id: input.id },
+        include: {
+          profileLinks: true,
+          user: { select: { id: true, username: true, name: true } },
+          _count: { select: { clicks: true } },
+        },
+      });
+    }),
 
   createProfile: protectedProcedure
     .input(profileInput)
@@ -99,7 +112,7 @@ export const profileRouter = createTRPCRouter({
   editProfile: protectedProcedure
     .input(profileInput.extend({ id: z.string() }))
     .mutation(async ({ input: { id, ...data }, ctx }) => {
-      await findOwnProfile(id, ctx.session.user.id);
+      await findOwnProfile(id, ctx.session.user);
       assertSlugLength(data.slug, ctx.session.user.admin);
       await assertProfileSlugFree(data.slug, id);
 
@@ -110,7 +123,7 @@ export const profileRouter = createTRPCRouter({
   deleteProfile: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      await findOwnProfile(input.id, ctx.session.user.id);
+      await findOwnProfile(input.id, ctx.session.user);
       await db.profile.delete({ where: { id: input.id } });
       return { success: true };
     }),
@@ -118,7 +131,7 @@ export const profileRouter = createTRPCRouter({
   createProfileLink: protectedProcedure
     .input(profileLinkInput.extend({ profileId: z.string() }))
     .mutation(async ({ input: { profileId, ...data }, ctx }) => {
-      const profile = await findOwnProfile(profileId, ctx.session.user.id);
+      const profile = await findOwnProfile(profileId, ctx.session.user);
 
       const profileLink = await db.profileLink.create({
         data: { ...data, profileId },
@@ -140,7 +153,7 @@ export const profileRouter = createTRPCRouter({
   editProfileLink: protectedProcedure
     .input(profileLinkInput.extend({ id: z.string() }))
     .mutation(async ({ input: { id, ...data }, ctx }) => {
-      await findOwnProfileLink(id, ctx.session.user.id);
+      await findOwnProfileLink(id, ctx.session.user);
       await db.profileLink.update({ where: { id }, data });
       return { success: true };
     }),
@@ -150,7 +163,7 @@ export const profileRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       const profile = await findOwnProfile(
         input.profileId,
-        ctx.session.user.id,
+        ctx.session.user,
       );
 
       // Only keep ids that belong to this profile.
@@ -168,7 +181,7 @@ export const profileRouter = createTRPCRouter({
   toggleProfileLinkVisibility: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const link = await findOwnProfileLink(input.id, ctx.session.user.id);
+      const link = await findOwnProfileLink(input.id, ctx.session.user);
 
       await db.profileLink.update({
         where: { id: input.id },
@@ -181,7 +194,7 @@ export const profileRouter = createTRPCRouter({
   deleteProfileLink: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const link = await findOwnProfileLink(input.id, ctx.session.user.id);
+      const link = await findOwnProfileLink(input.id, ctx.session.user);
 
       await db.profileLink.delete({ where: { id: input.id } });
 
@@ -201,7 +214,7 @@ export const profileRouter = createTRPCRouter({
   getClicks: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input, ctx }) => {
-      await findOwnProfile(input.id, ctx.session.user.id);
+      await findOwnProfile(input.id, ctx.session.user);
 
       const clicks = await db.click.findMany({
         where: { profileId: input.id },
@@ -216,10 +229,13 @@ export const profileRouter = createTRPCRouter({
   getPublicProfile: publicProcedure
     .input(z.object({ slug: z.string() }))
     .query(async ({ input, ctx }) => {
-      const profile = await db.profile.findUnique({
-        where: { slug: input.slug },
-        include: { profileLinks: { where: { visible: true } } },
-      });
+      const id = await findProfileIdBySlug(input.slug);
+      const profile = id
+        ? await db.profile.findUnique({
+            where: { id },
+            include: { profileLinks: { where: { visible: true } } },
+          })
+        : null;
 
       if (!profile) {
         return null;
@@ -241,7 +257,7 @@ export const profileRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input, ctx }) => {
-      await findOwnProfile(input.profileId, ctx.session.user.id);
+      await findOwnProfile(input.profileId, ctx.session.user);
 
       const today = new Date(`${utcDay(new Date())}T00:00:00.000Z`);
       const start = new Date(today.getTime() - (input.days - 1) * DAY_MS);
@@ -303,7 +319,7 @@ export const profileRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input, ctx }) => {
-      await findOwnProfile(input.profileId, ctx.session.user.id);
+      await findOwnProfile(input.profileId, ctx.session.user);
 
       const clicks = await db.click.findMany({
         where: {

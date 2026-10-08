@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import badWords from "~/utils/badWords";
+import { profileLinkIcons } from "~/utils/profileLinkIcons";
 
 const handle = z
   .string()
@@ -47,3 +48,17 @@ export const passwordSchema = z
   .string()
   .min(8, "Password must be at least 8 characters")
   .max(128);
+
+const emptyToNull = z.literal("").transform(() => null);
+
+/** "#c8f560" style colours for profile buttons. Empty means the default. */
+export const colorSchema = z.union([
+  emptyToNull,
+  z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use a hex colour like #c8f560"),
+]);
+
+/** One of the bundled icons. Empty means none. */
+export const iconSchema = z.union([
+  emptyToNull,
+  z.enum(profileLinkIcons.map((icon) => icon.file)),
+]);
