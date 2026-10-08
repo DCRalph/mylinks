@@ -8,6 +8,16 @@ const TABS = [
   { href: "/admin", label: "Overview", permissions: { stats: ["read"] } },
   { href: "/admin/users", label: "Users", permissions: { user: ["list"] } },
   {
+    href: "/admin/domains",
+    label: "Domains",
+    permissions: { domain: ["manage"] },
+  },
+  {
+    href: "/admin/settings",
+    label: "Settings",
+    permissions: { platform: ["manage"] },
+  },
+  {
     href: "/admin/audit",
     label: "Audit log",
     permissions: { audit: ["read"] },

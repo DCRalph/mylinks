@@ -111,7 +111,8 @@ model Link {
 }
 
 model Profile {
-  id String @id @default(cuid())
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
@@ -249,4 +250,49 @@ model AuditLog {
 
   @@index([createdAt])
   @@index([actorId])
+}
+
+// Platform: domains, settings and better-auth's rate limits.
+
+enum DomainStatus {
+  pending
+  active
+  disabled
+}
+
+// Hosts this deployment answers on, managed in Admin → Domains. Only active
+// domains serve the app (src/proxy.ts); pending ones answer the verify check.
+model Domain {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Lowercase, with a port only in development: "l2.it", "localhost:3000".
+  host     String       @unique
+  // "https", or "http" for local development.
+  protocol String       @default("https")
+  status   DomainStatus @default(pending)
+  // Used for new sessions, the landing page and copied links by default.
+  // Exactly one active domain is primary.
+  primary  Boolean      @default(false)
+
+  verifiedAt DateTime?
+  checkedAt  DateTime?
+  // Why the last verify check failed.
+  checkError String?
+}
+
+// A single row (id 1). `data` is validated and defaulted by src/server/settings.ts.
+model PlatformSettings {
+  id        Int      @id @default(1)
+  updatedAt DateTime @updatedAt
+  data      Json
+}
+
+// better-auth's rate limit counters, so limits survive restarts.
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
 }

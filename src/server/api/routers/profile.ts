@@ -9,7 +9,8 @@ import {
   slugSchema,
 } from "~/lib/validation";
 import { canManage } from "~/server/api/access";
-import { assertSlugLength } from "~/server/api/slugs";
+import { assertWithinLimit } from "~/server/api/limits";
+import { assertSlugAllowed } from "~/server/api/slugs";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -99,8 +100,9 @@ export const profileRouter = createTRPCRouter({
   createProfile: protectedProcedure
     .input(profileInput)
     .mutation(async ({ input, ctx }) => {
-      assertSlugLength(input.slug, ctx.session.user);
+      await assertSlugAllowed(input.slug, ctx.session.user);
       await assertProfileSlugFree(input.slug);
+      await assertWithinLimit("profile", ctx.session.user);
 
       const profile = await db.profile.create({
         data: { ...input, userId: ctx.session.user.id, linkOrder: "[]" },
@@ -113,7 +115,7 @@ export const profileRouter = createTRPCRouter({
     .input(profileInput.extend({ id: z.string() }))
     .mutation(async ({ input: { id, ...data }, ctx }) => {
       await findOwnProfile(id, ctx.session.user);
-      assertSlugLength(data.slug, ctx.session.user);
+      await assertSlugAllowed(data.slug, ctx.session.user);
       await assertProfileSlugFree(data.slug, id);
 
       await db.profile.update({ where: { id }, data });
@@ -161,10 +163,7 @@ export const profileRouter = createTRPCRouter({
   changeOrder: protectedProcedure
     .input(z.object({ profileId: z.string(), order: z.array(z.string()) }))
     .mutation(async ({ input, ctx }) => {
-      const profile = await findOwnProfile(
-        input.profileId,
-        ctx.session.user,
-      );
+      const profile = await findOwnProfile(input.profileId, ctx.session.user);
 
       // Only keep ids that belong to this profile.
       const ids = new Set(profile.profileLinks.map((link) => link.id));
@@ -241,8 +240,10 @@ export const profileRouter = createTRPCRouter({
         return null;
       }
 
-      void db.click
-        .create({ data: { profileId: profile.id, ...visitorInfo(ctx.headers) } })
+      void visitorInfo(ctx.headers)
+        .then((info) =>
+          db.click.create({ data: { profileId: profile.id, ...info } }),
+        )
         .catch(console.error);
 
       return profile;
@@ -350,9 +351,9 @@ export const profileRouter = createTRPCRouter({
         trafficSources: sources
           .slice(0, 5)
           .map(([source, count]) => ({ source, count })),
-        deviceTypes: tally(clicks.map((click) => deviceType(click.userAgent))).map(
-          ([device, count]) => ({ device, count }),
-        ),
+        deviceTypes: tally(
+          clicks.map((click) => deviceType(click.userAgent)),
+        ).map(([device, count]) => ({ device, count })),
       };
     }),
 });

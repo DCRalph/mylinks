@@ -166,6 +166,55 @@ BEGIN
   END IF;
 END $$;`,
   },
+  {
+    // Admin-managed domains and settings, better-auth rate limits in the
+    // database, and Profile.createdAt for per-user creation limits.
+    name: "domains-and-settings",
+    sql: `
+DO $$
+BEGIN
+  PERFORM pg_advisory_xact_lock(424242);
+  IF to_regclass('"User"') IS NULL THEN
+    RETURN;
+  END IF;
+
+  ALTER TABLE "Profile" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'DomainStatus') THEN
+    CREATE TYPE "DomainStatus" AS ENUM ('pending', 'active', 'disabled');
+  END IF;
+  CREATE TABLE IF NOT EXISTS "Domain" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "host" TEXT NOT NULL,
+    "protocol" TEXT NOT NULL DEFAULT 'https',
+    "status" "DomainStatus" NOT NULL DEFAULT 'pending',
+    "primary" BOOLEAN NOT NULL DEFAULT false,
+    "verifiedAt" TIMESTAMP(3),
+    "checkedAt" TIMESTAMP(3),
+    "checkError" TEXT,
+    CONSTRAINT "Domain_pkey" PRIMARY KEY ("id")
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS "Domain_host_key" ON "Domain"("host");
+
+  CREATE TABLE IF NOT EXISTS "PlatformSettings" (
+    "id" INTEGER NOT NULL DEFAULT 1,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "data" JSONB NOT NULL,
+    CONSTRAINT "PlatformSettings_pkey" PRIMARY KEY ("id")
+  );
+
+  CREATE TABLE IF NOT EXISTS "RateLimit" (
+    "id" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "count" INTEGER NOT NULL,
+    "lastRequest" BIGINT NOT NULL,
+    CONSTRAINT "RateLimit_pkey" PRIMARY KEY ("id")
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS "RateLimit_key_key" ON "RateLimit"("key");
+END $$;`,
+  },
 ];
 
 export async function runMigrations() {

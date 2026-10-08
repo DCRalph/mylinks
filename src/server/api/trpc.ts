@@ -3,7 +3,7 @@ import superjson from "superjson";
 import { z, ZodError } from "zod";
 
 import { can, type Permissions } from "~/lib/permissions";
-import { auth } from "~/server/auth";
+import { getAuth } from "~/server/auth";
 import { db } from "~/server/db";
 
 /**
@@ -11,7 +11,11 @@ import { db } from "~/server/db";
  * the HTTP handler (src/app/api/trpc) and by the RSC caller (src/trpc/server).
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const session = await auth.api.getSession({ headers: opts.headers });
+  const session = await (
+    await getAuth()
+  ).api.getSession({
+    headers: opts.headers,
+  });
 
   return {
     db,

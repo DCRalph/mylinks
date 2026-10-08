@@ -9,11 +9,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { domains } from "~/lib/domains";
+import { useDomains } from "~/components/DomainsProvider";
 import { useShareDomain } from "~/lib/use-share-domain";
 
 /** Header chip that picks the domain copied links use. Hidden with one domain. */
 export default function ShareDomainPicker() {
+  const domains = useDomains();
   const [shareDomain, setShareDomain] = useShareDomain();
 
   if (domains.length < 2) return null;

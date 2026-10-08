@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { slugSchema } from "~/lib/validation";
+import { assertWithinLimit } from "~/server/api/limits";
 import { randomSlug } from "~/server/api/slugs";
 import { createTRPCRouter, permissionProcedure } from "~/server/api/trpc";
 import { readStoredHeaders } from "~/server/clicks";
@@ -72,6 +73,7 @@ export const spypixelRouter = createTRPCRouter({
       if (taken) {
         throw new TRPCError({ code: "CONFLICT", message: "Slug already taken" });
       }
+      await assertWithinLimit("pixel", ctx.session.user);
 
       return db.spyPixel.create({
         data: { name: input.name, slug, userId: ctx.session.user.id },

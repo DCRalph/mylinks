@@ -16,7 +16,9 @@ export function Panel({
   return (
     <section className={cn("bg-panel rounded-2xl p-5", className)}>
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h3 className="display text-[28px]">{title}</h3>
+        <h3 className="display truncate-display min-w-0 text-[28px]">
+          {title}
+        </h3>
         {action}
       </div>
       {children}

@@ -1,4 +1,4 @@
-import { safeHeaders, visitorInfo } from "~/server/clicks";
+import { visitorInfo } from "~/server/clicks";
 import { db } from "~/server/db";
 
 // 1x1 transparent PNG.
@@ -16,8 +16,7 @@ async function recordLoad(req: Request, slug: string) {
   await db.click.create({
     data: {
       spyPixelId: pixel.id,
-      ...visitorInfo(req.headers),
-      allHeaders: JSON.stringify(safeHeaders(req.headers)),
+      ...(await visitorInfo(req.headers, { withHeaders: true })),
     },
   });
 }

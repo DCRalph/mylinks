@@ -8,7 +8,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
-import { auth } from "~/server/auth";
+import { getAuth } from "~/server/auth";
 import { db } from "~/server/db";
 
 /** Turns better-auth API errors into tRPC errors the client can show. */
@@ -77,8 +77,8 @@ export const userRouter = createTRPCRouter({
   createPassword: protectedProcedure
     .input(z.object({ password: passwordSchema }))
     .mutation(({ input, ctx }) =>
-      callAuth(() =>
-        auth.api.setPassword({
+      callAuth(async () =>
+        (await getAuth()).api.setPassword({
           body: { newPassword: input.password },
           headers: ctx.headers,
         }),
@@ -90,8 +90,8 @@ export const userRouter = createTRPCRouter({
       z.object({ currentPassword: z.string(), newPassword: passwordSchema }),
     )
     .mutation(({ input, ctx }) =>
-      callAuth(() =>
-        auth.api.changePassword({
+      callAuth(async () =>
+        (await getAuth()).api.changePassword({
           body: {
             currentPassword: input.currentPassword,
             newPassword: input.newPassword,
@@ -124,7 +124,7 @@ export const userRouter = createTRPCRouter({
         });
       }
 
-      const { password } = await auth.$context;
+      const { password } = await (await getAuth()).$context;
       const valid = await password.verify({
         hash: credential.password,
         password: input.currentPassword,

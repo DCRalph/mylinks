@@ -14,8 +14,9 @@ export default async function Page({
   const link = await findLinkBySlug((await params).slug);
   if (!link) notFound();
 
-  void db.click
-    .create({ data: { linkId: link.id, ...visitorInfo(await headers()) } })
+  const visit = await headers();
+  void visitorInfo(visit)
+    .then((info) => db.click.create({ data: { linkId: link.id, ...info } }))
     .catch(console.error);
 
   redirect(link.url);

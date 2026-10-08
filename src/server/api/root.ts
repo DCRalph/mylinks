@@ -5,6 +5,7 @@ import { setupRouter } from "./routers/setup";
 import { linkRouter } from "./routers/link";
 import { profileRouter } from "./routers/profile";
 import { adminRouter } from "./routers/admin";
+import { platformRouter } from "./routers/platform";
 import { spypixelRouter } from "./routers/spypixel";
 import { bookmakrsRouter } from "./routers/bookmarks";
 
@@ -19,6 +20,7 @@ export const appRouter = createTRPCRouter({
   link: linkRouter,
   profile: profileRouter,
   admin: adminRouter,
+  platform: platformRouter,
   spypixel: spypixelRouter,
   bookmarks: bookmakrsRouter,
 });

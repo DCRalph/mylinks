@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { isLocalHost, normalizeHost } from "~/lib/domains";
 import badWords from "~/utils/badWords";
 import { profileLinkIcons } from "~/utils/profileLinkIcons";
 
@@ -18,8 +19,8 @@ export const usernameSchema = handle
 
 /**
  * Short link and profile slugs, which share the URL space with app routes.
- * Empty means "generate one". Only admins may use slugs under 3 characters,
- * which the routers enforce with `assertSlugLength` (src/server/api/slugs.ts).
+ * Empty means "generate one". The server also applies the length minimum and
+ * Admin → Settings' reserved slugs (`assertSlugAllowed` in src/server/api/slugs.ts).
  */
 export const slugSchema = handle.refine(
   (slug) => !badWords.badSlugs.includes(slug.toLowerCase()),
@@ -39,10 +40,8 @@ export const profileLinkUrlSchema = z.url({
   error: "Enter a full URL (https://, mailto: or tel:)",
 });
 
-export const linkUrlSchema = httpUrlSchema.refine(
-  (url) => !badWords.badUrlFilter.some((word) => url.includes(word)),
-  "That URL is not allowed",
-);
+/** Short link destinations. Blocked URLs (Admin → Settings) are checked on the server. */
+export const linkUrlSchema = httpUrlSchema;
 
 export const passwordSchema = z
   .string()
@@ -62,3 +61,15 @@ export const iconSchema = z.union([
   emptyToNull,
   z.enum(profileLinkIcons.map((icon) => icon.file)),
 ]);
+
+const hostname =
+  /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]$/;
+
+/** A domain to add in Admin → Domains. Accepts pasted URLs; IP addresses aren't allowed. */
+export const domainHostSchema = z
+  .string()
+  .transform(normalizeHost)
+  .refine(
+    (host) => hostname.test(host) || isLocalHost(host),
+    "Enter a domain like go.example.com",
+  );

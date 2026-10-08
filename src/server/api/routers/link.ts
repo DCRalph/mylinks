@@ -3,7 +3,12 @@ import { z } from "zod";
 
 import { linkUrlSchema, slugSchema } from "~/lib/validation";
 import { canManage } from "~/server/api/access";
-import { assertSlugLength, randomSlug } from "~/server/api/slugs";
+import { assertWithinLimit } from "~/server/api/limits";
+import {
+  assertSlugAllowed,
+  assertUrlAllowed,
+  randomSlug,
+} from "~/server/api/slugs";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
 import { findLinkSlugClash } from "~/server/slugs";
@@ -73,8 +78,10 @@ export const linkRouter = createTRPCRouter({
     .input(linkInput)
     .mutation(async ({ input, ctx }) => {
       const slug = input.slug || randomSlug();
-      assertSlugLength(slug, ctx.session.user);
+      await assertSlugAllowed(slug, ctx.session.user);
+      await assertUrlAllowed(input.url);
       await assertSlugFree(slug);
+      await assertWithinLimit("link", ctx.session.user);
 
       const link = await db.link.create({
         data: {
@@ -94,7 +101,8 @@ export const linkRouter = createTRPCRouter({
       await findOwnLink(input.id, ctx.session.user);
 
       const slug = input.slug || randomSlug();
-      assertSlugLength(slug, ctx.session.user);
+      await assertSlugAllowed(slug, ctx.session.user);
+      await assertUrlAllowed(input.url);
       await assertSlugFree(slug, input.id);
 
       const link = await db.link.update({
